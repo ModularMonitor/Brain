@@ -1,0 +1,3 @@
+[submodule "M7/Serial"]
+	path = M7/Serial
+	url = https://github.com/ModularMonitor/lib-Serial
