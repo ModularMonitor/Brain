@@ -28,6 +28,8 @@ void loop()
     delay(5000);
     return;
   }
+  
+  delay(1000);
 
   for (uint8_t id = 0; id < CustomSerial::get_devices_limit(); ++id) {
     if (!CustomSerial::is_device_connected(id)) {
@@ -37,7 +39,6 @@ void loop()
 
     Serial.printf("Requesting id %d...\n", id);
     CustomSerial::request(id);
-    delay(100);
 
     //Serial.printf("Wire has %d bytes to read.\n", Wire.available());
 
