@@ -29,7 +29,7 @@ void loop()
     return;
   }
   
-  delay(1000);
+  delay(500);
 
   for (uint8_t id = 0; id < CustomSerial::get_devices_limit(); ++id) {
     if (!CustomSerial::is_device_connected(id)) {
