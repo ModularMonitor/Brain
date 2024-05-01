@@ -1,42 +1,40 @@
 //#define _DEBUG
 #include "Serial/packaging.h"
+#include "Serial/flags.h"
 
 using namespace CS;
 
+constexpr decltype(millis()) loop_delay = 1000;
+
 PackagedWired* wire;
-constexpr int led_pin = 2;
-bool must_check_again = true;
+bool devices_online[static_cast<size_t>(device_id::_MAX)]{false};
+
 
 void setup()
 {
     Serial.begin(115200);
-    while(!Serial || Serial.available() == 0);
-    
-    pinMode(led_pin, OUTPUT);
-    digitalWrite(led_pin, HIGH);
+    while(!Serial);
+    delay(2000);
     
     Serial.printf("Starting MASTER\n");
-    wire = new PackagedWired(config().set_master());    
-    
-    attachInterrupt(digitalPinToInterrupt(0), []{
-        Serial.printf("User requested check. Set to check.\n");
-        digitalWrite(led_pin, HIGH);    
-        must_check_again = true;
-    }, RISING);
-    
-    digitalWrite(led_pin, LOW);
+    wire = new PackagedWired(config().set_master().set_led(2));    
 }
 
 void loop()
 {
-    Serial.printf("### Beginning new requests... ###\n");
+    const auto bg = millis();
+    
     for(uint8_t p = 0; p < d2u(device_id::_MAX); ++p) {
         const device_id curr = static_cast<device_id>(p);
-        const char* device_name = d2str(curr);
+        const char* device_name = d2str(curr);        
         
-        //Serial.printf("Requesting %s... ", d2str(curr));
+        FlagWrapper fw;
+        auto lst = wire->master_smart_request_all(curr, fw);
         
-        const auto lst = wire->master_request_all(curr);
+        if (fw & device_flags::HAS_ISSUES) {
+            Serial.printf("[!] %s has issues flag on! Please check device!\n", device_name);
+            continue;
+        }        
         
         for(const auto& i : lst) {
             Serial.printf("> %s: %s = ", device_name, i.get_path());
@@ -60,7 +58,8 @@ void loop()
             Serial.println();
         }
     }
-    Serial.printf("### Ended row of requests ###\n");
     
-    delay(5000);
+    const auto nd = millis();
+    
+    if (nd - bg < loop_delay) delay(loop_delay - (nd - bg));
 }
