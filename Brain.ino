@@ -1,6 +1,7 @@
 //#define _DEBUG
 #include "Serial/packaging.h"
 #include "Serial/flags.h"
+#include "display_driver.h"
 
 using namespace CS;
 
@@ -8,16 +9,19 @@ constexpr decltype(millis()) loop_delay = 1000;
 
 PackagedWired* wire;
 bool devices_online[static_cast<size_t>(device_id::_MAX)]{false};
-
+const int cpu_display_id = 0; // 1 is used by Arduino by default, let's use 0
+const UBaseType_t display_pri = 1;
 
 void setup()
 {
     Serial.begin(115200);
-    while(!Serial);
+    //while(!Serial);
     delay(2000);
     
     Serial.printf("Starting MASTER\n");
-    wire = new PackagedWired(config().set_master().set_led(2));    
+
+    xTaskCreatePinnedToCore(loop_display, "DISPLAYTHR", 8192, nullptr, display_pri, nullptr, cpu_display_id);
+    wire = new PackagedWired(config().set_master().set_led(13).set_sda(25).set_scl(26));
 }
 
 void loop()

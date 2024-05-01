@@ -1,3 +1,6 @@
 [submodule "Serial"]
 	path = Serial
 	url = https://github.com/ModularMonitor/lib-Serial
+[submodule "TFT"]
+	path = TFT
+	url = https://www.github.com/ModularMonitor/lib-TFT
