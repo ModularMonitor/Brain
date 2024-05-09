@@ -243,6 +243,8 @@ void Display::item_list::self_update(ModuleMapping& mm)
 
     const ModuleMapping::module_each_map_t& mp = mm.get_data_of(this->self_id);
 
+    if (mp.size() == 0) return;
+
     const auto sec = millis() / 1000;    
     const auto off = sec % mp.size();
     const auto& iter = std::next(mp.begin(), off);
