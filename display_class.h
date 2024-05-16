@@ -6,7 +6,15 @@
 #include "free_fonts.h"
 #include "Serial/packaging.h"
 #include "devices_data_bridge.h"
+#include "cpu_manager.h"
 #include <memory>
+
+/*
+Format of the screen:
+20 px y = top informative bar
+40... = cards
+20 last pixels = debug
+*/
 
 #define CALIBRATION_FILE "/calibrationData"
 
@@ -53,7 +61,7 @@ private:
     item_list* m_selected_module = m_modules;
     display_state m_state = display_state::MAIN_ALL_MODULES;
     uint16_t calibrationData[5];
-    decltype(millis()) m_last_display_time_to_draw_ms = 0;
+    decltype(millis()) m_last_display_time_to_draw_ms = 0, m_last_display_time_to_draw_ms_stabilized = 0;
     bool m_had_transition = true; // true for one tick/loop
     
 
@@ -62,7 +70,8 @@ private:
     void _print_item_as_list_and_store_if_clicked(const char*, const bool, const bool, size_t);
 
     /*  == HELP FUNCTIONS ==  */
-    void print_debug_bottom();
+    void print_top_part(const bool&);
+    void print_bottom_part();
 public:
     Display(const Display&) = delete;
     Display(Display&&) = delete;
@@ -124,7 +133,7 @@ Display::Display()
 
 void Display::item_list::self_draw_resume(TFT_eSPI* tft, const bool& m_had_transition, bool no_offset) const
 {
-    const uint16_t real_offy = no_offset ? 0 : static_cast<uint16_t>(this->self_id) * 40;
+    const uint16_t real_offy = 20 + (no_offset ? 0 : static_cast<uint16_t>(this->self_id) * 40);
     const uint16_t color_box = this->was_on ? (this->was_ok ? (this->was_sel ? 0x421d : 0x550a) : 0xb2cb) : 0xa534;
     const bool upd = m_had_transition || this->state_changed;
 
@@ -133,17 +142,17 @@ void Display::item_list::self_draw_resume(TFT_eSPI* tft, const bool& m_had_trans
         tft->drawFastHLine(0, real_offy + 39, 440, TFT_BLACK);
 
         //tft->fillRect(0, real_offy, 440, 40, TFT_BLACK);
-        tft->fillRect(1, real_offy + 1, 438, 38, color_box);
+        tft->fillRect(0, real_offy + 1, 440, 38, color_box);
     }
 
     tft->setTextColor(TFT_WHITE, color_box);
     tft->setTextSize(1);
 
     if (upd) {
-        tft->setCursor(10, real_offy + 5, 2);
+        tft->setCursor(8, real_offy + 5, 2);
         tft->printf("Device: %s ", this->static_name);
     
-        tft->setCursor(10, real_offy + 20, 2);
+        tft->setCursor(8, real_offy + 20, 2);
         tft->printf("Connected? %s ", this->was_on ? "yes" : "no");    
     }
     
@@ -188,10 +197,10 @@ void Display::item_list::self_draw_alone(TFT_eSPI* tft, const bool& m_had_transi
     tft->setTextSize(1);
 
     if (upd) {
-        tft->setCursor(10, 5, 2);
+        tft->setCursor(8, 5, 2);
         tft->printf("Device: %s ", this->static_name);
     
-        tft->setCursor(10, 20, 2);
+        tft->setCursor(8, 20, 2);
         tft->printf("Connected? %s ", this->was_on ? "yes" : "no");    
     }
     
@@ -276,18 +285,40 @@ bool Display::item_list::self_check_click(last_touch& m_touch)
     return false;
 }
 
-void Display::print_debug_bottom()
+// has 20 pixels to play with
+void Display::print_top_part(const bool& m_had_transition)
 {
-    tft->setCursor(0, 305, 2);
+    if (m_had_transition) {
+        tft->fillRect(0, 0, 440, 19, TFT_DARKCYAN);
+        tft->fillRect(0, 300, 440, 19, TFT_DARKCYAN);
+    }
+    
+    tft->setCursor(1, 1, 2);
     tft->setTextColor(TFT_WHITE,TFT_BLACK);
     tft->setTextSize(1);
-    tft->printf("M %03hu:%03hu:%c%c D %03i ms S %i    ", 
+
+    tft->printf("Hello world %i", (int)(esp_random() % 1000));
+}
+
+// has 20 bottom pixels to play with
+void Display::print_bottom_part()
+{
+    tft->setCursor(1, 301, 2);
+    tft->setTextColor(TFT_WHITE,TFT_BLACK);
+    tft->setTextSize(1);
+
+    m_last_display_time_to_draw_ms_stabilized = (m_last_display_time_to_draw_ms_stabilized * 9 + m_last_display_time_to_draw_ms) / 10;
+
+    
+    tft->printf("M %03hu:%03hu:%c%c D %03i ms S %i CPU %04.1f%% [%u MHz]    ", 
         m_touch.x,
         m_touch.y,
         m_touch.down ? 'P' : '_',
         m_touch.last_was_down ? 'P' : '_',
-        (int)m_last_display_time_to_draw_ms,
-        (int)m_state
+        (int)m_last_display_time_to_draw_ms_stabilized,
+        (int)m_state,
+        get_cpu_usage() * 100.0f,
+        get_cpu_clock()
     );
 }
 
@@ -311,6 +342,8 @@ void Display::think_and_draw()
     switch(m_state) {
     case display_state::MAIN_ALL_MODULES:
     {
+        print_top_part(m_had_transition);
+        
         for(size_t p = 0; p < static_cast<size_t>(device_id::_MAX); ++p) {
             auto& i = m_modules[p];
             i.self_update(mm);
@@ -336,7 +369,7 @@ void Display::think_and_draw()
     break;
     }
 
-    print_debug_bottom();
+    print_bottom_part();
 
     if (m_transition_cleanup_next) m_had_transition = false;
     m_last_display_time_to_draw_ms = millis() - d_b4;

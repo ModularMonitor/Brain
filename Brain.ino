@@ -3,6 +3,7 @@
 #include "display_driver.h"
 #include "i2c_driver.h"
 #include "display_class.h"
+#include "cpu_manager.h"
 
 using namespace CS;
 

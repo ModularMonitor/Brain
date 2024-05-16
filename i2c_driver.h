@@ -3,6 +3,7 @@
 #include "Serial/packaging.h"
 #include "Serial/flags.h"
 #include "devices_data_bridge.h"
+#include "cpu_manager.h"
 
 constexpr decltype(millis()) loop_delay = 1000;
 
@@ -11,8 +12,8 @@ void loop_think(void* arg_useless)
     PackagedWired* wire = new PackagedWired(config().set_master().set_led(13).set_sda(25).set_scl(26));
     ModuleMapping& mm = get_global_map();
 
-    while(1) {    
-        const auto bg = millis();
+    while(1) {
+        AutoTiming autotime(1000);        
         
         for(uint8_t p = 0; p < d2u(device_id::_MAX); ++p) {
             const device_id curr = static_cast<device_id>(p);
@@ -59,10 +60,6 @@ void loop_think(void* arg_useless)
                 }
                 Serial.println();
             }
-        }
-        
-        const auto nd = millis();
-        
-        if (nd - bg < loop_delay) delay(loop_delay - (nd - bg));
+        }        
     }
 }

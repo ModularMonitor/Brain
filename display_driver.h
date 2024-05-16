@@ -12,7 +12,7 @@ void loop_display(void* arg_useless)
     Display disp;
 
     while(1) {
-        delay(1);
+        delayMicroseconds(1);
         disp.think_and_draw();
     }
 }
