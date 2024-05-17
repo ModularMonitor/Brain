@@ -38,11 +38,20 @@ size_t get_ram_free_bytes();
 size_t get_ram_total_bytes();
 float get_ram_usage();
 
-unsigned long long get_time_ms();
+uint64_t get_time_ms();
 
 class AutoTiming {
-    const unsigned long long m_now, m_last;
+    const uint64_t m_now, m_last;
 public:
     AutoTiming(const uint32_t ms);
     ~AutoTiming();
+};
+
+class TimingLoop {
+    const uint32_t m_diff;
+    uint64_t m_next;
+public:
+    TimingLoop(const uint32_t ms);
+    
+    bool is_time();
 };

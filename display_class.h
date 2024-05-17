@@ -7,6 +7,7 @@
 #include "Serial/packaging.h"
 #include "devices_data_bridge.h"
 #include "cpu_manager.h"
+#include "sdcard.h"
 #include <memory>
 
 /*
@@ -310,7 +311,7 @@ void Display::print_bottom_part()
     m_last_display_time_to_draw_ms_stabilized = (m_last_display_time_to_draw_ms_stabilized * 9 + m_last_display_time_to_draw_ms) / 10;
 
     
-    tft->printf("M %03hu:%03hu:%c%c D %03i ms S %i CPU %04.1f%% [%u MHz]    ", 
+    tft->printf("M %03hu:%03hu:%c%c D %03i ms S %i CPU %04.1f%% [%u MHz] SD %s    ", 
         m_touch.x,
         m_touch.y,
         m_touch.down ? 'P' : '_',
@@ -318,7 +319,8 @@ void Display::print_bottom_part()
         (int)m_last_display_time_to_draw_ms_stabilized,
         (int)m_state,
         get_cpu_usage() * 100.0f,
-        get_cpu_clock()
+        get_cpu_clock(),
+        SDcard::sd_get_type()
     );
 }
 
@@ -373,4 +375,14 @@ void Display::think_and_draw()
 
     if (m_transition_cleanup_next) m_had_transition = false;
     m_last_display_time_to_draw_ms = millis() - d_b4;
+}
+
+inline void loop_display(void* arg_useless)
+{
+    Display disp;
+
+    while(1) {
+        delayMicroseconds(1);
+        disp.think_and_draw();
+    }
 }

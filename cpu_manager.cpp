@@ -104,9 +104,9 @@ float get_ram_usage()
     return res;
 }
 
-unsigned long long get_time_ms()
+uint64_t get_time_ms()
 {
-    return std::chrono::duration_cast<std::chrono::duration<unsigned long long, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count();
+    return std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 AutoTiming::AutoTiming(const uint32_t ms)
@@ -118,4 +118,20 @@ AutoTiming::~AutoTiming()
 {
     const auto _nw = get_time_ms();
     if (_nw < m_last) vTaskDelay((m_last - _nw) / portTICK_PERIOD_MS);
+}
+
+TimingLoop::TimingLoop(const uint32_t ms)
+    : m_diff(ms), m_next(get_time_ms() + ms)
+{    
+}
+
+bool TimingLoop::is_time()
+{
+    const auto _nw = get_time_ms();
+    if (_nw > m_next) {
+        if (m_next + m_diff < _nw) m_next = _nw + m_diff; // took too long, reset
+        else m_next += m_diff; // keep perfect count
+        return true;
+    }
+    return false;
 }
