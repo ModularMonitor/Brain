@@ -55,3 +55,5 @@ public:
     
     bool is_time();
 };
+
+bool run_on_core_sync(void(*function)(void*), UBaseType_t core_id, void* arg = nullptr);

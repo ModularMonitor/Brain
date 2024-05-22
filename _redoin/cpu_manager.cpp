@@ -135,3 +135,34 @@ bool TimingLoop::is_time()
     }
     return false;
 }
+
+struct ___run {
+    void (*f)(void*);
+    void *a = nullptr;
+    bool ended = false, running = false;
+};
+
+bool run_on_core_sync(void(*function)(void*), UBaseType_t core_id, void* arg)
+{
+    if (!function || (core_id != 0 && core_id != 1)) return false;
+
+    ___run _run;
+
+    xTaskCreatePinnedToCore([](void* arg){
+        ___run* re = (___run*)arg;
+        re->ended = false;
+        re->running = true;
+        re->f(re->a);
+        re->running = false;
+        re->ended = true;
+        vTaskDelete(NULL);
+    }, "ASYNCRUN", 6144, (void*)&_run, 15, nullptr, core_id);
+
+    const auto start_time = get_time_ms();
+
+    while(!_run.ended) {
+        delay(10);
+        if (get_time_ms() - start_time > 500 && !_run.running) return false;
+    }
+    return true;
+}

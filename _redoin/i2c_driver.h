@@ -18,13 +18,13 @@ void loop_think(void* arg_useless)
     PackagedWired* wire = new PackagedWired(config().set_master().set_led(13).set_sda(25).set_scl(26));
     ModuleMapping& mm = get_global_map();
 
-    if (SDcard::mkdir("/i2c")) {
-        for(uint8_t p = 0; p < d2u(device_id::_MAX); ++p) {
-            char buf[80];
-            snprintf(buf, 80, "/i2c/%s", d2str(static_cast<device_id>(p)));
-            SDcard::mkdir(buf);
-        }
-    }
+    //if (SDcard::mkdir("/i2c")) {
+    //    for(uint8_t p = 0; p < d2u(device_id::_MAX); ++p) {
+    //        char buf[80];
+    //        snprintf(buf, 80, "/i2c/%s", d2str(static_cast<device_id>(p)));
+    //        SDcard::mkdir(buf);
+    //    }
+    //}
 
     // LATER: have a val in global map dynamic so time is configurable!
     TimingLoop tl[d2u(device_id::_MAX)]{1000,1000,1000,1000,1000,1000,1000};

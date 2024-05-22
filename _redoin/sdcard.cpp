@@ -1,15 +1,29 @@
+#include "defaults.h"
 #include "sdcard.h"
+#include "cpu_manager.h"
+
+#include "Serial/protocol.h"
 
 namespace SDcard {
 
     bool& ___sd_init_mem() {
-        static bool _sd = false;
+        static bool _sd;
         return _sd;
     }
 
     bool sd_init()
     {    
-        if (!___sd_init_mem())  ___sd_init_mem() |= SD.begin();
+        /*
+        uint8_t ssPin = SS
+        SPIClass & spi = SPI
+        uint32_t frequency = 4000000
+        const char * mountpoint = "/sd"
+        uint8_t max_files = 5
+        bool format_if_empty = false
+        */
+        if (!___sd_init_mem()) {
+            ___sd_init_mem() = SD.begin(5 /*select pin*/, SPI, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);
+        }
         return ___sd_init_mem();
     }
     
@@ -30,40 +44,52 @@ namespace SDcard {
         case CARD_SDHC:
             return "SDHC";
         default:
-            return "UNK";
+            return "BROKE";
         }
     }
 
     bool f_remove(const char* src)
     {
-        return SD.remove(src);
+        bool r = SD.remove(src);
+        if (!r) { sd_init(); r = SD.remove(src); }
+        return r;
     }
 
     bool f_rename(const char* src, const char* dst)
     {
-        return SD.rename(src, dst);
+        bool r = SD.rename(src, dst);
+        if (!r) { sd_init(); r = SD.rename(src, dst); }
+        return r;
     }
 
     File f_open(const char* src, const char* mode)
     {
-        return SD.open(src, mode);
+        File f = SD.open(src, mode);
+        if (!f) { sd_init(); f = SD.open(src, mode); }
+        return f;
     }
 
     bool rmdir(const char* dir)
     {
-        return SD.rmdir(dir);
+        bool r = SD.rmdir(dir);
+        if (!r) { sd_init(); r = SD.rmdir(dir); }
+        return r;
     }
 
     bool mkdir(const char* dir)
     {
-        return SD.mkdir(dir);
+        bool r = SD.mkdir(dir);
+        if (!r) { sd_init(); r = SD.mkdir(dir); }
+        return r;
     }
 
-    void _list_dir(std::vector<dir_item>& v, const char* d, const size_t l)
+    bool _list_dir(std::vector<dir_item>& v, const char* d, const size_t l)
     {
         Serial.printf("@ %s | %zu\n", d, l);
         File root = SD.open(d);
-        if (!root || !root.isDirectory()) return;
+
+        if (!root) return false; // fail
+        if (!root.isDirectory()) return true; // just not a directory
 
         for(File file = root.openNextFile(); file; file = root.openNextFile())
         {
@@ -77,13 +103,17 @@ namespace SDcard {
                 v.emplace_back(dir_item{file.name(), file.size()});
             }
         }
+        return true;
     }
 
     // deep = 0 -> list only current
     std::vector<dir_item> list_dir(const char* dir, const size_t how_deep)
     {
         std::vector<dir_item> v;
-        _list_dir(v, dir, how_deep);
+        if (!_list_dir(v, dir, how_deep)) {
+            sd_init();
+            _list_dir(v, dir, how_deep); // if fails, idc
+        }
         return v;
     }
 
