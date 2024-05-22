@@ -3,9 +3,17 @@
 #include "display.h"
 #include "sdcard.h"
 
-using namespace DP;
 
-INITIALIZE_ASYNC_CLASS(Display, cpu_core_id_for_display, 2);
+//class ASYNC_DisplayTask {
+//public:
+//    ASYNC_DisplayTask() {
+//        {
+//            CPU::create_task([](void*){ DP::Display obj; while(1) { obj.task(); yield(); }; vTaskDelete(__null); }, "ASYNCAUTO", 2, cpu_stack_default, nullptr, cpu_core_id_for_display);
+//        };
+//    }
+//};
+//ASYNC_DisplayTask& get_singleton_of_ASYNC_DisplayTask(){ static ASYNC_DisplayTask obj; return obj; }
+//namespace ______dummy_namespace_for_ASYNC_DisplayTask{ const auto& ______dummy_ref_ASYNC_DisplayTask = get_singleton_of_ASYNC_DisplayTask(); }
 
 void setup()
 {

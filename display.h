@@ -8,7 +8,6 @@
 
 #include <memory>
 
-#include "cpu_ctl.h"
 #include "devices_data_bridge.h"
 
 namespace DP {
@@ -71,4 +70,7 @@ namespace DP {
         void task();
     };
 
+    RUN_ASYNC_ON_CORE_AUTO(Display, DisplayTask, task, cpu_core_id_for_display, 2);
 }
+
+#include "display.ipp"

@@ -56,7 +56,7 @@ namespace CPU {
             }
         }
 
-        INITIALIZE_ONCE_FUNCTION(INITIALIZER, 
+        MAKE_SINGLETON_CLASS_INIT_CF(INITIALIZER,
         {
             auto& ctl0 = __get_singleton(0);
             if (!ctl0.m_started) {
@@ -71,6 +71,22 @@ namespace CPU {
                 esp_register_freertos_tick_hook_for_cpu(__tck1, 1);
             }
         }, IRAM_ATTR);
+
+        //INITIALIZE_ONCE_FUNCTION(INITIALIZER, 
+        //{
+        //    auto& ctl0 = __get_singleton(0);
+        //    if (!ctl0.m_started) {
+        //        ctl0.m_started = true;
+        //        esp_register_freertos_idle_hook_for_cpu(__idl0, 0);
+        //        esp_register_freertos_tick_hook_for_cpu(__tck0, 0);
+        //    }
+        //    auto& ctl1 = __get_singleton(1);
+        //    if (!ctl1.m_started) {
+        //        ctl1.m_started = true;
+        //        esp_register_freertos_idle_hook_for_cpu(__idl1, 1);
+        //        esp_register_freertos_tick_hook_for_cpu(__tck1, 1);
+        //    }
+        //}, IRAM_ATTR);
     }
     
     inline AutoWait::AutoWait(const uint64_t ms)
@@ -154,13 +170,18 @@ namespace CPU {
     {
         return xPortGetCoreID();
     }
+
+    inline uint32_t get_cpu_clock_mhz()
+    {
+        return getCpuFrequencyMhz();
+    }
     
     inline TaskHandle_t create_task(void(*f)(void*), const char* nam, UBaseType_t priority, size_t stac, void* arg, int coreid)
     {
         TaskHandle_t _t = nullptr; 
         //while (!_t) {
-        if (coreid < 0) xTaskCreate(f, nam, stac, NULL, priority, &_t);
-        else xTaskCreatePinnedToCore(f, nam, stac, NULL, priority, &_t, coreid % portNUM_PROCESSORS);
+        if (coreid < 0) xTaskCreate(f, nam, stac, arg, priority, &_t);
+        else xTaskCreatePinnedToCore(f, nam, stac, arg, priority, &_t, coreid % portNUM_PROCESSORS);
 
             //if (!_t) {
             //    mprint("Could not create a new thread! (name: %s). Trying again in 100 ms\n", nam);

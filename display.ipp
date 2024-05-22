@@ -2,8 +2,13 @@
 #include "display.h"
 
 #include "common.h"
+#include "cpu_ctl.h"
 
 namespace DP {
+
+    inline std::string ensureN(std::string input, size_t last_n) { 
+        return last_n > input.length() ? (input + std::string(last_n - input.length(), ' ')) : input.substr(input.size() - last_n); 
+    }
 
     inline void Display::Touch::set_down(bool n) {
         EXCHANGE(w, d, n);
@@ -13,7 +18,7 @@ namespace DP {
         return w && !d;
     }
     
-    Display::Display()
+    inline Display::Display()
     {    
         pinMode(TOUCH_CS, OUTPUT);
         tft = std::unique_ptr<TFT_eSPI>(new TFT_eSPI());
@@ -30,7 +35,7 @@ namespace DP {
             m_modules[p].self_id = conv;
         }
         
-        {
+        /*{
             bool calibrate_loaded = false;
             if (!SPIFFS.begin()) {
                 SPIFFS.format();
@@ -56,7 +61,7 @@ namespace DP {
                     f.close();
                 }
             }
-        }
+        }*/
             
         
         tft->fillScreen(TFT_BLACK);
@@ -194,7 +199,7 @@ namespace DP {
         this->last_data = sel.get_newest();
     }
 
-    inline bool Display::Item::self_check_click(last_touch& m_touch)
+    inline bool Display::Item::self_check_click(Touch& m_touch)
     {
         if (m_touch.was_triggered_last_tick()) {
             const uint16_t real_offy = static_cast<uint16_t>(this->self_id) * 40;
@@ -241,12 +246,12 @@ namespace DP {
             (int)m_state,
             CPU::get_cpu_usage(0) * 100.0f,
             CPU::get_cpu_usage(1) * 100.0f,
-            get_cpu_clock(),
-            SDcard::sd_get_type()
+            CPU::get_cpu_clock_mhz(),
+            "TODO"//SDcard::sd_get_type()
         );
     }
 
-    inline void Display::think_and_draw()
+    inline void Display::task()
     {
         const auto d_b4 = millis();
         const bool m_transition_cleanup_next = m_had_transition;
@@ -299,13 +304,13 @@ namespace DP {
         m_last_display_time_to_draw_ms = millis() - d_b4;
     }
 
-    inline void loop_display(void* arg_useless)
+    /*inline void loop_display(void* arg_useless)
     {
         Display disp;
 
         while(1) {
             delayMicroseconds(1);
-            disp.think_and_draw();
+            disp.task();
         }
-    }
+    }*/
 }

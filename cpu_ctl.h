@@ -33,7 +33,6 @@ namespace CPU {
 
         bool is_time();
     };
-
     
     uint32_t get_lowest_clock_mhz();
     uint32_t get_highest_clock_mhz();
@@ -47,6 +46,7 @@ namespace CPU {
     uint64_t get_time_ms();
     uint32_t get_random();
     uint8_t get_core_id();
+    uint32_t get_cpu_clock_mhz();
 
     TaskHandle_t create_task(void(*f)(void*), const char* nam, UBaseType_t priority = tskIDLE_PRIORITY, size_t stac = cpu_stack_default, void* arg = nullptr, int coreid = -1);
 
