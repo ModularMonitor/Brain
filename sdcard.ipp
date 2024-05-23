@@ -53,19 +53,28 @@ namespace SDcard {
         MAKE_SINGLETON_CLASS_INIT_C(INITIALIZER,
         {
             actcpb(    
-                static SPIClass* vspi = nullptr;
+                SPIClass* vspi = new SPIClass(SPI_SDCARD);
+                vspi->begin(SDCARD_SCK, SDCARD_MISO, SDCARD_MOSI, SDCARD_CS);
+                pinMode(vspi->pinSS(), OUTPUT);
 
-                if (!vspi) {
-                    vspi = new SPIClass(SPI_SDCARD);
-                    vspi->begin(SDCARD_SCK, SDCARD_MISO, SDCARD_MOSI, SDCARD_CS);
-                    pinMode(vspi->pinSS(), OUTPUT);
-                }
-                
-                if (!SD.begin(SDCARD_CS /*select pin*/, *vspi, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false)) {
-                    Serial.printf("[ERROR] CANNOT INIT SDCARD!\n");
-                }
-                else {
-                    Serial.printf("[DEBUG] SDcard loaded!\n");
+                while(1) {
+                    SD.exists("test.txt"); // dummy call
+                    const auto noww = SD.cardType();
+                    
+                    if (noww != CARD_MMC && noww != CARD_SD && noww != CARD_SDHC) {
+                        Serial.printf("[SD] SDcard removed / not loaded!\n");
+                        SD.end();
+                        while(1) {
+                            const bool got = SD.begin(SDCARD_CS /*select pin*/, *vspi, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);
+                            if (!got) delay(3000);
+                            else break;
+                        }
+
+                        Serial.printf("[SD] SDcard inserted / loaded!\n");
+                    }
+                    else {
+                        delay(5000);
+                    }
                 }
             , cpu_core_id_for_sd_card, 10);
         });
@@ -76,7 +85,7 @@ namespace SDcard {
     {
         switch(SD.cardType()) {
         case CARD_NONE:
-            return "NON";
+            return "OFF";
         case CARD_MMC:
             return "MMC";
         case CARD_SD:
