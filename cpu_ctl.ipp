@@ -202,6 +202,8 @@ namespace CPU {
         if (!function || (core_id != 0 && core_id != 1)) return false;
 
         ___run_core_sync_data _run;
+        _run.f = function;
+        _run.a = arg;
 
         xTaskCreatePinnedToCore([](void* arg){
             ___run_core_sync_data* re = (___run_core_sync_data*)arg;

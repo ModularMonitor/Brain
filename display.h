@@ -19,7 +19,7 @@ namespace DP {
 
     class Display {
         struct Touch {
-            uint16_t x, y;
+            uint16_t x = 0, y = 0;
             bool d = false, w = false;
 
             void set_down(bool);
@@ -53,6 +53,7 @@ namespace DP {
         uint16_t calibrationData[5];
         decltype(millis()) m_last_display_time_to_draw_ms = 0, m_last_display_time_to_draw_ms_stabilized = 0;
         bool m_had_transition = true; // true for one tick/loop
+        bool m_time_change_helper = false; // used in some in-screen by-time changes
         
         /*  == AUX FUNCTIONS ==  */
         void _print_item_as_list_and_store_if_clicked(const char*, const bool, const bool, size_t);

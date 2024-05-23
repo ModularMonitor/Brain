@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "cpu_ctl.h"
+#include "sdcard.h"
 
 namespace DP {
 
@@ -218,7 +219,6 @@ namespace DP {
     {
         if (m_had_transition) {
             tft->fillRect(0, 0, 440, 19, TFT_DARKCYAN);
-            tft->fillRect(0, 300, 440, 19, TFT_DARKCYAN);
         }
         
         tft->setCursor(1, 1, 2);
@@ -231,24 +231,50 @@ namespace DP {
     // has 20 bottom pixels to play with
     inline void Display::print_bottom_part()
     {
+        //if (m_had_transition) {
+        //    tft->fillRect(0, 300, 440, 19, TFT_DARKCYAN);
+        //}
+
         tft->setCursor(1, 301, 2);
         tft->setTextColor(TFT_WHITE,TFT_BLACK);
         tft->setTextSize(1);
 
         m_last_display_time_to_draw_ms_stabilized = (m_last_display_time_to_draw_ms_stabilized * 9 + m_last_display_time_to_draw_ms) / 10;
 
-        
-        tft->printf("M %03hu:%03hu:%c %03i ms S%i CPU %04.1f%%|%04.1f%% %uMHz %s    ", 
-            m_touch.x,
-            m_touch.y,
-            m_touch.d ? (m_touch.w ? 'H' : 'P') : (m_touch.w ? 'v' : '_'),
-            (int)m_last_display_time_to_draw_ms_stabilized,
-            (int)m_state,
-            CPU::get_cpu_usage(0) * 100.0f,
-            CPU::get_cpu_usage(1) * 100.0f,
-            CPU::get_cpu_clock_mhz(),
-            "TODO"//SDcard::sd_get_type()
-        );
+        if (CPU::get_time_ms() % 10000 < 5000)
+        {
+            if (!m_time_change_helper || m_had_transition) {
+                tft->fillRect(0, 300, 440, 19, TFT_DARKCYAN);
+                m_time_change_helper = true;
+            }
+
+            tft->printf("M %03hu:%03hu:%c %03i ms S%i CPU %04.1f%%|%04.1f%% %uMHz %s    ", 
+                m_touch.x,
+                m_touch.y,
+                m_touch.d ? (m_touch.w ? 'H' : 'P') : (m_touch.w ? 'v' : '_'),
+                (int)m_last_display_time_to_draw_ms_stabilized,
+                (int)m_state,
+                CPU::get_cpu_usage(0) * 100.0f,
+                CPU::get_cpu_usage(1) * 100.0f,
+                CPU::get_cpu_clock_mhz(),
+                SDcard::sd_get_type()
+            );
+        }
+        else {
+            if (m_time_change_helper || m_had_transition) {
+                tft->fillRect(0, 300, 440, 19, TFT_DARKCYAN);
+                m_time_change_helper = false;
+            }
+            tft->printf("M %03hu:%03hu:%c %03i ms S%i RAM %04.1f%% SD %04.1f%%    ", 
+                m_touch.x,
+                m_touch.y,
+                m_touch.d ? (m_touch.w ? 'H' : 'P') : (m_touch.w ? 'v' : '_'),
+                (int)m_last_display_time_to_draw_ms_stabilized,
+                (int)m_state,
+                CPU::get_ram_usage() * 100.0f,
+                SDcard::sd_used_perc() * 100.0f
+            );
+        }
     }
 
     inline void Display::task()

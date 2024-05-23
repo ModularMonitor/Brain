@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+
 namespace SDcard {
     bool sd_init();
     bool is_sd_init();

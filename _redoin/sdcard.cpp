@@ -22,7 +22,17 @@ namespace SDcard {
         bool format_if_empty = false
         */
         if (!___sd_init_mem()) {
-            ___sd_init_mem() = SD.begin(5 /*select pin*/, SPI, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);
+            if (CPU::get_core_id() != def_alt_core_id) {
+                if (!run_on_core_sync([](void*){
+                    SPI_SDCARD.begin(SDCARD_SCK, SDCARD_MISO, SDCARD_MOSI, SDCARD_CS);
+                    ___sd_init_mem() = SD.begin(5 /*select pin*/, SPI_SDCARD, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);
+                }, def_alt_core_id, nullptr)) return false;
+            }
+            else {
+                SPI_SDCARD.begin(SDCARD_SCK, SDCARD_MISO, SDCARD_MOSI, SDCARD_CS);
+                ___sd_init_mem() = SD.begin(5 /*select pin*/, SPI_SDCARD, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);
+            }
+            
         }
         return ___sd_init_mem();
     }

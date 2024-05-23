@@ -19,7 +19,7 @@ namespace CPU {
 // auto create task core prio
 #define actcp(FUNCNAME, COREID, PRIORITY) { CPU::create_task(FUNCNAME, #FUNCNAME, PRIORITY, cpu_stack_default, nullptr, COREID); }
 // auto create task core prio body
-#define actacpb(BODY, COREID, PRIORITY) { CPU::create_task([](void*){ BODY; exit_task(); }, "ASYNCAUTO", PRIORITY, cpu_stack_default, nullptr, COREID); }
+#define actcpb(BODY, COREID, PRIORITY) { CPU::create_task([](void*){ BODY; exit_task(); }, "ASYNCAUTO", PRIORITY, cpu_stack_default, nullptr, COREID); }
 
 #define exit_task() vTaskDelete(NULL)
 #define sleep_for(MILLISEC) { yield(); vTaskDelay(MILLISEC / portTICK_PERIOD_MS); }
@@ -50,7 +50,7 @@ namespace CPU {
 
     TaskHandle_t create_task(void(*f)(void*), const char* nam, UBaseType_t priority = tskIDLE_PRIORITY, size_t stac = cpu_stack_default, void* arg = nullptr, int coreid = -1);
 
-    bool run_on_core_sync(void(*)(void*), UBaseType_t, void* = nullptr);
+    bool run_on_core_sync(void(*function)(void*), UBaseType_t core_id, void* arg = nullptr);
 }
 
 #include "cpu_ctl.ipp"
