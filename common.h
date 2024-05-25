@@ -32,9 +32,9 @@
 #define SDCARD_MISO   33 // 32
 #define SDCARD_SCK    32 // 12
 
-#define COMM_LED    13
-#define COMM_SDA    14  // 5 on slaves | was 25
-#define COMM_SCL    27  // 4 on slaves | was 26
+//#define COMM_LED    13
+#define COMM_SDA    4   // 5 on slaves | was 25
+#define COMM_SCL    15  // 4 on slaves | was 26
 
 
 // DELETE X if X != nullptr then X = nullptr;

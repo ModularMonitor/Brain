@@ -8,7 +8,7 @@ namespace I2CC {
         MAKE_SINGLETON_CLASS_INIT_C(ASYNC_RUN,
         {
             actcpb(
-                CS::PackagedWired* wire = new CS::PackagedWired(CS::config().set_master().set_led(COMM_LED).set_sda(COMM_SDA).set_scl(COMM_SCL));
+                CS::PackagedWired* wire = new CS::PackagedWired(CS::config().set_master().set_sda(COMM_SDA).set_scl(COMM_SCL));
                 //ModuleMapping& mm = get_global_map();
                 ::STR::SharedData& shared = ::STR::get_singleton_of_SharedData();
 
