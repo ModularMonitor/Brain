@@ -14,6 +14,8 @@ void setup()
     //dsp = new DP::Display();
     //CPU::run_on_core_sync([](void* a){ SDcard::sd_init(); }, cpu_core_id_for_sd_card, nullptr);
 
+    pinMode(DISPLAY_LED, OUTPUT);
+    digitalWrite(DISPLAY_LED, HIGH);
 
     attachInterrupt(digitalPinToInterrupt(0), []{ 
         if (CPU::get_time_ms() > 5000) 
@@ -33,5 +35,10 @@ void loop()
     //    CPU::get_ram_usage() * 100.0f
     //);
     //delay(1000);
-    vTaskDelete(NULL);
+
+    for(int u = 0; u < 255; ++u) {
+        analogWrite(DISPLAY_LED, u);
+        delay(50);
+    }
+    //vTaskDelete(NULL);
 }

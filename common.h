@@ -14,22 +14,27 @@
 
 #define DISPLAY_CALIBRATION_FILE "/display_calibration.ini"
 
-#define DISPLAY_MISO     19
-#define DISPLAY_MOSI     23
-#define DISPLAY_SCLK     18
-#define DISPLAY_CS       15
-#define DISPLAY_DC        2
-#define DISPLAY_RST       4
-#define DISPLAY_TOUCH_CS 16
+#define DISPLAY_CS         23 //15
+#define DISPLAY_RST        22 // 4
+#define DISPLAY_DC         21 // 2
+#define DISPLAY_MOSI       19 //23 // SDI
+#define DISPLAY_SCLK       5  //18
+#define DISPLAY_LED        17 //<undef>
+// DISPLAY_MISO disconnected (SDO)
+// TOUCH_CLK = DISPLAY_SCLK
+#define DISPLAY_TOUCH_CS   16 //16
+// TOUCH_DIN = DISPLAY_MOSI
+#define DISPLAY_MISO       18 //19 // TOUCH_DOUT
 
-#define SDCARD_CS 33
-#define SDCARD_MOSI 14
-#define SDCARD_MISO 32
-#define SDCARD_SCK 12
+
+#define SDCARD_CS     26 // 33
+#define SDCARD_MOSI   25 // 14
+#define SDCARD_MISO   33 // 32
+#define SDCARD_SCK    32 // 12
 
 #define COMM_LED    13
-#define COMM_SDA    25  // 5 on slaves
-#define COMM_SCL    26  // 4 on slaves
+#define COMM_SDA    14  // 5 on slaves | was 25
+#define COMM_SCL    27  // 4 on slaves | was 26
 
 
 // DELETE X if X != nullptr then X = nullptr;
