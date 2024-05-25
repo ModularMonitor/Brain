@@ -37,11 +37,7 @@ namespace LG {
                 Serial.printf("%.*s", res, m_lines_buffering[0] + written);
                 Serial.println();
             }
-
-            //if (res > 0) {
-            //    const int empty_from = res + written;
-            //    if (empty_from < log_line_max_len - 1) memset(m_lines_buffering[0] + empty_from, ' ', log_line_max_len - empty_from);
-            //}
+            m_had_news = true;
 
             return res;
         }
@@ -52,15 +48,20 @@ namespace LG {
         m_lines_buffering[0][log_line_max_len-1] = '\0';
     }
 
-    const char* Logger::get_line(const size_t i) const
+    inline const char* Logger::get_line(const size_t i) const
     {
         if (i >= log_amount) return "";
         return m_lines_buffering[i];
     }
 
-    size_t Logger::size() const
+    inline size_t Logger::size() const
     {
         return log_amount;
+    }
+
+    inline bool Logger::for_display_had_news()
+    {
+        return EXC_RETURN(m_had_news, false);
     }
 
 }

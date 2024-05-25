@@ -13,16 +13,18 @@ namespace SDcard {
         MAKE_SINGLETON_CLASS_INIT_C(INITIALIZER,
         {
             actcpb(    
+                bool is_first_time = true;
                 SPIClass* vspi = new SPIClass(SPI_SDCARD);
                 vspi->begin(SDCARD_SCK, SDCARD_MISO, SDCARD_MOSI, SDCARD_CS);
                 pinMode(vspi->pinSS(), OUTPUT);
 
                 while(1) {
-                    SD.exists("test.txt"); // dummy call
+                    auto fp = f_open("/__check_card.txt", "w"); // dummy call
                     const auto noww = SD.cardType();
                     
-                    if (noww != CARD_MMC && noww != CARD_SD && noww != CARD_SDHC) {
-                        LOGI(TAG, "SDcard removed / not loaded!");
+                    if (!fp || noww != CARD_MMC && noww != CARD_SD && noww != CARD_SDHC) {
+                        LOGI(TAG, is_first_time ? "SDcard task working on card (yet to load)..." : "SDcard removed or failed!");
+                        is_first_time = false;
                         SD.end();
                         while(1) {
                             const bool got = SD.begin(SDCARD_CS /*select pin*/, *vspi, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);
@@ -30,9 +32,11 @@ namespace SDcard {
                             else break;
                         }
 
-                        LOGI(TAG, "SDcard inserted / loaded!");
+                        LOGI(TAG, "SDcard inserted and loaded!");
+                        delay(1000);
                     }
                     else {
+                        fp.close();
                         delay(5000);
                     }
                 }

@@ -36,6 +36,8 @@
 #define EXCHANGE(TARG, FROM, FROM_VAL) { TARG = FROM; FROM = FROM_VAL; }
 // TARG << FROM, FROM << NULL
 #define EXC_NULL(TARG, FROM) EXCHANGE(TARG, FROM, nullptr)
+// EXCHANGE for return
+#define EXC_RETURN(VALUE_RETURN, TO_SET_VALUE) [&]{ const auto ___v = VALUE_RETURN; VALUE_RETURN = TO_SET_VALUE; return ___v; }()
 
 #define TABLE_FLIP_CHIP_I_AM_DEAD() esp_restart()
 

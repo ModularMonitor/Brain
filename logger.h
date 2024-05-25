@@ -14,6 +14,7 @@ namespace LG {
 
     MAKE_SINGLETON_CLASS(Logger, {
         char m_lines_buffering[log_amount][log_line_max_len]{};
+        bool m_had_news = false;
         std::mutex m_mtx;
     public:
         Logger();
@@ -25,6 +26,8 @@ namespace LG {
 
         // just log_amount
         size_t size() const;
+
+        bool for_display_had_news();
     });
 }
 

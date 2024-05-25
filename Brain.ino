@@ -14,7 +14,10 @@ void setup()
     //CPU::run_on_core_sync([](void* a){ SDcard::sd_init(); }, cpu_core_id_for_sd_card, nullptr);
 
 
-    attachInterrupt(digitalPinToInterrupt(0), []{ LOGI("TEST", "This is a long string I've set up so we can test the limits of this thing. Hopefully it won't break!"); /*dsp->toggle_debugging();*/ }, FALLING);
+    attachInterrupt(digitalPinToInterrupt(0), []{ 
+        if (CPU::get_time_ms() > 5000) 
+            DP::get_singleton_of_ASYNC_DisplayTask().get_internal_variable().get_display()->toggle_debugging();
+        }, RISING);
 
     //actcp(idc_loop_sometimes, 0, 1);
     //actcp(idc_loop_sometimes, 1, 1);

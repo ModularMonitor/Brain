@@ -17,85 +17,8 @@ namespace DP {
         //m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
         //m_tft->setTextSize(1);
         //m_tft->setCursor(0, 0, 2);
-
-        LOGI(TAG, "## ModularMonitor loading screen ##");
-        LOGI(TAG, "> Loading screen");
-        LOGI(TAG, "Checking file " DISPLAY_CALIBRATION_FILE "...");
-        this->terminal_print();
-
-        if (!SDcard::is_sd_init()) {
-            LOGE(TAG, "SD card is not loaded / present! Touch calibration skipped.");
-            this->terminal_print();
-        }
-        else { // has SD card
-
-            uint16_t calibrationData[6]{}; // 14 bytes actually + 1 extra byte for flag
-
-            CPU::run_on_core_sync([](void* a){
-                uint16_t* calData = (uint16_t*)a;
-
-                File f = SDcard::f_open(DISPLAY_CALIBRATION_FILE, "r");
-
-                if (!f || (f.readBytes((char*)calData, 14) != 14)) {
-                    LOGI(TAG, DISPLAY_CALIBRATION_FILE " not found. Calibration to go.");
-                    calData[5] = 2;
-                }
-                else {
-                    LOGI(TAG, DISPLAY_CALIBRATION_FILE " found and ready to set!");
-                    calData[5] = 1;
-                }
-                f.close();
-            }, cpu_core_id_for_sd_card, (void*)calibrationData);
-
-            this->terminal_print();
-
-            switch(calibrationData[5]) {
-            case 1:
-            {
-                LOGI(TAG, "Found display calibration. Applying... ");
-                m_tft->setTouch(calibrationData);
-                LOGI(TAG, DISPLAY_CALIBRATION_FILE " applied!");
-                this->terminal_print();
-            }
-                break;
-            case 2:
-            {
-                LOGI(TAG, "No file or data found, initializing calibration...");
-                LOGI(TAG, "Calibrating display... Please proceed.");
-                this->terminal_print();
-
-                delay(1000);
-                
-                m_tft->fillScreen(TFT_BLACK);
-                m_tft->calibrateTouch(calibrationData, TFT_WHITE, TFT_RED, 15);
-                m_tft->fillScreen(TFT_BLACK);
-
-                CPU::run_on_core_sync([](void* a){
-                    uint16_t* calData = (uint16_t*)a;
-
-                    File f = SDcard::f_open(DISPLAY_CALIBRATION_FILE, "w");
-
-                    if (!f) {
-                        LOGI(TAG, "Could not create/open " DISPLAY_CALIBRATION_FILE " file to write. Save failed.");
-                    }
-
-                    f.write((uint8_t*)calData, 14);
-                    f.close();
-
-                    LOGI(TAG, "Wrote " DISPLAY_CALIBRATION_FILE " successfully.");
-                }, cpu_core_id_for_sd_card, (void*)calibrationData);
-
-                this->terminal_print();
-            }
-                break;
-            default:
-                LOGE(TAG, "Undefined behaviour on Display::Display. Skipping calibration.");
-                this->terminal_print();
-                break;
-            }
-        }
-
-        LOGI(TAG, "Ready.");
+        
+        LOGI(TAG, "Display is ready for use.");
         this->terminal_print();
     }
 
@@ -117,15 +40,15 @@ namespace DP {
     inline void Display::toggle_debugging()
     {
         m_is_log_screen = !m_is_log_screen;
-        if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
-        else                 { LOGI(TAG, "Debug screen disabled!"); }
+        //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
+        //else                 { LOGI(TAG, "Debug screen disabled!"); }
     }
 
     inline void Display::set_debugging(const bool b)
     {
         m_is_log_screen = b;
-        if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
-        else                 { LOGI(TAG, "Debug screen disabled!"); }
+        //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
+        //else                 { LOGI(TAG, "Debug screen disabled!"); }
     }
 
     inline void Display::terminal_print()
@@ -149,18 +72,198 @@ namespace DP {
         }
     }
 
-    inline void DisplayCtl::task()
+    inline std::shared_ptr<TFT_eSPI> Display::share_tft() const
     {
-        if (!m_disp) m_disp = new Display();
+        return m_tft;
+    }
 
-        // make fancy tasking logic later
 
-        if (m_disp->is_debugging()) {
-            m_disp->terminal_print();
-            return;
+    inline TouchCtl::TouchCtl(Display& disp)
+        : m_disp(disp)
+    {
+        pinMode(TOUCH_CS, OUTPUT);
+
+        LOGI(TAG, "=== TouchCtl block ===");
+        LOGI(TAG, "Checking file " DISPLAY_CALIBRATION_FILE "...");
+        m_disp.terminal_print();
+
+        if (!SDcard::is_sd_init()) {
+            LOGE(TAG, "SD card is not present! Touch calibration won't run this time.");
+            m_disp.terminal_print();
+        }
+        else { // has SD card
+
+            uint16_t calibrationData[6]{}; // 14 bytes actually + 1 extra byte for flag
+
+            CPU::run_on_core_sync([](void* a){
+                uint16_t* calData = (uint16_t*)a;
+
+                File f = SDcard::f_open(DISPLAY_CALIBRATION_FILE, "r");
+
+                if (!f || (f.readBytes((char*)calData, 14) != 14)) {
+                    LOGI(TAG, "File " DISPLAY_CALIBRATION_FILE " not found or empty.");
+                    calData[5] = 2;
+                }
+                else {
+                    LOGI(TAG, "File " DISPLAY_CALIBRATION_FILE " found and ready to set!");
+                    calData[5] = 1;
+                }
+                f.close();
+            }, cpu_core_id_for_sd_card, (void*)calibrationData);
+
+            m_disp.terminal_print();
+
+            switch(calibrationData[5]) {
+            case 1:
+            {
+                LOGI(TAG, "Found display calibration. Applying... ");
+                m_disp->setTouch(calibrationData);
+                LOGI(TAG, "File " DISPLAY_CALIBRATION_FILE " applied!");
+                m_disp.terminal_print();
+            }
+                break;
+            case 2:
+            {
+                LOGI(TAG, "No file or data found, calibration requested!");
+
+                m_disp.terminal_print();
+
+                delay(1000);
+                
+                m_disp->fillScreen(TFT_BLACK);
+                m_disp->calibrateTouch(calibrationData, TFT_WHITE, TFT_RED, 15);
+                m_disp->fillScreen(TFT_BLACK);
+
+                CPU::run_on_core_sync([](void* a){
+                    uint16_t* calData = (uint16_t*)a;
+
+                    File f = SDcard::f_open(DISPLAY_CALIBRATION_FILE, "w");
+
+                    if (!f) {
+                        LOGI(TAG, "Could not create/open " DISPLAY_CALIBRATION_FILE " file to write. Save failed.");
+                    }
+
+                    f.write((uint8_t*)calData, 14);
+                    f.close();
+
+                    LOGI(TAG, "Wrote " DISPLAY_CALIBRATION_FILE " successfully.");
+                }, cpu_core_id_for_sd_card, (void*)calibrationData);
+
+                m_disp.terminal_print();
+            }
+                break;
+            default:
+                LOGE(TAG, "Undefined behaviour on Display::Display. Skipping calibration.");
+                m_disp.terminal_print();
+                break;
+            }
         }
 
+        LOGI(TAG, "TouchCtl is ready and running.");
+        LOGI(TAG, "=== TouchCtl block ===");
+    }
+
+    inline bool TouchCtl::task()
+    {
+        m_b4 = m_now;
+        m_now.state = m_disp->getTouch(&m_now.x, &m_now.y);
+
+        if (m_b4.state && !m_now.state)
+        {
+            m_now.last_switch_false = CPU::get_time_ms();
+            return true;
+        }
+        return false;
+    }
+
+    inline uint16_t TouchCtl::get_x(bool old) const
+    {
+        return old ? m_b4.x : m_now.x;
+    }
+
+    inline uint16_t TouchCtl::get_y(bool old) const
+    {
+        return old ? m_b4.y : m_now.y;
+    }
+
+    inline uint64_t TouchCtl::get_time_ms(bool old) const
+    {
+        return old ? m_b4.last_switch_false : m_now.last_switch_false;
+    }
+
+    inline uint64_t TouchCtl::last_event_was_ms() const
+    {
+        return CPU::get_time_ms() - m_now.last_switch_false;
+    }
+
+    inline int32_t TouchCtl::get_dx() const
+    {
+        return static_cast<int32_t>(m_now.x) - static_cast<int32_t>(m_b4.x);
+    }
+
+    inline int32_t TouchCtl::get_dy() const
+    {
+        return static_cast<int32_t>(m_now.y) - static_cast<int32_t>(m_b4.y);
+    }
+
+    inline uint64_t TouchCtl::get_delta_time_of_last_ms() const
+    {
+        return m_now.last_switch_false - m_b4.last_switch_false;
+    }
+
+    inline bool TouchCtl::is_down() const
+    {
+        return m_now.state;
+    }
+
+
+
+    inline void DisplayCtl::task()
+    {
+        if (!m_disp) {
+            m_disp = new Display();
+            m_touch = new TouchCtl(*m_disp);
+        } 
+
+        if (m_touch->task()) { // touch event, task.
+            LOGI(TAG, "Touch event @ %i:%i (delta: %" PRIu64 " ms)", (int)m_touch->get_x(), (int)m_touch->get_y(), m_touch->get_delta_time_of_last_ms());
+        }
+
+        if (m_disp->is_debugging()) {
+            const bool update_forced = (!m_touch->is_down() && m_touch->last_event_was_ms() < 200);
+
+            if (LG::get_singleton_of_Logger().for_display_had_news() || update_forced) {
+                m_disp->terminal_print();
+            }
+
+            if (m_touch->is_down() || update_forced) {
+                const int32_t nx = m_touch->get_x();
+                const int32_t ny = m_touch->get_y();
+                const int32_t ox = m_touch->get_x(true);
+                const int32_t oy = m_touch->get_y(true);
+
+                //(*m_disp)->fillRect(ox, oy, 7, 7, TFT_BLACK);
+
+                const auto draw_arrow = [&](const int32_t x, const int32_t y, const int color) {
+                    (*m_disp)->drawFastHLine(x, y, 6, color);
+                    (*m_disp)->drawFastHLine(x, y + 1, 6, color);
+                    (*m_disp)->drawFastVLine(x, y, 6, color);
+                    (*m_disp)->drawFastVLine(x + 1, y, 6, color);
+                    
+                    (*m_disp)->drawLine(x, y, x + 6, y + 6, color);
+                    (*m_disp)->drawLine(x + 1, y, x + 7, y + 6, color);
+                    (*m_disp)->drawLine(x, y + 1, x + 6, y + 7, color);
+                };
+
+                draw_arrow(ox, oy, TFT_BLACK);
+                draw_arrow(nx, ny, TFT_WHITE);
+            }
+            return;
+        }
+        
         // make fancy draw logic later
+
+
     }
 
     Display* DisplayCtl::get_display()

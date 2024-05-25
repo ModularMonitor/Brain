@@ -24,7 +24,7 @@ namespace DP {
     // - Autoload
     class Display {
         std::shared_ptr<TFT_eSPI> m_tft;
-        bool m_is_log_screen = true;
+        bool m_is_log_screen = true;        
     public:
         Display();
 
@@ -36,20 +36,47 @@ namespace DP {
         void set_debugging(const bool); // forced
 
         void terminal_print();
+
+        std::shared_ptr<TFT_eSPI> share_tft() const;
     };
 
     // TouchCtl
     // - Hook stuff to events on touch release
     class TouchCtl {
-        std::shared_ptr<TFT_eSPI> m_tft;
+        struct {
+            uint16_t x{}, y{};
+            bool state = false;
+            uint64_t last_switch_false = 0;
+        } m_now, m_b4;
+        
+        Display& m_disp;
     public:
+        TouchCtl(Display&);
+        
+        // returns true if had touch event (RISING finger)
+        bool task();
 
+        // param: old? def false
+        uint16_t get_x(bool = false) const;
+        // param: old? def false
+        uint16_t get_y(bool = false) const;
+        // param: old? def false
+        uint64_t get_time_ms(bool = false) const;
+
+        uint64_t last_event_was_ms() const;
+
+        int32_t get_dx() const;
+        int32_t get_dy() const;
+        uint64_t get_delta_time_of_last_ms() const;
+
+        bool is_down() const;
     };
 
     // DisplayCtl:
     // - Controls screen overlays and stuff
     class DisplayCtl {
         Display* m_disp = nullptr;
+        TouchCtl* m_touch = nullptr;
     public:
         void task();
 
