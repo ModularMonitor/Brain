@@ -13,21 +13,24 @@ namespace DP {
         m_tft->init();
         m_tft->setRotation(3);
         m_tft->fillScreen(TFT_BLACK);
+
+
         //m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
         //m_tft->setTextSize(1);
         //m_tft->setCursor(0, 0, 2);
 
         terminal_push("## ModularMonitor loading screen ##", true);
-        terminal_push("> Loading screen:", true);
+        terminal_push("> Loading screen", true);
+
+        terminal_push("Checking file ", false);
+        terminal_append(DISPLAY_CALIBRATION_FILE, false);
+        terminal_append("...", true);
 
         if (!SDcard::is_sd_init()) {
             terminal_push("Error: SD card not present. Calibration of display will not be loaded / saved.", true);
             LOGE(TAG, "SD card was not loaded / present to save / restore calibration data. Skipping.");
         }
         else { // has SD card
-            terminal_push("Checking file ", false);
-            terminal_append(DISPLAY_CALIBRATION_FILE, false);
-            terminal_append("...", true);
 
             uint16_t calibrationData[6]{}; // 14 bytes actually + 1 extra byte for flag
 
