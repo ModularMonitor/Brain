@@ -58,35 +58,24 @@ namespace CPU {
 
         MAKE_SINGLETON_CLASS_INIT_CF(INITIALIZER,
         {
+            //LOGI(TAG, "Initializing hook on core 0...");
             auto& ctl0 = __get_singleton(0);
             if (!ctl0.m_started) {
                 ctl0.m_started = true;
                 esp_register_freertos_idle_hook_for_cpu(__idl0, 0);
                 esp_register_freertos_tick_hook_for_cpu(__tck0, 0);
             }
+
+            //LOGI(TAG, "Initializing hook on core 1...");
             auto& ctl1 = __get_singleton(1);
             if (!ctl1.m_started) {
                 ctl1.m_started = true;
                 esp_register_freertos_idle_hook_for_cpu(__idl1, 1);
                 esp_register_freertos_tick_hook_for_cpu(__tck1, 1);
             }
-        }, IRAM_ATTR);
 
-        //INITIALIZE_ONCE_FUNCTION(INITIALIZER, 
-        //{
-        //    auto& ctl0 = __get_singleton(0);
-        //    if (!ctl0.m_started) {
-        //        ctl0.m_started = true;
-        //        esp_register_freertos_idle_hook_for_cpu(__idl0, 0);
-        //        esp_register_freertos_tick_hook_for_cpu(__tck0, 0);
-        //    }
-        //    auto& ctl1 = __get_singleton(1);
-        //    if (!ctl1.m_started) {
-        //        ctl1.m_started = true;
-        //        esp_register_freertos_idle_hook_for_cpu(__idl1, 1);
-        //        esp_register_freertos_tick_hook_for_cpu(__tck1, 1);
-        //    }
-        //}, IRAM_ATTR);
+            //LOGI(TAG, "Cores were hooked. Performance meters online.");
+        }, IRAM_ATTR);
     }
     
     inline AutoWait::AutoWait(const uint64_t ms)
@@ -128,7 +117,9 @@ namespace CPU {
     {
         const auto _min = get_lowest_clock_mhz();
         const auto _max = get_highest_clock_mhz();
-        setCpuFrequencyMhz(clk < _min ? _min : (clk > _max ? _max : clk));
+        const uint32_t nclk = clk < _min ? _min : (clk > _max ? _max : clk);
+        LOGI(TAG, "Call registered to set CPU to %u MHz.", nclk);
+        setCpuFrequencyMhz(nclk);
     }
     
     inline float get_cpu_usage()
@@ -179,15 +170,8 @@ namespace CPU {
     inline TaskHandle_t create_task(void(*f)(void*), const char* nam, UBaseType_t priority, size_t stac, void* arg, int coreid)
     {
         TaskHandle_t _t = nullptr; 
-        //while (!_t) {
         if (coreid < 0) xTaskCreate(f, nam, stac, arg, priority, &_t);
         else xTaskCreatePinnedToCore(f, nam, stac, arg, priority, &_t, coreid % portNUM_PROCESSORS);
-
-            //if (!_t) {
-            //    mprint("Could not create a new thread! (name: %s). Trying again in 100 ms\n", nam);
-            //    sleep_for(100);
-            //}
-        //}
         return _t;
     }
     
@@ -197,7 +181,7 @@ namespace CPU {
         bool ended = false, running = false;
     };
     
-    bool run_on_core_sync(void(*function)(void*), UBaseType_t core_id, void* arg)
+    inline bool run_on_core_sync(void(*function)(void*), UBaseType_t core_id, void* arg)
     {
         if (!function || (core_id != 0 && core_id != 1)) return false;
 
@@ -205,7 +189,7 @@ namespace CPU {
         _run.f = function;
         _run.a = arg;
 
-        xTaskCreatePinnedToCore([](void* arg){
+        create_task([](void* arg){
             ___run_core_sync_data* re = (___run_core_sync_data*)arg;
             re->ended = false;
             re->running = true;
@@ -213,13 +197,13 @@ namespace CPU {
             re->running = false;
             re->ended = true;
             vTaskDelete(NULL);
-        }, "ASYNCRUN", 6144, (void*)&_run, 15, nullptr, core_id);
+        }, "SYNCED_CALL", 15, 6144, (void*)&_run, core_id);
 
         const auto start_time = get_time_ms();
 
         while(!_run.ended) {
             delay(10);
-            if (get_time_ms() - start_time > 500 && !_run.running) return false;
+            if (get_time_ms() - start_time > 5000 && !_run.running) return false;
         }
         return true;
     }

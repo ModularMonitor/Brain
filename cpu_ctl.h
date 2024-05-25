@@ -10,6 +10,8 @@
 
 namespace CPU {
 
+    static const char TAG[] = "CPU";
+
 // auto create task auto
 #define acta(FUNCNAME) { CPU::create_task(FUNCNAME, #FUNCNAME); }
 // auto create task priority

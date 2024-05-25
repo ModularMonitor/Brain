@@ -12,13 +12,13 @@ namespace DP {
     {
         m_tft->init();
         m_tft->setRotation(3);
-        m_tft->fillScreen(TFT_BLACK);
+        m_tft->fillScreen(TFT_DARKGREEN);
 
         //m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
         //m_tft->setTextSize(1);
         //m_tft->setCursor(0, 0, 2);
         
-        LOGI(TAG, "Display is ready for use.");
+        LOGI(TAG, "Display launched!");
         this->terminal_print();
     }
 
@@ -32,24 +32,24 @@ namespace DP {
         return m_tft.get();
     }
 
-    inline bool Display::is_debugging() const
-    {
-        return m_is_log_screen;
-    }
-
-    inline void Display::toggle_debugging()
-    {
-        m_is_log_screen = !m_is_log_screen;
-        //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
-        //else                 { LOGI(TAG, "Debug screen disabled!"); }
-    }
-
-    inline void Display::set_debugging(const bool b)
-    {
-        m_is_log_screen = b;
-        //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
-        //else                 { LOGI(TAG, "Debug screen disabled!"); }
-    }
+    //inline bool Display::is_debugging() const
+    //{
+    //    return m_is_log_screen;
+    //}
+    //
+    //inline void Display::toggle_debugging()
+    //{
+    //    m_is_log_screen = !m_is_log_screen;
+    //    //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
+    //    //else                 { LOGI(TAG, "Debug screen disabled!"); }
+    //}
+    //
+    //inline void Display::set_debugging(const bool b)
+    //{
+    //    m_is_log_screen = b;
+    //    //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
+    //    //else                 { LOGI(TAG, "Debug screen disabled!"); }
+    //}
 
     inline void Display::terminal_print()
     {
@@ -161,6 +161,8 @@ namespace DP {
 
         LOGI(TAG, "TouchCtl is ready and running.");
         LOGI(TAG, "=== TouchCtl block ===");
+
+        m_disp.terminal_print();
     }
 
     inline bool TouchCtl::task()
@@ -216,59 +218,137 @@ namespace DP {
         return m_now.state;
     }
 
+    inline bool TouchCtl::is_touch_on(const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h) const
+    {
+        return m_now.x >= x && m_now.y >= y && m_now.x < (x + w) && m_now.y < (y + h);
+    }
 
+
+    inline void DisplayCtl::draw_mouse(bool bg) 
+    {
+        const int32_t nx = m_touch->get_x();
+        const int32_t ny = m_touch->get_y();
+        const int32_t ox = m_touch->get_x(true);
+        const int32_t oy = m_touch->get_y(true);
+
+        const auto draw_arrow = [&](const int32_t x, const int32_t y, const int color) {
+            (*m_disp)->drawFastHLine(x, y, 6, color);
+            (*m_disp)->drawFastHLine(x, y + 1, 6, color);
+            (*m_disp)->drawFastVLine(x, y, 6, color);
+            (*m_disp)->drawFastVLine(x + 1, y, 6, color);
+            
+            (*m_disp)->drawLine(x, y, x + 6, y + 6, color);
+            (*m_disp)->drawLine(x + 1, y, x + 7, y + 6, color);
+            (*m_disp)->drawLine(x, y + 1, x + 6, y + 7, color);
+        };
+
+        if (bg) draw_arrow(ox, oy, TFT_BLACK);
+        draw_arrow(nx, ny, TFT_WHITE);
+    }
 
     inline void DisplayCtl::task()
     {
+        // track screen change
+        screen next_screen = m_screen;
+
+        // Guarantee everything is loaded
         if (!m_disp) {
             m_disp = new Display();
             m_touch = new TouchCtl(*m_disp);
-        } 
 
-        if (m_touch->task()) { // touch event, task.
-            LOGI(TAG, "Touch event @ %i:%i (delta: %" PRIu64 " ms)", (int)m_touch->get_x(), (int)m_touch->get_y(), m_touch->get_delta_time_of_last_ms());
+            LOGI(TAG, "Loaded all modules. Ready to start UI...");
+            m_disp->terminal_print();
+
+            delay(1000);
+
+            next_screen = screen::HOME;
         }
 
-        if (m_disp->is_debugging()) {
-            const bool update_forced = (!m_touch->is_down() && m_touch->last_event_was_ms() < 200);
+        // logic of stuff going on
 
-            if (LG::get_singleton_of_Logger().for_display_had_news() || update_forced) {
+        // ======== ALWAYS RUN BLOCK ======== //
+        const bool had_touch_event = m_touch->task();
+        //if (m_touch->task()) { // touch event, task.
+        //    LOGI(TAG, "Touch event @ %i:%i (delta: %" PRIu64 " ms)", (int)m_touch->get_x(), (int)m_touch->get_y(), m_touch->get_delta_time_of_last_ms());
+        //}
+
+        // ======== END OF ALWAYS RUN BLOCK ======== //
+
+        // ================ THINK BLOCK ================ //
+        if (had_touch_event) {
+            switch(next_screen) {
+            case screen::DEBUG_CMD: // only log screen
+            {
+                if (m_touch->is_touch_on(460, 0, 20, 20))
+                    next_screen = screen::HOME;
+            }
+                break;
+            case screen::HOME:
+            {
+                //if (m_touch->is_touch_on(460, 0, 20, 20))
+                //    next_screen = screen::DEBUG_CMD;
+            }
+                break;
+            }
+        }
+        if (m_ext_cmd_req) { // button pressed, things like that
+            m_ext_cmd_req = false;
+            next_screen = screen::DEBUG_CMD;
+        }
+        // ================ END OF THINK BLOCK ================ //
+
+        // ================ DRAW BLOCK ================ //
+
+        // TOOLS:
+        const bool state_changed = next_screen != m_screen;
+
+        switch(next_screen) {
+        case screen::DEBUG_CMD: // only log screen
+        {
+            const bool update_forced = (!m_touch->is_down() && m_touch->last_event_was_ms() < 400);
+
+            if (state_changed) (*m_disp)->fillScreen(TFT_DARKGREEN);
+
+            // if had new line on log or touch stuff
+            if (LG::get_singleton_of_Logger().for_display_had_news() || update_forced || state_changed) {
                 m_disp->terminal_print();
+                (*m_disp)->fillRect(460, 0, 20, 20, TFT_RED);
+                (*m_disp)->drawLine(462, 2, 478, 18, 0xA000);
+                (*m_disp)->drawLine(478, 18, 462, 2, 0xA000);
             }
 
+            // touch shenanigans
             if (m_touch->is_down() || update_forced) {
-                const int32_t nx = m_touch->get_x();
-                const int32_t ny = m_touch->get_y();
-                const int32_t ox = m_touch->get_x(true);
-                const int32_t oy = m_touch->get_y(true);
-
-                //(*m_disp)->fillRect(ox, oy, 7, 7, TFT_BLACK);
-
-                const auto draw_arrow = [&](const int32_t x, const int32_t y, const int color) {
-                    (*m_disp)->drawFastHLine(x, y, 6, color);
-                    (*m_disp)->drawFastHLine(x, y + 1, 6, color);
-                    (*m_disp)->drawFastVLine(x, y, 6, color);
-                    (*m_disp)->drawFastVLine(x + 1, y, 6, color);
-                    
-                    (*m_disp)->drawLine(x, y, x + 6, y + 6, color);
-                    (*m_disp)->drawLine(x + 1, y, x + 7, y + 6, color);
-                    (*m_disp)->drawLine(x, y + 1, x + 6, y + 7, color);
-                };
-
-                draw_arrow(ox, oy, TFT_BLACK);
-                draw_arrow(nx, ny, TFT_WHITE);
+                draw_mouse();
             }
-            return;
         }
+            break;
+        case screen::HOME:
+        {
+            if (state_changed) {
+                (*m_disp)->fillRect(0, 0, 480, 20, 0x34da); // top bar bg
+                (*m_disp)->fillRect(440, 20, 480, 320, 0xcd49); // right bar menu
+                (*m_disp)->fillRect(0, 20, 440, 320, TFT_WHITE); // body
+                
+                //(*m_disp)->fillScreen(TFT_BLACK);
+                //(*m_disp)->fillRect(460, 0, 20, 20, TFT_RED);
+            }
+        }
+            break;
+        }
+        // ================ END OF DRAW BLOCK ================ //
         
-        // make fancy draw logic later
-
-
+        m_screen = next_screen;
     }
 
-    Display* DisplayCtl::get_display()
+    inline Display* DisplayCtl::get_display()
     {
         return m_disp;
+    }
+
+    inline void DisplayCtl::set_debugging()
+    {
+        m_ext_cmd_req = true;
     }
 
 //    inline std::string ensureN(std::string input, size_t last_n) { 

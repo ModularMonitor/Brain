@@ -3,6 +3,7 @@
 #include "cpu_ctl.h" // self deploy
 #include "sdcard.h" // self deploy
 #include "display.h" // self deploy
+#include "i2c_controller.h" // self deploy
 
 #include "debug_tools.h"
 
@@ -16,7 +17,7 @@ void setup()
 
     attachInterrupt(digitalPinToInterrupt(0), []{ 
         if (CPU::get_time_ms() > 5000) 
-            DP::get_singleton_of_ASYNC_DisplayTask().get_internal_variable().get_display()->toggle_debugging();
+            DP::get_singleton_of_ASYNC_DisplayTask().get_internal_variable().set_debugging();
         }, RISING);
 
     //actcp(idc_loop_sometimes, 0, 1);

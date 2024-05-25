@@ -10,7 +10,7 @@ namespace SDcard {
 
     namespace _INTERNAL {
 
-        MAKE_SINGLETON_CLASS_INIT_C(INITIALIZER,
+        MAKE_SINGLETON_CLASS_INIT_C(ASYNC_RUN,
         {
             actcpb(    
                 bool is_first_time = true;
@@ -101,6 +101,22 @@ namespace SDcard {
     {
         if (CPU::get_core_id() != cpu_core_id_for_sd_card) { LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING MKDIR."); return false; }
         return SD.mkdir(dir);
+    }
+
+    inline bool exists(const char* src)
+    {
+        auto fp = SD.open(src);
+        const bool is_it = fp && !fp.isDirectory();
+        if (fp) fp.close();
+        return is_it;
+    }
+
+    inline bool dir_exists(const char* src)
+    {
+        auto fp = SD.open(src);
+        const bool is_it = fp && fp.isDirectory();
+        if (fp) fp.close();
+        return is_it;
     }
 
     inline bool _list_dir(std::vector<dir_item>& v, const char* d, const size_t l)

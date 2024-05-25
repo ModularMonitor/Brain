@@ -17,8 +17,14 @@ namespace SDcard {
     bool f_remove(const char* src);
     bool f_rename(const char* src, const char* dst);
     File f_open(const char* src, const char* mode);
+
     bool rmdir(const char* dir);
     bool mkdir(const char* dir);
+
+    // file:
+    bool exists(const char* src);
+    // directory:
+    bool dir_exists(const char* src);
 
     struct dir_item {
         std::string name;

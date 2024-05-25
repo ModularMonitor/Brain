@@ -27,6 +27,10 @@
 #define SDCARD_MISO 32
 #define SDCARD_SCK 12
 
+#define COMM_LED    13
+#define COMM_SDA    25  // 5 on slaves
+#define COMM_SCL    26  // 4 on slaves
+
 
 // DELETE X if X != nullptr then X = nullptr;
 #define DEL_IT(X) { if (X) delete X; X = nullptr; }

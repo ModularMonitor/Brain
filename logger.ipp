@@ -23,7 +23,7 @@ namespace LG {
 
             //memset(m_lines_buffering[0], '\0', log_line_max_len);
 
-            int written = snprintf(m_lines_buffering[0], log_line_max_len, "[#%i]%s: ", (int)xPortGetCoreID(), tag);
+            int written = snprintf(m_lines_buffering[0], log_line_max_len, "@%i %s> ", (int)xPortGetCoreID(), tag);
             if (written < 0) written = 0;
             if (written >= log_line_max_len) return 0;
 

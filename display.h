@@ -24,16 +24,16 @@ namespace DP {
     // - Autoload
     class Display {
         std::shared_ptr<TFT_eSPI> m_tft;
-        bool m_is_log_screen = true;        
+        //bool m_is_log_screen = true;        
     public:
         Display();
 
         TFT_eSPI* operator->();
         const TFT_eSPI* operator->() const;
 
-        bool is_debugging() const; // check on DisplayCtl to see if thread should call terminal_print() for debugging or not!
-        void toggle_debugging(); // hook to button!
-        void set_debugging(const bool); // forced
+        //bool is_debugging() const; // check on DisplayCtl to see if thread should call terminal_print() for debugging or not!
+        //void toggle_debugging(); // hook to button!
+        //void set_debugging(const bool); // forced
 
         void terminal_print();
 
@@ -70,17 +70,31 @@ namespace DP {
         uint64_t get_delta_time_of_last_ms() const;
 
         bool is_down() const;
+
+        bool is_touch_on(const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h) const;
     };
 
     // DisplayCtl:
     // - Controls screen overlays and stuff
     class DisplayCtl {
+        enum class screen {
+            DEBUG_CMD,      // Shows terminal of logs
+            HOME            // Show devices connected, taskbar, buttons for config and so on.
+        };
+
         Display* m_disp = nullptr;
         TouchCtl* m_touch = nullptr;
+        screen m_screen = screen::DEBUG_CMD;
+        bool m_ext_cmd_req = false;
+
+        // param: with background on last?
+        void draw_mouse(bool = true);
     public:
         void task();
 
         Display* get_display();
+
+        void set_debugging();
     };
 
     RUN_ASYNC_ON_CORE_AUTO(DisplayCtl, DisplayTask, task, cpu_core_id_for_display, 2);
