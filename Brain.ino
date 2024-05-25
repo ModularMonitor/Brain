@@ -6,15 +6,15 @@
 
 #include "debug_tools.h"
 
-DP::Display* dsp = nullptr;
+//DP::Display* dsp = nullptr;
 
 void setup()
 {
-    dsp = new DP::Display();
+    //dsp = new DP::Display();
     //CPU::run_on_core_sync([](void* a){ SDcard::sd_init(); }, cpu_core_id_for_sd_card, nullptr);
 
 
-    attachInterrupt(digitalPinToInterrupt(0), []{ dsp->toggle_debugging(); }, RISING);
+    attachInterrupt(digitalPinToInterrupt(0), []{ LOGI("TEST", "This is a long string I've set up so we can test the limits of this thing. Hopefully it won't break!"); /*dsp->toggle_debugging();*/ }, FALLING);
 
     //actcp(idc_loop_sometimes, 0, 1);
     //actcp(idc_loop_sometimes, 1, 1);

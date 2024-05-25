@@ -20,6 +20,8 @@ namespace CPU {
 #define actcp(FUNCNAME, COREID, PRIORITY) { CPU::create_task(FUNCNAME, #FUNCNAME, PRIORITY, cpu_stack_default, nullptr, COREID); }
 // auto create task core prio body
 #define actcpb(BODY, COREID, PRIORITY) { CPU::create_task([](void*){ BODY; exit_task(); }, "ASYNCAUTO", PRIORITY, cpu_stack_default, nullptr, COREID); }
+// auto create task core prio body argument
+#define actcpba(BODY, COREID, PRIORITY, ARG) { CPU::create_task([](void* arg){ BODY; exit_task(); }, "ASYNCAUTO", PRIORITY, cpu_stack_default, ARG, COREID); }
 
 #define exit_task() vTaskDelete(NULL)
 #define sleep_for(MILLISEC) { yield(); vTaskDelay(MILLISEC / portTICK_PERIOD_MS); }

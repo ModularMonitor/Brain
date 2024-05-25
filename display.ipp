@@ -14,21 +14,18 @@ namespace DP {
         m_tft->setRotation(3);
         m_tft->fillScreen(TFT_BLACK);
 
-
         //m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
         //m_tft->setTextSize(1);
         //m_tft->setCursor(0, 0, 2);
 
-        terminal_push("## ModularMonitor loading screen ##", true);
-        terminal_push("> Loading screen", true);
-
-        terminal_push("Checking file ", false);
-        terminal_append(DISPLAY_CALIBRATION_FILE, false);
-        terminal_append("...", true);
+        LOGI(TAG, "## ModularMonitor loading screen ##");
+        LOGI(TAG, "> Loading screen");
+        LOGI(TAG, "Checking file " DISPLAY_CALIBRATION_FILE "...");
+        this->terminal_print();
 
         if (!SDcard::is_sd_init()) {
-            terminal_push("Error: SD card not present. Calibration of display will not be loaded / saved.", true);
-            LOGE(TAG, "SD card was not loaded / present to save / restore calibration data. Skipping.");
+            LOGE(TAG, "SD card is not loaded / present! Touch calibration skipped.");
+            this->terminal_print();
         }
         else { // has SD card
 
@@ -40,29 +37,32 @@ namespace DP {
                 File f = SDcard::f_open(DISPLAY_CALIBRATION_FILE, "r");
 
                 if (!f || (f.readBytes((char*)calData, 14) != 14)) {
-                    LOGI(TAG, DISPLAY_CALIBRATION_FILE " was not present or had not enough data. Calibration should be done.");
+                    LOGI(TAG, DISPLAY_CALIBRATION_FILE " not found. Calibration to go.");
                     calData[5] = 2;
                 }
                 else {
-                    LOGI(TAG, DISPLAY_CALIBRATION_FILE " loaded and ready to be applied on Display.");
+                    LOGI(TAG, DISPLAY_CALIBRATION_FILE " found and ready to set!");
                     calData[5] = 1;
                 }
                 f.close();
             }, cpu_core_id_for_sd_card, (void*)calibrationData);
 
+            this->terminal_print();
+
             switch(calibrationData[5]) {
             case 1:
             {
-                terminal_push("Found display calibration. Applying... ", true);
+                LOGI(TAG, "Found display calibration. Applying... ");
                 m_tft->setTouch(calibrationData);
                 LOGI(TAG, DISPLAY_CALIBRATION_FILE " applied!");
-                terminal_append("applied!", true);
+                this->terminal_print();
             }
                 break;
             case 2:
             {
-                terminal_push("No file or data found, initializing calibration...", true);
+                LOGI(TAG, "No file or data found, initializing calibration...");
                 LOGI(TAG, "Calibrating display... Please proceed.");
+                this->terminal_print();
 
                 delay(1000);
                 
@@ -76,22 +76,27 @@ namespace DP {
                     File f = SDcard::f_open(DISPLAY_CALIBRATION_FILE, "w");
 
                     if (!f) {
-                        LOGI(TAG, "Could not create/open " DISPLAY_CALIBRATION_FILE " file to write. Calibration was not saved.");
+                        LOGI(TAG, "Could not create/open " DISPLAY_CALIBRATION_FILE " file to write. Save failed.");
                     }
 
                     f.write((uint8_t*)calData, 14);
                     f.close();
-                    LOGI(TAG, "Wrote " DISPLAY_CALIBRATION_FILE " with Display calibration data.");
+
+                    LOGI(TAG, "Wrote " DISPLAY_CALIBRATION_FILE " successfully.");
                 }, cpu_core_id_for_sd_card, (void*)calibrationData);
+
+                this->terminal_print();
             }
                 break;
             default:
                 LOGE(TAG, "Undefined behaviour on Display::Display. Skipping calibration.");
+                this->terminal_print();
                 break;
             }
         }
 
-        terminal_push("Ready.", true);
+        LOGI(TAG, "Ready.");
+        this->terminal_print();
     }
 
     inline TFT_eSPI* Display::operator->()
@@ -112,55 +117,56 @@ namespace DP {
     inline void Display::toggle_debugging()
     {
         m_is_log_screen = !m_is_log_screen;
-        if (m_is_log_screen) terminal_push("Debug screen enabled!", true);
-        else                 terminal_push("Debug screen disabled!", false);
+        if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
+        else                 { LOGI(TAG, "Debug screen disabled!"); }
     }
 
     inline void Display::set_debugging(const bool b)
     {
         m_is_log_screen = b;
-        if (m_is_log_screen) terminal_push("Debug screen enabled!", true);
-        else                 terminal_push("Debug screen disabled!", false);
+        if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
+        else                 { LOGI(TAG, "Debug screen disabled!"); }
     }
 
     inline void Display::terminal_print()
     {
-        m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
+        //m_tft->fillScreen(TFT_BLACK);
+        m_tft->setTextColor(TFT_WHITE, TFT_BLUE);
         m_tft->setTextSize(1);
 
-        for(size_t p = 0; p < log_amount; ++p) {
-            int16_t off_txt = m_tft->textWidth(m_lines_buffering[p], 2);
-            for(size_t ps = 1; ps < log_line_max_len && off_txt >= 480; ++ps) {
-                m_lines_buffering[p][log_line_max_len - ps] = '\0';
-                off_txt = m_tft->textWidth(m_lines_buffering[p], 2);
-            }
+        const auto& logg = ::LG::get_singleton_of_Logger();
 
-            m_tft->fillRect(off_txt, 320 - log_line_dist * (p+1), 480 - off_txt, log_line_dist + 1, TFT_BLACK);
-            m_tft->setCursor(0, 320 - log_line_dist * (p+1), 2);
-            m_tft->printf("%.*s", log_line_max_len, m_lines_buffering[p]);
+        for(size_t pp = 0; pp < logg.size(); ++pp) {
+            const size_t p = logg.size() - pp - 1;
+
+            const char* line = logg.get_line(p);
+
+            int16_t off_txt = m_tft->textWidth(line, 2);
+            if (off_txt < 480) m_tft->fillRect(off_txt, 320 - ::LG::log_line_dist * (p+1), 480 - off_txt, ::LG::log_line_dist + 1, TFT_DARKGREEN);
+
+            //m_tft->setCursor(0, 320 - ::LG::log_line_dist * (p+1), 2);
+            m_tft->drawString(line, 0, 320 - ::LG::log_line_dist * (p+1), 2); // , ::LG::log_line_max_len
         }
     }
 
-    inline void Display::terminal_push(const char* s, const bool autodraw)
+    inline void DisplayCtl::task()
     {
-        for(size_t p = log_amount - 1; p != 0; --p)
-            memcpy(m_lines_buffering[p], m_lines_buffering[p - 1], log_line_max_len);
-        
-        memcpy(m_lines_buffering[0], s, log_line_max_len);
+        if (!m_disp) m_disp = new Display();
 
-        if (autodraw) terminal_print();
-    }
-    
-    inline void Display::terminal_append(const char* s, const bool autodraw)
-    {
-        int len = strlen(m_lines_buffering[0]); // real pos to put stuff to
-        if (len < 0) len = 0;
-        const int remaining = static_cast<int>(log_line_max_len) - len;
-        memcpy(m_lines_buffering[0] + len, s, remaining);
+        // make fancy tasking logic later
 
-        if (autodraw) terminal_print();
+        if (m_disp->is_debugging()) {
+            m_disp->terminal_print();
+            return;
+        }
+
+        // make fancy draw logic later
     }
 
+    Display* DisplayCtl::get_display()
+    {
+        return m_disp;
+    }
 
 //    inline std::string ensureN(std::string input, size_t last_n) { 
 //        return last_n > input.length() ? (input + std::string(last_n - input.length(), ' ')) : input.substr(input.size() - last_n); 

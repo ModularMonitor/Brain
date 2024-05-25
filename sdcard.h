@@ -9,7 +9,7 @@
 
 namespace SDcard {
 
-    const char TAG[] = "SD";
+    static const char TAG[] = "SD";
 
     bool is_sd_init();
     const char* sd_get_type();

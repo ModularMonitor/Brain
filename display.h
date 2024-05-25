@@ -9,12 +9,11 @@
 
 #include <memory>
 
-
 #include "data_displayed.h"
 
 namespace DP {
 
-    const char TAG[] = "Display";
+    static const char TAG[] = "Display";
 
     constexpr size_t log_line_dist = 20;
     constexpr size_t log_amount = 320 / log_line_dist;
@@ -25,7 +24,6 @@ namespace DP {
     // - Autoload
     class Display {
         std::shared_ptr<TFT_eSPI> m_tft;
-        char m_lines_buffering[log_amount][log_line_max_len]{};
         bool m_is_log_screen = true;
     public:
         Display();
@@ -38,8 +36,6 @@ namespace DP {
         void set_debugging(const bool); // forced
 
         void terminal_print();
-        void terminal_push(const char*, const bool = false);
-        void terminal_append(const char*, const bool = false);
     };
 
     // TouchCtl
@@ -53,10 +49,14 @@ namespace DP {
     // DisplayCtl:
     // - Controls screen overlays and stuff
     class DisplayCtl {
-        Display m_disp;
+        Display* m_disp = nullptr;
     public:
+        void task();
+
+        Display* get_display();
     };
 
+    RUN_ASYNC_ON_CORE_AUTO(DisplayCtl, DisplayTask, task, cpu_core_id_for_display, 2);
 
 
 

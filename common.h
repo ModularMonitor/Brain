@@ -27,10 +27,6 @@
 #define SDCARD_MISO 32
 #define SDCARD_SCK 12
 
-#define LOGI(TAG, ...) Serial.printf("[CPU%i][%s][I] ", (int)xPortGetCoreID(), TAG); Serial.printf(__VA_ARGS__); Serial.println();
-#define LOGW(TAG, ...) Serial.printf("[CPU%i][%s][W] ", (int)xPortGetCoreID(), TAG); Serial.printf(__VA_ARGS__); Serial.println();
-#define LOGE(TAG, ...) Serial.printf("[CPU%i][%s][E] ", (int)xPortGetCoreID(), TAG); Serial.printf(__VA_ARGS__); Serial.println();
-
 
 // DELETE X if X != nullptr then X = nullptr;
 #define DEL_IT(X) { if (X) delete X; X = nullptr; }
@@ -60,4 +56,6 @@
 
 #define RUN_ONLY_ONCE(FUNCTIONNAME, ...) MAKE_SINGLETON_CLASS_INIT_C(RUNNABLE_##FUNCTIONNAME, FUNCTIONNAME(__VA_ARGS__), FUNCFLAGS );
 #define RUN_ONLY_ONCE_FLAGGED(FUNCTIONNAME, FUNCFLAGS, ...) MAKE_SINGLETON_CLASS_INIT_C(RUNNABLE_##FUNCTIONNAME, FUNCTIONNAME(__VA_ARGS__), FUNCFLAGS );
-#define RUN_ASYNC_ON_CORE_AUTO(CLASSNAME, THREADNAME, LOOPFUNC, COREID, PRIORITY) MAKE_SINGLETON_CLASS_INIT_C(ASYNC_##THREADNAME,   actcpb( CLASSNAME obj; while(1) { obj.LOOPFUNC(); yield(); }, COREID, PRIORITY)   )
+#define RUN_ASYNC_ON_CORE_AUTO(CLASSNAME, THREADNAME, LOOPFUNC, COREID, PRIORITY) MAKE_SINGLETON_CLASS_INIT(ASYNC_##THREADNAME,  { CLASSNAME obj; public: ASYNC_##THREADNAME() { actcpba( while(1) { ((CLASSNAME*)arg)->LOOPFUNC(); yield(); }, COREID, PRIORITY, (void*)&obj); } const CLASSNAME& get_internal_variable() const { return obj; } CLASSNAME& get_internal_variable() { return obj; } }   )
+
+#include "logger.h"
