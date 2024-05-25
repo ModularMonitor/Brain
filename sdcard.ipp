@@ -8,47 +8,7 @@
 
 namespace SDcard {
 
-    namespace _INTERNAL {       
-
-
-        //inline bool& ___sd_init_mem() {
-        //    static bool _sd;
-        //    return _sd;
-        //}
-        //
-        //inline bool sd_init()
-        //{
-        //    if (CPU::get_core_id() != def_alt_core_id) return false;
-        //
-        //    static SPIClass* vspi = nullptr;
-        //
-        //    if (!vspi) {
-        //        vspi = new SPIClass(SPI_SDCARD);
-        //        vspi->begin(SDCARD_SCK, SDCARD_MISO, SDCARD_MOSI, SDCARD_CS);
-        //        pinMode(vspi->pinSS(), OUTPUT);
-        //    }
-        //
-        //
-        //    /*
-        //    uint8_t ssPin = SS
-        //    SPIClass & spi = SPI
-        //    uint32_t frequency = 4000000
-        //    const char * mountpoint = "/sd"
-        //    uint8_t max_files = 5
-        //    bool format_if_empty = false
-        //    */
-        //    if (!___sd_init_mem()) {
-        //        ___sd_init_mem() = SD.begin(SDCARD_CS /*select pin*/, *vspi, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);            
-        //    }
-        //    return ___sd_init_mem();
-        //}
-        //
-        //
-        //
-        //inline bool is_sd_init()
-        //{
-        //    return ___sd_init_mem();
-        //}
+    namespace _INTERNAL {
 
         MAKE_SINGLETON_CLASS_INIT_C(INITIALIZER,
         {
@@ -62,7 +22,7 @@ namespace SDcard {
                     const auto noww = SD.cardType();
                     
                     if (noww != CARD_MMC && noww != CARD_SD && noww != CARD_SDHC) {
-                        Serial.printf("[SD] SDcard removed / not loaded!\n");
+                        LOGI(TAG, "SDcard removed / not loaded!");
                         SD.end();
                         while(1) {
                             const bool got = SD.begin(SDCARD_CS /*select pin*/, *vspi, 4000000, "/sd", d2u(CS::device_id::_MAX) + 1/*max_files*/, false);
@@ -70,7 +30,7 @@ namespace SDcard {
                             else break;
                         }
 
-                        Serial.printf("[SD] SDcard inserted / loaded!\n");
+                        LOGI(TAG, "SDcard inserted / loaded!");
                     }
                     else {
                         delay(5000);
@@ -79,6 +39,18 @@ namespace SDcard {
             , cpu_core_id_for_sd_card, 10);
         });
 
+    }
+
+    inline bool is_sd_init()
+    {
+        switch(SD.cardType()) {
+        case CARD_MMC:
+        case CARD_SD:
+        case CARD_SDHC:
+            return true;
+        default:
+            return false;
+        }
     }
 
     inline const char* sd_get_type()
@@ -99,39 +71,42 @@ namespace SDcard {
 
     inline bool f_remove(const char* src)
     {
-        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { Serial.println("[SD] GOT CALL FROM WRONG CORE, ABORTING F_REMOVE."); return false; }
+        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING F_REMOVE."); return false; }
         return SD.remove(src);
     }
 
     inline bool f_rename(const char* src, const char* dst)
     {
-        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { Serial.println("[SD] GOT CALL FROM WRONG CORE, ABORTING F_RENAME."); return false; }
+        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING F_RENAME."); return false; }
         return SD.rename(src, dst);
     }
 
     inline File f_open(const char* src, const char* mode)
     {
-        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { Serial.println("[SD] GOT CALL FROM WRONG CORE, ABORTING F_OPEN."); return {}; }
+        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING F_OPEN."); return {}; }
         return SD.open(src, mode);
     }
 
     inline bool rmdir(const char* dir)
     {
-        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { Serial.println("[SD] GOT CALL FROM WRONG CORE, ABORTING RMDIR."); return false; }
+        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING RMDIR."); return false; }
         return SD.rmdir(dir);
     }
 
     inline bool mkdir(const char* dir)
     {
-        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { Serial.println("[SD] GOT CALL FROM WRONG CORE, ABORTING MKDIR."); return false; }
+        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING MKDIR."); return false; }
         return SD.mkdir(dir);
     }
 
     inline bool _list_dir(std::vector<dir_item>& v, const char* d, const size_t l)
     {
-        if (CPU::get_core_id() != cpu_core_id_for_sd_card) { Serial.println("[SD] GOT CALL FROM WRONG CORE, ABORTING _LIST_DIR."); return false; }
+        if (CPU::get_core_id() != cpu_core_id_for_sd_card) {
+            LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING _LIST_DIR.");
+            return false;
+        }
 
-        Serial.printf("@ %s | %zu\n", d, l);
+        //Serial.printf("@ %s | %zu\n", d, l);
         File root = SD.open(d);
 
         if (!root) return false; // fail
@@ -155,12 +130,16 @@ namespace SDcard {
     // deep = 0 -> list only current
     inline std::vector<dir_item> list_dir(const char* dir, const size_t how_deep)
     {
-        if (CPU::get_core_id() != def_alt_core_id) { Serial.println("[SD] GOT CALL FROM WRONG CORE, ABORTING LIST_DIR."); return {}; }
+        if (CPU::get_core_id() != def_alt_core_id) {
+            LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING LIST_DIR.");
+            return {};
+        }
 
         std::vector<dir_item> v;
-        if (!_list_dir(v, dir, how_deep)) {
-            sd_init();
-            _list_dir(v, dir, how_deep); // if fails, idc
+        if (!_list_dir(v, dir, how_deep)) 
+        {
+            LOGW(TAG, "Failed to list dirs!");
+            return {};
         }
         return v;
     }

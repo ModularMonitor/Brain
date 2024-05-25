@@ -8,14 +8,15 @@
 #include <string>
 
 namespace SDcard {
-    bool sd_init();
+
+    const char TAG[] = "SD";
+
     bool is_sd_init();
     const char* sd_get_type();
 
     bool f_remove(const char* src);
     bool f_rename(const char* src, const char* dst);
-    bool f_write_on_file(const char* src, const bool append, const char* what, const size_t len);
-    bool f_read_from_file(const char* src, char* read, const size_t read_len, const size_t offset);
+    File f_open(const char* src, const char* mode);
     bool rmdir(const char* dir);
     bool mkdir(const char* dir);
 

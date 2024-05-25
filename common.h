@@ -1,16 +1,18 @@
-#pragma once
+//#pragma once
 
 #define SPI_DISPLAY HSPI
 #define SPI_SDCARD VSPI
 
-constexpr size_t cpu_stack_default = 6144;
+#define cpu_stack_default  6144
 
-constexpr int def_spi_core_id = 1; // spi (tft screen, touch)
-constexpr int def_alt_core_id = 0; // other tasks (+ sd card)
+#define def_spi_core_id  1 // spi (tft screen, touch)
+#define def_alt_core_id  0 // other tasks (+ sd card)
 
-constexpr int cpu_core_id_for_ctl = def_alt_core_id;
-constexpr int cpu_core_id_for_display = def_spi_core_id;
-constexpr int cpu_core_id_for_sd_card = def_alt_core_id;
+#define cpu_core_id_for_ctl       def_alt_core_id
+#define cpu_core_id_for_display   def_spi_core_id
+#define cpu_core_id_for_sd_card   def_alt_core_id
+
+#define DISPLAY_CALIBRATION_FILE "/display_calibration.ini"
 
 #define DISPLAY_MISO     19
 #define DISPLAY_MOSI     23
@@ -24,6 +26,10 @@ constexpr int cpu_core_id_for_sd_card = def_alt_core_id;
 #define SDCARD_MOSI 14
 #define SDCARD_MISO 32
 #define SDCARD_SCK 12
+
+#define LOGI(TAG, ...) Serial.printf("[CPU%i][%s][I] ", (int)xPortGetCoreID(), TAG); Serial.printf(__VA_ARGS__); Serial.println();
+#define LOGW(TAG, ...) Serial.printf("[CPU%i][%s][W] ", (int)xPortGetCoreID(), TAG); Serial.printf(__VA_ARGS__); Serial.println();
+#define LOGE(TAG, ...) Serial.printf("[CPU%i][%s][E] ", (int)xPortGetCoreID(), TAG); Serial.printf(__VA_ARGS__); Serial.println();
 
 
 // DELETE X if X != nullptr then X = nullptr;

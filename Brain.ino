@@ -1,19 +1,23 @@
 #include "common.h"
+#include "serial_setup.h" // self deploy
 #include "cpu_ctl.h" // self deploy
-#include "display.h" // self deploy
 #include "sdcard.h" // self deploy
+#include "display.h" // self deploy
 
 #include "debug_tools.h"
 
+DP::Display dsp;
+
 void setup()
 {
-    Serial.begin(115200);
-    Serial.printf("Started MASTER\n");
     
     //CPU::run_on_core_sync([](void* a){ SDcard::sd_init(); }, cpu_core_id_for_sd_card, nullptr);
 
-    actcp(idc_loop_sometimes, 0, 1);
-    actcp(idc_loop_sometimes, 1, 1);
+
+    attachInterrupt(digitalPinToInterrupt(0), []{ dsp.toggle_debugging(); }, RISING);
+
+    //actcp(idc_loop_sometimes, 0, 1);
+    //actcp(idc_loop_sometimes, 1, 1);
 }
 
 void loop()
