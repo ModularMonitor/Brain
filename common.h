@@ -32,6 +32,14 @@
 #define SDCARD_MISO   33 // 32
 #define SDCARD_SCK    32 // 12
 
+// G && V == GND && VCC
+#define MODULE4G_S    2  // "Flight"
+#define MODULE4G_K    14 // "Key"
+#define MODULE4G_T    13 // Tx
+#define MODULE4G_R    27 // Rx
+
+
+
 //#define COMM_LED    13
 #define COMM_SDA    4   // 5 on slaves | was 25
 #define COMM_SCL    15  // 4 on slaves | was 26
@@ -68,5 +76,7 @@
 #define RUN_ONLY_ONCE(FUNCTIONNAME, ...) MAKE_SINGLETON_CLASS_INIT_C(RUNNABLE_##FUNCTIONNAME, FUNCTIONNAME(__VA_ARGS__), FUNCFLAGS );
 #define RUN_ONLY_ONCE_FLAGGED(FUNCTIONNAME, FUNCFLAGS, ...) MAKE_SINGLETON_CLASS_INIT_C(RUNNABLE_##FUNCTIONNAME, FUNCTIONNAME(__VA_ARGS__), FUNCFLAGS );
 #define RUN_ASYNC_ON_CORE_AUTO(CLASSNAME, THREADNAME, LOOPFUNC, COREID, PRIORITY) MAKE_SINGLETON_CLASS_INIT(ASYNC_##THREADNAME,  { CLASSNAME obj; public: ASYNC_##THREADNAME() { actcpba( while(1) { ((CLASSNAME*)arg)->LOOPFUNC(); yield(); }, COREID, PRIORITY, (void*)&obj); } const CLASSNAME& get_internal_variable() const { return obj; } CLASSNAME& get_internal_variable() { return obj; } }   )
+
+#define SET_DISPLAY_BRIGHTNESS(PERCENTAGE_0_TO_1) analogWrite(DISPLAY_LED, static_cast<int>(powf(PERCENTAGE_0_TO_1, 0.25f) * 255.0f))
 
 #include "logger.h"

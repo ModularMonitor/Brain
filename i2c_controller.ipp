@@ -14,7 +14,9 @@ namespace I2CC {
 
                 LOGI(TAG, "Making first attempt to create/check paths...");
                 make_paths();
-                LOGI(TAG, "Started package control.");
+                LOGI(TAG, "Starting package control in 2 seconds.");
+
+                delay(2000);
 
                 // LATER: have a val in global map dynamic so time is configurable!
                 //::CPU::AutoWait tl[d2u(device_id::_MAX)]{1000,1000,1000,1000,1000,1000,1000};

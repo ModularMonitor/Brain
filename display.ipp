@@ -13,6 +13,7 @@ namespace DP {
         m_tft->init();
         m_tft->setRotation(3);
         m_tft->fillScreen(TFT_DARKGREEN);
+        SET_DISPLAY_BRIGHTNESS(0.2f);
 
         //m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
         //m_tft->setTextSize(1);
@@ -259,7 +260,10 @@ namespace DP {
             LOGI(TAG, "Loaded all modules. Ready to start UI...");
             m_disp->terminal_print();
 
-            delay(1000);
+            delay(500);
+            SET_DISPLAY_BRIGHTNESS(0.5f);
+            delay(500);
+            SET_DISPLAY_BRIGHTNESS(1.0f);
 
             next_screen = screen::HOME;
         }
