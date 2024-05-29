@@ -83,9 +83,13 @@ namespace DP {
         };
 
         Display* m_disp = nullptr;
+        std::shared_ptr<TFT_eSPI> m_tft; // of m_disp!
         TouchCtl* m_touch = nullptr;
         screen m_screen = screen::DEBUG_CMD;
         bool m_ext_cmd_req = false;
+
+        CPU::AutoWait m_clock_update_time{1000}; // every second makes sense
+        CPU::AutoWait m_sdcard_update_time{5000};
 
         // param: with background on last?
         void draw_mouse(bool = true);

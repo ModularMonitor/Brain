@@ -7,6 +7,45 @@
 
 namespace DP {
 
+    namespace Bitmaps {
+        // 11 x 13 SD card icon:
+        PROGMEM const unsigned char sd_card_icon_11_13[] = {
+            0b00011111, 0b11100000,
+            0b00111111, 0b11100000,
+            0b01111111, 0b11100000,
+            0b11111000, 0b11100000,
+            0b11110000, 0b11100000,
+            0b11100000, 0b11100000,
+            0b11100000, 0b11100000,
+            0b11100000, 0b11100000,
+            0b11100000, 0b11100000,
+            0b11100000, 0b11100000,
+            0b11111111, 0b11100000,
+            0b11111111, 0b11100000,
+            0b11111111, 0b11100000
+        };
+
+        // 11 x 14 DB icon
+        PROGMEM const unsigned char database_icon_11_14[] = {
+            0b01111111, 0b11000000,
+            0b11111111, 0b11100000,
+            0b11100000, 0b11100000,
+            0b11111111, 0b11100000,
+            0b11111111, 0b11100000,
+            0b11011111, 0b01100000,
+            0b11000000, 0b01100000,
+            0b11000000, 0b01100000,
+            0b11000000, 0b01100000,
+            0b11000000, 0b01100000,
+            0b11100000, 0b11100000,
+            0b11111111, 0b11100000,
+            0b01111111, 0b11000000,
+            0b00111111, 0b10000000
+            
+        };
+
+    }
+
     inline Display::Display()
         : m_tft(std::unique_ptr<TFT_eSPI>(new TFT_eSPI()))
     {
@@ -32,25 +71,6 @@ namespace DP {
     {
         return m_tft.get();
     }
-
-    //inline bool Display::is_debugging() const
-    //{
-    //    return m_is_log_screen;
-    //}
-    //
-    //inline void Display::toggle_debugging()
-    //{
-    //    m_is_log_screen = !m_is_log_screen;
-    //    //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
-    //    //else                 { LOGI(TAG, "Debug screen disabled!"); }
-    //}
-    //
-    //inline void Display::set_debugging(const bool b)
-    //{
-    //    m_is_log_screen = b;
-    //    //if (m_is_log_screen) { LOGI(TAG, "Debug screen enabled!"); }
-    //    //else                 { LOGI(TAG, "Debug screen disabled!"); }
-    //}
 
     inline void Display::terminal_print()
     {
@@ -88,13 +108,21 @@ namespace DP {
         LOGI(TAG, "Checking file " DISPLAY_CALIBRATION_FILE "...");
         m_disp.terminal_print();
 
+        uint16_t calibrationData[6]{}; // 14 bytes actually + 1 extra byte for flag
+
         if (!SDcard::is_sd_init()) {
-            LOGE(TAG, "SD card is not present! Touch calibration won't run this time.");
+            LOGE(TAG, "SD card is not present! Touch calibration will run all times this way! Please insert a SD Card next time.");
+
+            m_disp.terminal_print();
+            delay(1000);
+            
+            m_disp->fillScreen(TFT_BLACK);
+            m_disp->calibrateTouch(calibrationData, TFT_WHITE, TFT_RED, 15);
+            m_disp->fillScreen(TFT_BLACK);
+
             m_disp.terminal_print();
         }
         else { // has SD card
-
-            uint16_t calibrationData[6]{}; // 14 bytes actually + 1 extra byte for flag
 
             CPU::run_on_core_sync([](void* a){
                 uint16_t* calData = (uint16_t*)a;
@@ -233,14 +261,14 @@ namespace DP {
         const int32_t oy = m_touch->get_y(true);
 
         const auto draw_arrow = [&](const int32_t x, const int32_t y, const int color) {
-            (*m_disp)->drawFastHLine(x, y, 6, color);
-            (*m_disp)->drawFastHLine(x, y + 1, 6, color);
-            (*m_disp)->drawFastVLine(x, y, 6, color);
-            (*m_disp)->drawFastVLine(x + 1, y, 6, color);
+            m_tft->drawFastHLine(x, y, 6, color);
+            m_tft->drawFastHLine(x, y + 1, 6, color);
+            m_tft->drawFastVLine(x, y, 6, color);
+            m_tft->drawFastVLine(x + 1, y, 6, color);
             
-            (*m_disp)->drawLine(x, y, x + 6, y + 6, color);
-            (*m_disp)->drawLine(x + 1, y, x + 7, y + 6, color);
-            (*m_disp)->drawLine(x, y + 1, x + 6, y + 7, color);
+            m_tft->drawLine(x, y, x + 6, y + 6, color);
+            m_tft->drawLine(x + 1, y, x + 7, y + 6, color);
+            m_tft->drawLine(x, y + 1, x + 6, y + 7, color);
         };
 
         if (bg) draw_arrow(ox, oy, TFT_BLACK);
@@ -256,6 +284,7 @@ namespace DP {
         if (!m_disp) {
             m_disp = new Display();
             m_touch = new TouchCtl(*m_disp);
+            m_tft = m_disp->share_tft();
 
             LOGI(TAG, "Loaded all modules. Ready to start UI...");
             m_disp->terminal_print();
@@ -305,20 +334,21 @@ namespace DP {
 
         // TOOLS:
         const bool state_changed = next_screen != m_screen;
+        STR::SharedData& shared_data = STR::get_singleton_of_SharedData();
 
         switch(next_screen) {
         case screen::DEBUG_CMD: // only log screen
         {
             const bool update_forced = (!m_touch->is_down() && m_touch->last_event_was_ms() < 400);
 
-            if (state_changed) (*m_disp)->fillScreen(TFT_DARKGREEN);
+            if (state_changed) m_tft->fillScreen(TFT_DARKGREEN);
 
             // if had new line on log or touch stuff
             if (LG::get_singleton_of_Logger().for_display_had_news() || update_forced || state_changed) {
                 m_disp->terminal_print();
-                (*m_disp)->fillRect(460, 0, 20, 20, TFT_RED);
-                (*m_disp)->drawLine(462, 2, 478, 18, 0xA000);
-                (*m_disp)->drawLine(478, 18, 462, 2, 0xA000);
+                m_tft->fillRect(460, 0, 20, 20, TFT_RED);
+                m_tft->drawLine(462, 2, 478, 18, 0xA000);
+                m_tft->drawLine(478, 18, 462, 2, 0xA000);
             }
 
             // touch shenanigans
@@ -329,14 +359,97 @@ namespace DP {
             break;
         case screen::HOME:
         {
+            STR::SIMData& sim = shared_data.get_sim_data();
+
+            m_tft->setTextSize(1);
+
             if (state_changed) {
-                (*m_disp)->fillRect(0, 0, 480, 20, 0x34da); // top bar bg
-                (*m_disp)->fillRect(440, 20, 480, 320, 0xcd49); // right bar menu
-                (*m_disp)->fillRect(0, 20, 440, 320, TFT_WHITE); // body
-                
-                //(*m_disp)->fillScreen(TFT_BLACK);
-                //(*m_disp)->fillRect(460, 0, 20, 20, TFT_RED);
+                m_tft->fillRect(0, 0, 480, 20, 0x34da); // top bar bg
+                m_tft->fillRect(440, 20, 480, 320, 0xcd49); // right bar menu
+                m_tft->fillRect(0, 20, 440, 320, TFT_WHITE); // body
+
+                m_tft->setTextColor(TFT_BLACK, 0x34da); // top bar
+
+                m_tft->drawString("Waiting 4G...", 2, 2, 2);
+                m_tft->drawString("...", 457, 2, 2);
+                m_tft->drawString("4G", 406, 2, 2);
+
+                m_tft->drawBitmap(376, 4, Bitmaps::sd_card_icon_11_13, 11, 13, TFT_BLACK);
+                m_tft->drawBitmap(289, 3, Bitmaps::database_icon_11_14, 11, 14, TFT_BLACK);
             }
+            else {
+                m_tft->setTextColor(TFT_BLACK, 0x34da); // top bar
+
+                // = = = = = = TIME (clock) = = = = = = //
+                if (sim.has_new_data_of(STR::SIMData::test_has_new_data_of::TIME) || (m_clock_update_time.is_time() && sim.get_rssi() != -1)) {
+                    char safe_buffer[96];
+                    m_tft->drawString(sim.get_time(safe_buffer, 96), 2, 2, 2);
+                }
+
+                // = = = = = = SD Card status = = = = = = //
+                if (m_sdcard_update_time.is_time()) {
+                    const char* stat = SDcard::sd_get_type();
+                    const int wd = m_tft->textWidth(stat, 2);
+
+                    m_tft->fillRect(304, 2, 70, 16, 0x34da); // fill color
+                    m_tft->drawString(stat, 374 - wd - 2, 2, 2);
+                }
+
+                // = = = = = = DB connection = = = = = = //
+                
+                // = = = = = = RSSI (bar and text) = = = = = = //
+                if (sim.get_rssi() == -1) {
+                    m_tft->drawString("??", 457, 2, 2);
+
+                    switch((CPU::get_time_ms() / 200) % 4){
+                    case 3:
+                        m_tft->fillRect(448,  3, 5, 14, TFT_BLACK);
+                        m_tft->fillRect(441,  6, 5, 11, 0x34da);
+                        //m_tft->fillRect(434,  9, 5,  8, 0x34da);
+                        //m_tft->fillRect(427, 12, 5,  5, 0x34da);
+                        break;
+                    case 2:
+                        //m_tft->fillRect(448,  3, 5, 14, 0x34da);
+                        m_tft->fillRect(441,  6, 5, 11, TFT_BLACK);
+                        m_tft->fillRect(434,  9, 5,  8, 0x34da);
+                        //m_tft->fillRect(427, 12, 5,  5, 0x34da);
+                        break;
+                    case 1:
+                        //m_tft->fillRect(448,  3, 5, 14, 0x34da);
+                        //m_tft->fillRect(441,  6, 5, 11, 0x34da);
+                        m_tft->fillRect(434,  9, 5,  8, TFT_BLACK);
+                        m_tft->fillRect(427, 12, 5,  5, 0x34da);
+                        break;
+                    default:
+                        m_tft->fillRect(448,  3, 5, 14, 0x34da);
+                        //m_tft->fillRect(441,  6, 5, 11, 0x34da);
+                        //m_tft->fillRect(434,  9, 5,  8, 0x34da);
+                        m_tft->fillRect(427, 12, 5,  5, TFT_BLACK);
+                        break;
+                    }
+                }
+                else if (sim.has_new_data_of(STR::SIMData::test_has_new_data_of::RSSI)) {
+                    const int rssi = sim.get_rssi();
+
+                    char buf_test[32];
+                    snprintf(buf_test, 32, "%i", rssi);
+                    const int wd = m_tft->textWidth(buf_test, 2);
+                    m_tft->drawString(buf_test, 480 - wd - 2, 2, 2);
+                    
+                    if (rssi > -65) m_tft->fillRect(448,  3, 5, 14, TFT_BLACK);
+                    else            m_tft->fillRect(448,  3, 5, 14, 0x34da);
+
+                    if (rssi > -75) m_tft->fillRect(441,  6, 5, 11, TFT_BLACK);
+                    else            m_tft->fillRect(441,  6, 5, 11, 0x34da);
+
+                    if (rssi > -85) m_tft->fillRect(434,  9, 5,  8, TFT_BLACK);
+                    else            m_tft->fillRect(434,  9, 5,  8, 0x34da);
+
+                    if (rssi > -95) m_tft->fillRect(427, 12, 5,  5, TFT_BLACK);
+                    else            m_tft->fillRect(427, 12, 5,  5, 0x34da);
+                }
+            }
+
         }
             break;
         }

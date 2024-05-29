@@ -9,16 +9,12 @@
 
 namespace I2CC {
 
-    static const char TAG[] = "I2C";
+    static const char TAG[2][4] = {"I2C", "STR"};
 
-    constexpr decltype(millis()) loop_delay = 1000;
+    constexpr int loop_delay = 1000;
+    constexpr int store_delay = 1000;
 
-    //void format_and_store_sd_card(const uint64_t timestamp, const device_id did, const char* path, const double val);
-    //void format_and_store_sd_card(const uint64_t timestamp, const device_id did, const char* path, const float val);
-    //void format_and_store_sd_card(const uint64_t timestamp, const device_id did, const char* path, const int64_t val);
-    //void format_and_store_sd_card(const uint64_t timestamp, const device_id did, const char* path, const uint64_t val);
-
-    void make_paths();
+    bool make_paths(const char*);
 
 
 

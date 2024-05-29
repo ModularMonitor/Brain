@@ -8,16 +8,6 @@ namespace LTE {
 
     inline void SIM::update_location()
     {
-        // not working right now.
-        //LOGI(TAG, "Updating local time and globe position... %s",
-        //    m_modem->getGsmLocation(
-        //        &m_loc.lat, &m_loc.lon, &m_loc.acc,
-        //        &m_loc.year, &m_loc.month, &m_loc.day,
-        //        &m_loc.hour, &m_loc.minute, &m_loc.second) ? "Done." : "Failed!"
-        //    );
-        
-        //const String time_now = m_modem->getGSMDateTime(TinyGSMDateTimeFormat::DATE_FULL);
-
         float timezone = 0.0f;
         m_modem->getNetworkTime(&m_loc.tm_year, &m_loc.tm_mon, &m_loc.tm_mday, &m_loc.tm_hour, &m_loc.tm_min, &m_loc.tm_sec, &timezone);
         m_loc.tm_mon--;
@@ -27,12 +17,34 @@ namespace LTE {
         m_loc.tm_hour += timezone_hours;
         m_loc.tm_min += timezone_mins;
         mktime(&m_loc);
+
+        STR::SharedData& shr = STR::get_singleton_of_SharedData();
+        shr.get_sim_data().set_time(m_loc);
     }
 
     inline void SIM::update_rssi()
     {
-        m_rssi = m_modem->getSignalQuality();
-        //LOGI(TAG, "Updated RSSI: %i", m_rssi);
+        int raw_rssi = m_modem->getSignalQuality();
+        
+        switch(raw_rssi) {
+        case 0: raw_rssi = -113; break; // or less
+        case 1: raw_rssi = -111; break;
+        case 31: raw_rssi = -51; break; // or greater
+        case 99: raw_rssi = -1; break; // unknown
+        case 100: raw_rssi = -116; break; // or less
+        case 101: raw_rssi = -115; break;
+        case 191: raw_rssi = -25; break; // or greater
+        case 199: raw_rssi = -1; break; // unknown
+        default:
+            if (raw_rssi >= 2 && raw_rssi <= 30) raw_rssi = map(raw_rssi, 2, 30, -109, -53);
+            else if (raw_rssi >= 102 && raw_rssi < 191) raw_rssi = map(raw_rssi, 102, 191, -114, -26);
+            else raw_rssi = -1;
+            break;
+        }
+
+        m_rssi = raw_rssi;
+        STR::SharedData& shr = STR::get_singleton_of_SharedData();
+        shr.get_sim_data().set_rssi(m_rssi);
     }
 
     inline void SIM::task()
@@ -71,52 +83,6 @@ namespace LTE {
 
         if (m_loc_upd.is_time()) update_location();
         if (m_rssi_upd.is_time()) update_rssi();
-    }
-
-    inline struct tm SIM::get_time() const
-    {
-        return m_loc;
-    }
-
-    inline void SIM::get_time_str(char* buf, const size_t buf_len, const SIM::time_format format, const SIM::time_type type) const
-    {
-        switch(format) {
-        case SIM::time_format::CLOCK_FULL:
-            if (type == SIM::time_type::HOUR_12) {
-                snprintf(buf, buf_len, "%02i:%02i:%02i %s",
-                    (m_loc.tm_hour % 12 == 0 ? 12 : m_loc.tm_hour % 12), m_loc.tm_min, m_loc.tm_sec, m_loc.tm_hour >= 12 ? "PM" : "AM");
-            }
-            else {
-                snprintf(buf, buf_len, "%02i:%02i:%02i",
-                    m_loc.tm_hour, m_loc.tm_min, m_loc.tm_sec);
-            }
-            break;
-        case SIM::time_format::CLOCK_RESUMED:
-            if (type == SIM::time_type::HOUR_12) {
-                snprintf(buf, buf_len, "%02i:%02i %s",
-                    (m_loc.tm_hour % 12 == 0 ? 12 : m_loc.tm_hour % 12), m_loc.tm_min, m_loc.tm_hour >= 12 ? "PM" : "AM");
-            }
-            else {
-                snprintf(buf, buf_len, "%02i:%02i",
-                    m_loc.tm_hour, m_loc.tm_min);
-            }
-            break;
-        case SIM::time_format::DATE:
-            snprintf(buf, buf_len, "%04i/%02i/%02i", m_loc.tm_year + 1900, m_loc.tm_mon + 1, m_loc.tm_mday);
-            break;
-        case SIM::time_format::BOTH_FULL:
-            if (type == SIM::time_type::HOUR_12) {
-                snprintf(buf, buf_len, "%04i/%02i/%02i %02i:%02i:%02i %s",
-                    m_loc.tm_year + 1900, m_loc.tm_mon + 1, m_loc.tm_mday,
-                    (m_loc.tm_hour % 12 == 0 ? 12 : m_loc.tm_hour % 12), m_loc.tm_min, m_loc.tm_sec, m_loc.tm_hour >= 12 ? "PM" : "AM");
-            }
-            else {
-                snprintf(buf, buf_len, "%04i/%02i/%02i %02i:%02i:%02i",
-                    m_loc.tm_year + 1900, m_loc.tm_mon + 1, m_loc.tm_mday,
-                    m_loc.tm_hour, m_loc.tm_min, m_loc.tm_sec);
-            }
-            break;
-        }
     }
 
 }
