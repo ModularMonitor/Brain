@@ -85,6 +85,12 @@ namespace STR {
         data_cptr end() const;
     };
 
+    class SIMData {
+        struct tm m_copy_loc;
+        uint64_t m_copy_loc_off = 0;
+        
+    };
+
     MAKE_SINGLETON_CLASS(SharedData, {
         StoredDataEachDevice m_devices[CS::d2u(CS::device_id::_MAX)]{};
     public:

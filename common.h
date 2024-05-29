@@ -11,6 +11,7 @@
 #define cpu_core_id_for_ctl       def_alt_core_id
 #define cpu_core_id_for_display   def_spi_core_id
 #define cpu_core_id_for_sd_card   def_alt_core_id
+#define cpu_core_id_for_4g_lte    def_alt_core_id
 
 #define DISPLAY_CALIBRATION_FILE "/display_calibration.ini"
 
@@ -75,7 +76,7 @@
 
 #define RUN_ONLY_ONCE(FUNCTIONNAME, ...) MAKE_SINGLETON_CLASS_INIT_C(RUNNABLE_##FUNCTIONNAME, FUNCTIONNAME(__VA_ARGS__), FUNCFLAGS );
 #define RUN_ONLY_ONCE_FLAGGED(FUNCTIONNAME, FUNCFLAGS, ...) MAKE_SINGLETON_CLASS_INIT_C(RUNNABLE_##FUNCTIONNAME, FUNCTIONNAME(__VA_ARGS__), FUNCFLAGS );
-#define RUN_ASYNC_ON_CORE_AUTO(CLASSNAME, THREADNAME, LOOPFUNC, COREID, PRIORITY) MAKE_SINGLETON_CLASS_INIT(ASYNC_##THREADNAME,  { CLASSNAME obj; public: ASYNC_##THREADNAME() { actcpba( while(1) { ((CLASSNAME*)arg)->LOOPFUNC(); yield(); }, COREID, PRIORITY, (void*)&obj); } const CLASSNAME& get_internal_variable() const { return obj; } CLASSNAME& get_internal_variable() { return obj; } }   )
+#define RUN_ASYNC_ON_CORE_AUTO(CLASSNAME, THREADNAME, LOOPFUNC, COREID, PRIORITY) MAKE_SINGLETON_CLASS_INIT(ASYNC_##THREADNAME,  { CLASSNAME obj; public: ASYNC_##THREADNAME() { actcpba( while(1) { ((CLASSNAME*)arg)->LOOPFUNC(); yield(); }, COREID, PRIORITY, (void*)&obj); } const CLASSNAME& get_internal_variable() const { return obj; } CLASSNAME& get_internal_variable() { return obj; } }   ) CLASSNAME& get_singleton_of_##CLASSNAME() { return get_singleton_of_ASYNC_##THREADNAME().get_internal_variable(); }
 
 #define SET_DISPLAY_BRIGHTNESS(PERCENTAGE_0_TO_1) analogWrite(DISPLAY_LED, static_cast<int>(powf(PERCENTAGE_0_TO_1, 0.25f) * 255.0f))
 

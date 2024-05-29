@@ -78,6 +78,7 @@
         "span": "cpp",
         "condition_variable": "cpp",
         "semaphore": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "*.tpp": "cpp"
     }
 }
