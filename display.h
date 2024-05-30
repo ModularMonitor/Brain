@@ -101,6 +101,7 @@ namespace DP {
     class LateralBtnCtl {
     public:
         enum class event_type {
+            NO_EVENT, // when nothing was clicked on lateral button ctl
             GO_HOME, // Go back home button
             VERTICAL_ALIGNMENT_CHANGED, // arrow up and down
             GO_DEBUG, // config button
@@ -109,11 +110,12 @@ namespace DP {
     private:
         int m_vertical_track = 0; // used in lists. up == --; down == ++
     public:
-        event_type touch_event_test(TouchCtl&, const int);
+        event_type touch_event_test(TouchCtl&, const int, const int);
         int get_vertical_pos() const;
         void set_vertical_pos(int);
     };
 
+    void draw_block_at(const char* title, const char* subtitle, const char* subsubtitle, TFT_eSPI* m_tft, const size_t offset, const bool update_body, const bool update, const uint16_t border, const uint16_t fill, const uint16_t font_color = TFT_BLACK);
     void draw_resumed_at(const ::STR::StoredDataEachDevice&, TFT_eSPI*, size_t, const bool&, const char*);
 
     // DisplayCtl:

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "esp32/clk.h"
 #include "esp32-hal.h"
 #include "esp32-hal-cpu.h"
 #include "soc/rtc.h"

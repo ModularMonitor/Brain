@@ -58,7 +58,7 @@ namespace STR {
 
 
     class StoredDataEachDevice {
-        std::deque<std::unique_ptr<RepresentedData>> m_data;
+        std::deque<std::shared_ptr<RepresentedData>> m_data;
 
         // user settings
         uint32_t m_store_sd_card = 0; // 0 means no, else [seconds]
@@ -71,13 +71,13 @@ namespace STR {
         // FOR DISPLAY!
         bool m_has_new_data_for_display_update = false;
 
-        RepresentedData* _find(const char*) const;
+        std::shared_ptr<RepresentedData> _find(const char*) const;
     public:
-        using data_cptr = std::deque<std::unique_ptr<RepresentedData>>::const_iterator;
+        using data_cptr = std::deque<std::shared_ptr<RepresentedData>>::const_iterator;
 
         template<typename T> 
         void update_data(const char*, const T&);
-        const RepresentedData* get(const char*) const;
+        const std::shared_ptr<RepresentedData> get(const char*) const;
 
         void set_has_issues(const bool);
         void set_is_online(const bool);
@@ -87,8 +87,8 @@ namespace STR {
 
         size_t size() const;
 
-        RepresentedData* operator()(const size_t);
-        const RepresentedData* operator[](const size_t) const;
+        std::shared_ptr<RepresentedData> operator()(const size_t);
+        const std::shared_ptr<RepresentedData> operator[](const size_t) const;
         
         data_cptr begin() const;
         data_cptr end() const;

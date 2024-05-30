@@ -113,19 +113,19 @@ namespace STR {
 
 
 
-    inline RepresentedData* StoredDataEachDevice::_find(const char* s) const
+    inline std::shared_ptr<RepresentedData> StoredDataEachDevice::_find(const char* s) const
     {
         for(auto i = m_data.begin(); i != m_data.end(); ++i) {
-            if ((*i)->is_path(s)) return i->get();
+            if ((*i)->is_path(s)) return (*i);
         }
-        return nullptr;
+        return {};
     }
 
     template<typename T>
     inline void StoredDataEachDevice::update_data(const char* s, const T& v)
     {
         m_has_new_data_for_display_update = true;
-        RepresentedData* it = _find(s);
+        std::shared_ptr<RepresentedData> it = _find(s);
         if (!it) {
             m_data.push_back(std::move(std::unique_ptr<RepresentedData>(new RepresentedData(s, v))));
             return;
@@ -133,21 +133,21 @@ namespace STR {
         it->set_value(v);
     }
 
-    inline const RepresentedData* StoredDataEachDevice::get(const char* s) const
+    inline const std::shared_ptr<RepresentedData> StoredDataEachDevice::get(const char* s) const
     {
         return _find(s);
     }
 
     inline void StoredDataEachDevice::set_has_issues(const bool v)
     {
+        m_has_new_data_for_display_update = m_has_issues != v;
         m_has_issues = v;
-        m_has_new_data_for_display_update = true;
     }
 
     inline void StoredDataEachDevice::set_is_online(const bool v)
     {
+        m_has_new_data_for_display_update = m_online != v;
         m_online = v;
-        m_has_new_data_for_display_update = true;
     }
 
     inline bool StoredDataEachDevice::get_has_issues() const
@@ -166,17 +166,17 @@ namespace STR {
         return m_data.size();
     }
 
-    inline RepresentedData* StoredDataEachDevice::operator()(const size_t idx)
+    inline std::shared_ptr<RepresentedData> StoredDataEachDevice::operator()(const size_t idx)
     {
-        if (idx >= m_data.size()) return nullptr;
+        if (idx >= m_data.size()) return {};
         m_has_new_data_for_display_update = true;
-        return (m_data.begin() + idx)->get();
+        return *(std::next(m_data.begin(), idx));
     }
 
-    inline const RepresentedData* StoredDataEachDevice::operator[](const size_t idx) const
+    inline const std::shared_ptr<RepresentedData> StoredDataEachDevice::operator[](const size_t idx) const
     {
-        if (idx >= m_data.size()) return nullptr;
-        return (m_data.begin() + idx)->get();
+        if (idx >= m_data.size()) return {};
+        return *(std::next(m_data.begin(), idx));
     }
     
     inline StoredDataEachDevice::data_cptr StoredDataEachDevice::begin() const

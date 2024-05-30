@@ -141,14 +141,14 @@ namespace DP {
     inline const char* get_fancy_name_for(CS::device_id id)
     {
         switch(id) {
-        case CS::device_id::DHT22_SENSOR:       return u8"Modulo de temperatura e humidade";
-        case CS::device_id::MICS_6814_SENSOR:   return u8"Modulo de NO2, NH3 e CO";
-        case CS::device_id::LY038_HW072_SENSOR: return u8"Modulo de som e luz";
-        case CS::device_id::GY87_SENSOR:        return u8"Modulo acelerometro, giroscopio, barometro";
-        case CS::device_id::CCS811_SENSOR:      return u8"Modulo de eCO2 e TVOC";
-        case CS::device_id::PMSDS011_SENSOR:    return u8"Modulo de particulas no ar";
-        case CS::device_id::BATTERY_SENSOR:     return u8"Modulo da bateria";
-        default:                                return u8"Desconhecido";
+        case CS::device_id::DHT22_SENSOR:       return "Modulo de temperatura e humidade";
+        case CS::device_id::MICS_6814_SENSOR:   return "Modulo de NO2, NH3 e CO";
+        case CS::device_id::LY038_HW072_SENSOR: return "Modulo de som e luz";
+        case CS::device_id::GY87_SENSOR:        return "Modulo acelerometro, giroscopio, barometro";
+        case CS::device_id::CCS811_SENSOR:      return "Modulo de eCO2 e TVOC";
+        case CS::device_id::PMSDS011_SENSOR:    return "Modulo de particulas no ar";
+        case CS::device_id::BATTERY_SENSOR:     return "Modulo da bateria";
+        default:                                return "Desconhecido";
         }
     }
 
@@ -360,7 +360,7 @@ namespace DP {
 
 
 
-    LateralBtnCtl::event_type LateralBtnCtl::touch_event_test(TouchCtl& t, const int max_off)
+    LateralBtnCtl::event_type LateralBtnCtl::touch_event_test(TouchCtl& t, const int min_val, const int max_val)
     {
         uint16_t buttons{};
         for(size_t p = 0; p < 5; ++p) buttons |= (static_cast<uint16_t>(t.is_touch_on(480 - bar_right_width, bar_top_height + (p * bar_right_each_height), 40, 60)) << p);
@@ -369,10 +369,10 @@ namespace DP {
         case 0x01: // home
             return event_type::GO_HOME;
         case 0x02: // up
-            ++m_vertical_track;
+            if (m_vertical_track < max_val) ++m_vertical_track;
             return event_type::VERTICAL_ALIGNMENT_CHANGED;
         case 0x04: // down
-            --m_vertical_track;
+            if (m_vertical_track > min_val) --m_vertical_track;
             return event_type::VERTICAL_ALIGNMENT_CHANGED;
             break;
         case 0x08: // debug
@@ -380,7 +380,7 @@ namespace DP {
         case 0x10: // config
             return event_type::GO_CONFIG;
         default: // if somehow
-            return event_type::GO_HOME;
+            return event_type::NO_EVENT;
         }
     }
 
@@ -396,30 +396,70 @@ namespace DP {
 
 
 
+    inline void draw_block_at(const char* title, const char* subtitle, const char* subsubtitle, TFT_eSPI* m_tft,
+        const size_t offset, const bool update, const bool update_body, const uint16_t border,
+        const uint16_t fill, const uint16_t font_color)
+    {
+        const int32_t base_y = static_cast<int32_t>(21 + (offset * item_resumed_height_max));
+
+        if (base_y > 320) return;
+
+        if (update_body) {
+            m_tft->fillRoundRect(
+                1, base_y,
+                item_resumed_width_max - 2, item_resumed_height_max - 2, item_resumed_border_radius,
+                border);
+            m_tft->fillRoundRect(
+                3, base_y + 2,
+                item_resumed_width_max - 6, item_resumed_height_max - 6, item_resumed_border_radius,
+                fill);
+        }
+
+        if (update || update_body) {
+            m_tft->setTextColor(font_color, fill);
+
+            if (subsubtitle) {
+                m_tft->drawString(title, 6, base_y + 5, 2);
+                m_tft->drawString(subtitle, 6, base_y + 20, 2);
+                m_tft->drawString(subsubtitle, 6, base_y + 35, 2);
+            }
+            else {
+                m_tft->drawString(title, 6, base_y + 5, 2);
+                m_tft->drawString(subtitle, 6, base_y + 30, 2);
+            }
+
+        }
+    }
 
     inline void draw_resumed_at(::STR::StoredDataEachDevice& m_dev, TFT_eSPI* m_tft, const size_t item_in_list, const bool& state_changed, const char* name)
     {
         const uint16_t bgcolor = m_dev.get_has_issues() ? item_has_issues_bg_color : (m_dev.get_is_online() ? item_online_bg_color : TFT_DARKGREY);
         const uint16_t bordercolor = m_dev.get_has_issues() ? item_has_issues_bg_color_border : (m_dev.get_is_online() ? item_online_bg_color_border : TFT_DARKGREY);
-        const int32_t base_y = static_cast<int32_t>(21 + (item_in_list * item_resumed_height_max));
 
-        if (base_y > 320) return;
+        const size_t siz = m_dev.size();
+        const char no_data[] = "sem dados";
 
-        if (state_changed) {
-            m_tft->fillRoundRect(
-                1, base_y,
-                item_resumed_width_max - 2, item_resumed_height_max - 2, item_resumed_border_radius,
-                bordercolor);
+        if (!siz) {
+            draw_block_at(name, no_data, nullptr, m_tft, item_in_list,
+                state_changed, state_changed || m_dev.has_new_data_for_display(), bordercolor,
+                bgcolor, TFT_BLACK);
+            return;
         }
 
-        if (state_changed || m_dev.has_new_data_for_display()) {
-            m_tft->fillRoundRect(
-                3, base_y + 2,
-                item_resumed_width_max - 6, item_resumed_height_max - 6, item_resumed_border_radius,
-                bgcolor);
-            m_tft->setTextColor(TFT_BLACK);
-            m_tft->drawString(name, 6, base_y + 5, 2);
-        }
+        const size_t                                    off_by_time = (CPU::get_time_ms() / 2000) % siz;
+        const auto                                      item        = m_dev[off_by_time];
+        const ::STR::RepresentedData::data_storage*     data        = item ? item->get_in_time(0) : nullptr;
+        
+        const char* path = item ? item->get_path() : no_data;
+        const char* value = data ? data->get_value() : no_data;
+        const uint64_t time_since_update_sec = data ? ((CPU::get_time_ms() - data->get_modified_ms()) / 1000) : 0;
+
+        char minibuf[128];
+        char secnbuf[64];
+        snprintf(minibuf, 128, "%s = %s  ", path, value);
+        snprintf(secnbuf, 64, "(%" PRIu64 " seg atras)  ", time_since_update_sec);
+
+        draw_block_at(name, minibuf, item ? secnbuf : nullptr, m_tft, item_in_list, state_changed, m_dev.has_new_data_for_display(), bordercolor, bgcolor, TFT_BLACK);
     }
 
 
@@ -560,6 +600,7 @@ namespace DP {
     {
         // track screen change
         screen next_screen = m_screen;
+        STR::SharedData& shared_data = STR::get_singleton_of_SharedData();
 
         // Guarantee everything is loaded
         if (!m_disp) {
@@ -583,6 +624,7 @@ namespace DP {
 
         // ======== ALWAYS RUN BLOCK ======== //
         const bool had_touch_event = m_touch->task();
+
         //if (m_touch->task()) { // touch event, task.
         //    LOGI(TAG, "Touch event @ %i:%i (delta: %" PRIu64 " ms)", (int)m_touch->get_x(), (int)m_touch->get_y(), m_touch->get_delta_time_of_last_ms());
         //}
@@ -600,19 +642,14 @@ namespace DP {
                 break;
             default:
             {
-                const auto cmd = m_btns.touch_event_test(*m_touch, 99); // = = = = = = = = = = TODO TBD LIMIT HERE OF ITEMS TO SCROLL, this is dynamic and depends on current mode
+                const auto cmd = m_btns.touch_event_test(*m_touch, -2, 0); // = = = = = = = = = = TODO TBD LIMIT HERE OF ITEMS TO SCROLL, this is dynamic and depends on current mode
+
                 switch(cmd) {
                 case LateralBtnCtl::event_type::GO_HOME: // Go back home button
                     next_screen = screen::HOME;
                     m_btns.set_vertical_pos(0);
                     break;
                 case LateralBtnCtl::event_type::VERTICAL_ALIGNMENT_CHANGED: // arrow up and down
-                    switch(next_screen) {
-                    case screen::HOME:
-                        if (-m_btns.get_vertical_pos() > item_resumed_max_offset) m_btns.set_vertical_pos(-item_resumed_max_offset);
-                        if (-m_btns.get_vertical_pos() < 0) m_btns.set_vertical_pos(0);
-                        break;
-                    }
                     break;
                 case LateralBtnCtl::event_type::GO_DEBUG: // config button
                     m_btns.set_vertical_pos(0);
@@ -620,6 +657,11 @@ namespace DP {
                     break;
                 case LateralBtnCtl::event_type::GO_CONFIG: // config button
                     m_btns.set_vertical_pos(0);
+                    break;
+                case LateralBtnCtl::event_type::NO_EVENT: 
+                {
+
+                }
                     break;
                 }
             }
@@ -635,10 +677,7 @@ namespace DP {
         // ================ DRAW BLOCK ================ //
 
         // TOOLS:
-        const bool state_changed = next_screen != m_screen;
-        STR::SharedData& shared_data = STR::get_singleton_of_SharedData();
-
-        
+        const bool state_changed = next_screen != m_screen;        
 
         switch(next_screen) {
         case screen::DEBUG_CMD: // only log screen
@@ -667,7 +706,7 @@ namespace DP {
             draw_always_on_top_auto(state_changed);
             for(int p = 0; p < CS::d2u(CS::device_id::_MAX); ++p) {
                 const int real_p = p - m_btns.get_vertical_pos();
-                if (real_p < 0) continue;
+                if (real_p < 0 || real_p >= (int)CS::d2u(CS::device_id::_MAX)) continue;
                 draw_resumed_at(
                     shared_data(static_cast<CS::device_id>(real_p)),
                     m_tft.get(),
