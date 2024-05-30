@@ -19,6 +19,30 @@ namespace DP {
     constexpr size_t log_amount = 320 / log_line_dist;
     constexpr size_t log_line_max_len = 96;
 
+    constexpr int32_t bar_top_height = 20;
+    constexpr int32_t bar_right_width = 40;
+    constexpr int32_t bar_right_each_height = (320 - bar_top_height) / 5;
+
+    constexpr uint16_t bar_top_color = 0x34da;
+    constexpr uint16_t bar_right_color = 0xcd49;
+
+    constexpr int32_t item_resumed_height_max = 60;
+    constexpr int32_t item_resumed_total_amount = (320 - bar_top_height) / item_resumed_height_max;
+    constexpr int32_t item_resumed_max_offset = (static_cast<int32_t>(CS::device_id::_MAX)) - item_resumed_total_amount;
+    constexpr int32_t item_resumed_width_max = 440;
+    constexpr int32_t item_resumed_border_radius = 8;
+
+    const uint16_t item_online_bg_color = 0xc7b8;
+    const uint16_t item_online_bg_color_border = 0x9e13;
+    const uint16_t item_has_issues_bg_color = 0xf638;
+    const uint16_t item_has_issues_bg_color_border = 0xb410;
+
+    const uint16_t item_close_button_x_and_border = 0xea8a;
+    const uint16_t item_close_button_body = 0x90c3;
+
+    // ;-;
+    const char* get_fancy_name_for(CS::device_id);
+
     // Display
     // - Hook stuff to display
     // - Autoload
@@ -74,6 +98,24 @@ namespace DP {
         bool is_touch_on(const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h) const;
     };
 
+    class LateralBtnCtl {
+    public:
+        enum class event_type {
+            GO_HOME, // Go back home button
+            VERTICAL_ALIGNMENT_CHANGED, // arrow up and down
+            GO_DEBUG, // config button
+            GO_CONFIG // config button
+        };
+    private:
+        int m_vertical_track = 0; // used in lists. up == --; down == ++
+    public:
+        event_type touch_event_test(TouchCtl&, const int);
+        int get_vertical_pos() const;
+        void set_vertical_pos(int);
+    };
+
+    void draw_resumed_at(const ::STR::StoredDataEachDevice&, TFT_eSPI*, size_t, const bool&, const char*);
+
     // DisplayCtl:
     // - Controls screen overlays and stuff
     class DisplayCtl {
@@ -85,14 +127,19 @@ namespace DP {
         Display* m_disp = nullptr;
         std::shared_ptr<TFT_eSPI> m_tft; // of m_disp!
         TouchCtl* m_touch = nullptr;
+
+        LateralBtnCtl m_btns;
+
         screen m_screen = screen::DEBUG_CMD;
         bool m_ext_cmd_req = false;
 
         CPU::AutoWait m_clock_update_time{1000}; // every second makes sense
         CPU::AutoWait m_sdcard_update_time{5000};
+        CPU::AutoWait m_idb_update_time{5000};
 
         // param: with background on last?
         void draw_mouse(bool = true);
+        void draw_always_on_top_auto(const bool&);
     public:
         void task();
 

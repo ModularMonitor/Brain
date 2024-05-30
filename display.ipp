@@ -40,10 +40,116 @@ namespace DP {
             0b11100000, 0b11100000,
             0b11111111, 0b11100000,
             0b01111111, 0b11000000,
-            0b00111111, 0b10000000
-            
+            0b00111111, 0b10000000            
+        };
+        // 40 x 46 icon home
+        PROGMEM const unsigned char config_icon_home[] = {
+            0x00, 0x01, 0xF8, 0x00, 0x00, 0x00, 0x07, 0xFE, 0x00, 0x00, 0x00, 0x1F, 
+            0xFF, 0x80, 0x00, 0x00, 0x7F, 0xFF, 0xE0, 0x00, 0x01, 0xFF, 0xFF, 0xF8, 
+            0x00, 0x07, 0xFF, 0xFF, 0xFE, 0x00, 0x1F, 0xFF, 0xFF, 0xFF, 0x80, 0x7F, 
+            0xFF, 0xFF, 0xFF, 0xE0, 0xFF, 0xFF, 0xFF, 0xFF, 0xF0, 0xFF, 0xFF, 0xFF, 
+            0xFF, 0xF0, 0xFC, 0x00, 0x00, 0x03, 0xF0, 0x70, 0x00, 0x00, 0x00, 0xE0, 
+            0x0E, 0x00, 0x00, 0x07, 0x00, 0x1F, 0x00, 0x00, 0x0F, 0x80, 0x1F, 0x00, 
+            0x00, 0x0F, 0x80, 0x1F, 0x00, 0x00, 0x0F, 0x80, 0x1F, 0x00, 0x00, 0x0F, 
+            0x80, 0x1F, 0x00, 0x00, 0x0F, 0x80, 0x1F, 0x00, 0x00, 0x0F, 0x80, 0x1F, 
+            0x00, 0xFF, 0xCF, 0x80, 0x1F, 0x00, 0xFF, 0xCF, 0x80, 0x1F, 0x00, 0xFF, 
+            0xCF, 0x80, 0x1F, 0x00, 0xFE, 0x0F, 0x80, 0x1F, 0x00, 0xFF, 0x0F, 0x80, 
+            0x1F, 0x00, 0xFF, 0x8F, 0x80, 0x1F, 0x00, 0xEF, 0xCF, 0x80, 0x1F, 0x00, 
+            0xE3, 0xCF, 0x80, 0x1F, 0x00, 0xE1, 0xEF, 0x80, 0x1F, 0x00, 0xE1, 0xF7, 
+            0x80, 0x1F, 0x00, 0x00, 0xF7, 0x80, 0x1F, 0x00, 0x00, 0xFB, 0x80, 0x1F, 
+            0xFF, 0xFF, 0x7B, 0x80, 0x1F, 0xFF, 0xFF, 0x7D, 0x80, 0x1F, 0xFF, 0xFF, 
+            0xBD, 0x80, 0x1F, 0xFF, 0xFF, 0xBD, 0x80, 0x0F, 0xFF, 0xFF, 0xBD, 0x00, 
+            0x00, 0x00, 0x00, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x78, 0x00, 0x00, 0x00, 
+            0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x00, 0x00, 0x00, 0x03, 0xF0, 
+            0x00, 0x00, 0x70, 0x07, 0xE0, 0x00, 0x00, 0x7C, 0x3F, 0xC0, 0x00, 0x00, 
+            0x7F, 0xFF, 0x80, 0x00, 0x00, 0x3F, 0xFE, 0x00, 0x00, 0x00, 0x07, 0xF8, 
+            0x00, 0x00
+        };
+        // 26 x 35
+        PROGMEM const unsigned char config_icon_up[] = {
+            0x00, 0x7F, 0x80, 0x00, 0x00, 0xFF, 0xC0, 0x00, 0x01, 0xFF, 0xE0, 0x00, 
+            0x01, 0xFF, 0xE0, 0x00, 0x03, 0xFF, 0xF0, 0x00, 0x07, 0xFF, 0xF8, 0x00, 
+            0x07, 0xFF, 0xF8, 0x00, 0x0F, 0xFF, 0xFC, 0x00, 0x0F, 0xBF, 0x7C, 0x00, 
+            0x1F, 0xBF, 0x7E, 0x00, 0x1F, 0x3F, 0x3E, 0x00, 0x3F, 0x3F, 0x3F, 0x00, 
+            0x7E, 0x3F, 0x1F, 0x80, 0x7E, 0x3F, 0x1F, 0x80, 0xFC, 0x3F, 0x0F, 0xC0, 
+            0xF8, 0x3F, 0x07, 0xC0, 0xF8, 0x3F, 0x07, 0xC0, 0x70, 0x3F, 0x03, 0x80, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00
+        };
+        // 26 x 35
+        PROGMEM const unsigned char config_icon_down[] = {
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 
+            0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x70, 0x3F, 0x03, 0x80, 
+            0xF8, 0x3F, 0x07, 0xC0, 0xF8, 0x3F, 0x07, 0xC0, 0xFC, 0x3F, 0x0F, 0xC0, 
+            0x7E, 0x3F, 0x1F, 0x80, 0x7E, 0x3F, 0x1F, 0x80, 0x3F, 0x3F, 0x3F, 0x00, 
+            0x1F, 0x3F, 0x3E, 0x00, 0x1F, 0xBF, 0x7E, 0x00, 0x0F, 0xBF, 0x7C, 0x00, 
+            0x0F, 0xFF, 0xFC, 0x00, 0x07, 0xFF, 0xF8, 0x00, 0x07, 0xFF, 0xF8, 0x00, 
+            0x03, 0xFF, 0xF0, 0x00, 0x01, 0xFF, 0xE0, 0x00, 0x01, 0xFF, 0xE0, 0x00, 
+            0x00, 0xFF, 0xC0, 0x00, 0x00, 0x7F, 0x80, 0x00
+        };
+        // 32 x 38
+        PROGMEM const unsigned char config_icon_debug[] = {
+            0x1F, 0xFF, 0xFF, 0xF8, 0x7F, 0xFF, 0xFF, 0xFE, 0x7F, 0xFF, 0xFF, 0xFE, 
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF1, 0xFF, 0xFF, 0xFF, 
+            0xF0, 0xFF, 0xFF, 0xFF, 0xF0, 0x3F, 0xFF, 0xFF, 0xF8, 0x1F, 0xFF, 0xFF, 
+            0xFE, 0x07, 0xFF, 0xFF, 0xFF, 0x03, 0xFF, 0xFF, 0xFF, 0xC3, 0xFF, 0xFF, 
+            0xFF, 0xC3, 0xFF, 0xFF, 0xFF, 0x03, 0xFF, 0xFF, 0xFE, 0x07, 0xFF, 0xFF, 
+            0xF8, 0x1F, 0xFF, 0xFF, 0xF0, 0x3F, 0xC0, 0x0F, 0xF0, 0xFF, 0xC0, 0x0F, 
+            0xF1, 0xFF, 0xC0, 0x0F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFE, 
+            0x7F, 0xFF, 0xFF, 0xFE, 0x1F, 0xFF, 0xFF, 0xF8
+        };
+        // 32 x 32
+        PROGMEM const unsigned char config_icon_config[] = {
+            0x00, 0x07, 0xE0, 0x00, 0x00, 0x07, 0xE0, 0x00, 0x00, 0x07, 0xE0, 0x00, 
+            0x03, 0x07, 0xE0, 0xC0, 0x07, 0x87, 0xE1, 0xE0, 0x0F, 0xCF, 0xF3, 0xF0, 
+            0x1F, 0xFF, 0xFF, 0xF8, 0x1F, 0xFF, 0xFF, 0xF8, 0x0F, 0xFF, 0xFF, 0xF0, 
+            0x07, 0xFF, 0xFF, 0xE0, 0x03, 0xFC, 0x3F, 0xC0, 0x03, 0xF0, 0x0F, 0xC0, 
+            0x07, 0xE0, 0x07, 0xE0, 0xFF, 0xE0, 0x07, 0xFF, 0xFF, 0xC0, 0x03, 0xFF, 
+            0xFF, 0xC0, 0x03, 0xFF, 0xFF, 0xC0, 0x03, 0xFF, 0xFF, 0xC0, 0x03, 0xFF, 
+            0xFF, 0xE0, 0x07, 0xFF, 0x07, 0xE0, 0x07, 0xE0, 0x03, 0xF0, 0x0F, 0xC0, 
+            0x03, 0xFC, 0x3F, 0xC0, 0x07, 0xFF, 0xFF, 0xE0, 0x0F, 0xFF, 0xFF, 0xF0, 
+            0x1F, 0xFF, 0xFF, 0xF8, 0x1F, 0xFF, 0xFF, 0xF8, 0x0F, 0xCF, 0xF3, 0xF0, 
+            0x07, 0x87, 0xE1, 0xE0, 0x03, 0x07, 0xE0, 0xC0, 0x00, 0x07, 0xE0, 0x00, 
+            0x00, 0x07, 0xE0, 0x00, 0x00, 0x07, 0xE0, 0x00
+        };
+        // 24 x 24 icon close
+        PROGMEM const unsigned char terminal_icon_close[] = {
+            0x00, 0x00, 0x00, 0x3F, 0xFF, 0xFC, 0x7F, 0xFF, 0xFE, 0x63, 0xFF, 0xC6, 
+            0x61, 0xFF, 0x86, 0x60, 0xFF, 0x06, 0x70, 0x7E, 0x0E, 0x78, 0x3C, 0x1E, 
+            0x7C, 0x18, 0x3E, 0x7E, 0x00, 0x7E, 0x7F, 0x00, 0xFE, 0x7F, 0x81, 0xFE, 
+            0x7F, 0x81, 0xFE, 0x7F, 0x00, 0xFE, 0x7E, 0x00, 0x7E, 0x7C, 0x18, 0x3E, 
+            0x78, 0x3C, 0x1E, 0x70, 0x7E, 0x0E, 0x60, 0xFF, 0x06, 0x61, 0xFF, 0x86, 
+            0x63, 0xFF, 0xC6, 0x7F, 0xFF, 0xFE, 0x3F, 0xFF, 0xFC, 0x00, 0x00, 0x00,
+            0                 
         };
 
+    }
+    
+    inline const char* get_fancy_name_for(CS::device_id id)
+    {
+        switch(id) {
+        case CS::device_id::DHT22_SENSOR:       return u8"Modulo de temperatura e humidade";
+        case CS::device_id::MICS_6814_SENSOR:   return u8"Modulo de NO2, NH3 e CO";
+        case CS::device_id::LY038_HW072_SENSOR: return u8"Modulo de som e luz";
+        case CS::device_id::GY87_SENSOR:        return u8"Modulo acelerometro, giroscopio, barometro";
+        case CS::device_id::CCS811_SENSOR:      return u8"Modulo de eCO2 e TVOC";
+        case CS::device_id::PMSDS011_SENSOR:    return u8"Modulo de particulas no ar";
+        case CS::device_id::BATTERY_SENSOR:     return u8"Modulo da bateria";
+        default:                                return u8"Desconhecido";
+        }
     }
 
     inline Display::Display()
@@ -253,6 +359,70 @@ namespace DP {
     }
 
 
+
+    LateralBtnCtl::event_type LateralBtnCtl::touch_event_test(TouchCtl& t, const int max_off)
+    {
+        uint16_t buttons{};
+        for(size_t p = 0; p < 5; ++p) buttons |= (static_cast<uint16_t>(t.is_touch_on(480 - bar_right_width, bar_top_height + (p * bar_right_each_height), 40, 60)) << p);
+
+        switch(buttons) {
+        case 0x01: // home
+            return event_type::GO_HOME;
+        case 0x02: // up
+            ++m_vertical_track;
+            return event_type::VERTICAL_ALIGNMENT_CHANGED;
+        case 0x04: // down
+            --m_vertical_track;
+            return event_type::VERTICAL_ALIGNMENT_CHANGED;
+            break;
+        case 0x08: // debug
+            return event_type::GO_DEBUG;
+        case 0x10: // config
+            return event_type::GO_CONFIG;
+        default: // if somehow
+            return event_type::GO_HOME;
+        }
+    }
+
+    int LateralBtnCtl::get_vertical_pos() const
+    {
+        return m_vertical_track;
+    }
+
+    void LateralBtnCtl::set_vertical_pos(int v)
+    {
+        m_vertical_track = v;
+    }
+
+
+
+
+    inline void draw_resumed_at(::STR::StoredDataEachDevice& m_dev, TFT_eSPI* m_tft, const size_t item_in_list, const bool& state_changed, const char* name)
+    {
+        const uint16_t bgcolor = m_dev.get_has_issues() ? item_has_issues_bg_color : (m_dev.get_is_online() ? item_online_bg_color : TFT_DARKGREY);
+        const uint16_t bordercolor = m_dev.get_has_issues() ? item_has_issues_bg_color_border : (m_dev.get_is_online() ? item_online_bg_color_border : TFT_DARKGREY);
+        const int32_t base_y = static_cast<int32_t>(21 + (item_in_list * item_resumed_height_max));
+
+        if (base_y > 320) return;
+
+        if (state_changed) {
+            m_tft->fillRoundRect(
+                1, base_y,
+                item_resumed_width_max - 2, item_resumed_height_max - 2, item_resumed_border_radius,
+                bordercolor);
+        }
+
+        if (state_changed || m_dev.has_new_data_for_display()) {
+            m_tft->fillRoundRect(
+                3, base_y + 2,
+                item_resumed_width_max - 6, item_resumed_height_max - 6, item_resumed_border_radius,
+                bgcolor);
+            m_tft->setTextColor(TFT_BLACK);
+            m_tft->drawString(name, 6, base_y + 5, 2);
+        }
+    }
+
+
     inline void DisplayCtl::draw_mouse(bool bg) 
     {
         const int32_t nx = m_touch->get_x();
@@ -275,6 +445,117 @@ namespace DP {
         draw_arrow(nx, ny, TFT_WHITE);
     }
 
+    inline void DisplayCtl::draw_always_on_top_auto(const bool& state_changed)
+    {
+        STR::SharedData& shared_data = STR::get_singleton_of_SharedData();
+
+        STR::SIMData& sim = shared_data.get_sim_data();
+        STR::InfluxDBData& idb = shared_data.get_idb_data();
+
+        m_tft->setTextSize(1);
+
+        if (state_changed) {
+            m_tft->fillRect(0, 0, 480, bar_top_height, bar_top_color); // top bar bg
+            m_tft->fillRect(480 - bar_right_width, bar_top_height, 480, 320, bar_right_color); // right bar menu
+            m_tft->fillRect(0, 20, 440, 320, TFT_WHITE); // body
+
+            m_tft->setTextColor(TFT_BLACK, bar_top_color); // top bar
+
+            m_tft->drawString("Waiting 4G...", 2, 2, 2);
+            m_tft->drawString("...", 457, 2, 2);
+            m_tft->drawString("4G", 406, 2, 2);
+
+            m_tft->drawBitmap(376, 4, Bitmaps::sd_card_icon_11_13, 11, 13, TFT_BLACK);
+            m_tft->drawBitmap(289, 3, Bitmaps::database_icon_11_14, 11, 14, TFT_BLACK);
+
+            m_tft->drawBitmap(442,  28, Bitmaps::config_icon_home,   40, 46, TFT_BLACK);
+            m_tft->drawBitmap(447,  92, Bitmaps::config_icon_up,     26, 35, TFT_BLACK);
+            m_tft->drawBitmap(447, 152, Bitmaps::config_icon_down,   26, 35, TFT_BLACK);
+            m_tft->drawBitmap(444, 211, Bitmaps::config_icon_debug,  32, 38, TFT_BLACK);
+            m_tft->drawBitmap(444, 274, Bitmaps::config_icon_config, 32, 32, TFT_BLACK);
+        }
+        else {
+            m_tft->setTextColor(TFT_BLACK, bar_top_color); // top bar
+
+            // = = = = = = TIME (clock) = = = = = = //
+            if (sim.has_new_data_for_display(STR::SIMData::test_has_new_data_of::TIME) || (m_clock_update_time.is_time() && sim.get_rssi() != -1)) {
+                char safe_buffer[96];
+                m_tft->drawString(sim.get_time(safe_buffer, 96), 2, 2, 2);
+            }
+
+            // = = = = = = SD Card status = = = = = = //
+            if (m_sdcard_update_time.is_time()) {
+                const char* stat = SDcard::sd_get_type();
+                const int wd = m_tft->textWidth(stat, 2);
+
+                m_tft->fillRect(304, 2, 70, 16, bar_top_color); // fill color
+                m_tft->drawString(stat, 372 - wd, 2, 2);
+            }
+
+            // = = = = = = DB connection = = = = = = //
+            if (m_idb_update_time.is_time()) {
+                const char* stat = idb.get_is_online() ? "ONLINE" : "OFFLINE";
+                const int wd = m_tft->textWidth(stat, 2);
+
+                m_tft->fillRect(200, 2, 87, 16, bar_top_color); // fill color
+                m_tft->drawString(stat, 287 - wd - 2, 2, 2);
+            }
+            
+            // = = = = = = RSSI (bar and text) = = = = = = //
+            if (sim.get_rssi() == -1) {
+                m_tft->drawString("??", 457, 2, 2);
+
+                switch((CPU::get_time_ms() / 200) % 4){
+                case 3:
+                    m_tft->fillRect(448,  3, 5, 14, TFT_BLACK);
+                    m_tft->fillRect(441,  6, 5, 11, bar_top_color);
+                    //m_tft->fillRect(434,  9, 5,  8, bar_top_color);
+                    //m_tft->fillRect(427, 12, 5,  5, bar_top_color);
+                    break;
+                case 2:
+                    //m_tft->fillRect(448,  3, 5, 14, bar_top_color);
+                    m_tft->fillRect(441,  6, 5, 11, TFT_BLACK);
+                    m_tft->fillRect(434,  9, 5,  8, bar_top_color);
+                    //m_tft->fillRect(427, 12, 5,  5, bar_top_color);
+                    break;
+                case 1:
+                    //m_tft->fillRect(448,  3, 5, 14, bar_top_color);
+                    //m_tft->fillRect(441,  6, 5, 11, bar_top_color);
+                    m_tft->fillRect(434,  9, 5,  8, TFT_BLACK);
+                    m_tft->fillRect(427, 12, 5,  5, bar_top_color);
+                    break;
+                default:
+                    m_tft->fillRect(448,  3, 5, 14, bar_top_color);
+                    //m_tft->fillRect(441,  6, 5, 11, bar_top_color);
+                    //m_tft->fillRect(434,  9, 5,  8, bar_top_color);
+                    m_tft->fillRect(427, 12, 5,  5, TFT_BLACK);
+                    break;
+                }
+            }
+            else if (sim.has_new_data_for_display(STR::SIMData::test_has_new_data_of::RSSI)) {
+                const int rssi = sim.get_rssi();
+
+                char buf_test[32];
+                snprintf(buf_test, 32, "%i", rssi);
+                const int wd = m_tft->textWidth(buf_test, 2);
+                m_tft->drawString(buf_test, 480 - wd - 2, 2, 2);
+                
+                if (rssi > -65) m_tft->fillRect(448,  3, 5, 14, TFT_BLACK);
+                else            m_tft->fillRect(448,  3, 5, 14, bar_top_color);
+
+                if (rssi > -75) m_tft->fillRect(441,  6, 5, 11, TFT_BLACK);
+                else            m_tft->fillRect(441,  6, 5, 11, bar_top_color);
+
+                if (rssi > -85) m_tft->fillRect(434,  9, 5,  8, TFT_BLACK);
+                else            m_tft->fillRect(434,  9, 5,  8, bar_top_color);
+
+                if (rssi > -95) m_tft->fillRect(427, 12, 5,  5, TFT_BLACK);
+                else            m_tft->fillRect(427, 12, 5,  5, bar_top_color);
+            }
+        }
+
+    }
+
     inline void DisplayCtl::task()
     {
         // track screen change
@@ -289,9 +570,10 @@ namespace DP {
             LOGI(TAG, "Loaded all modules. Ready to start UI...");
             m_disp->terminal_print();
 
-            delay(500);
-            SET_DISPLAY_BRIGHTNESS(0.5f);
-            delay(500);
+            for(float f = 0.5f; f < 1.0f; f += 0.025f) {
+                delay(25);
+                SET_DISPLAY_BRIGHTNESS(f);
+            }
             SET_DISPLAY_BRIGHTNESS(1.0f);
 
             next_screen = screen::HOME;
@@ -312,14 +594,34 @@ namespace DP {
             switch(next_screen) {
             case screen::DEBUG_CMD: // only log screen
             {
-                if (m_touch->is_touch_on(460, 0, 20, 20))
+                if (m_touch->is_touch_on(456, 0, 24, 24))
                     next_screen = screen::HOME;
             }
                 break;
-            case screen::HOME:
+            default:
             {
-                //if (m_touch->is_touch_on(460, 0, 20, 20))
-                //    next_screen = screen::DEBUG_CMD;
+                const auto cmd = m_btns.touch_event_test(*m_touch, 99); // = = = = = = = = = = TODO TBD LIMIT HERE OF ITEMS TO SCROLL, this is dynamic and depends on current mode
+                switch(cmd) {
+                case LateralBtnCtl::event_type::GO_HOME: // Go back home button
+                    next_screen = screen::HOME;
+                    m_btns.set_vertical_pos(0);
+                    break;
+                case LateralBtnCtl::event_type::VERTICAL_ALIGNMENT_CHANGED: // arrow up and down
+                    switch(next_screen) {
+                    case screen::HOME:
+                        if (-m_btns.get_vertical_pos() > item_resumed_max_offset) m_btns.set_vertical_pos(-item_resumed_max_offset);
+                        if (-m_btns.get_vertical_pos() < 0) m_btns.set_vertical_pos(0);
+                        break;
+                    }
+                    break;
+                case LateralBtnCtl::event_type::GO_DEBUG: // config button
+                    m_btns.set_vertical_pos(0);
+                    next_screen = screen::DEBUG_CMD;
+                    break;
+                case LateralBtnCtl::event_type::GO_CONFIG: // config button
+                    m_btns.set_vertical_pos(0);
+                    break;
+                }
             }
                 break;
             }
@@ -336,6 +638,8 @@ namespace DP {
         const bool state_changed = next_screen != m_screen;
         STR::SharedData& shared_data = STR::get_singleton_of_SharedData();
 
+        
+
         switch(next_screen) {
         case screen::DEBUG_CMD: // only log screen
         {
@@ -346,9 +650,10 @@ namespace DP {
             // if had new line on log or touch stuff
             if (LG::get_singleton_of_Logger().for_display_had_news() || update_forced || state_changed) {
                 m_disp->terminal_print();
-                m_tft->fillRect(460, 0, 20, 20, TFT_RED);
-                m_tft->drawLine(462, 2, 478, 18, 0xA000);
-                m_tft->drawLine(478, 18, 462, 2, 0xA000);
+                //m_tft->fillRect(460, 0, 20, 20, TFT_RED);
+                //m_tft->drawLine(462, 2, 478, 18, 0xA000);
+                //m_tft->drawLine(478, 18, 462, 2, 0xA000);
+                m_tft->drawBitmap(456, 0, Bitmaps::terminal_icon_close, 24, 24, item_close_button_x_and_border, item_close_button_body);
             }
 
             // touch shenanigans
@@ -359,97 +664,17 @@ namespace DP {
             break;
         case screen::HOME:
         {
-            STR::SIMData& sim = shared_data.get_sim_data();
-
-            m_tft->setTextSize(1);
-
-            if (state_changed) {
-                m_tft->fillRect(0, 0, 480, 20, 0x34da); // top bar bg
-                m_tft->fillRect(440, 20, 480, 320, 0xcd49); // right bar menu
-                m_tft->fillRect(0, 20, 440, 320, TFT_WHITE); // body
-
-                m_tft->setTextColor(TFT_BLACK, 0x34da); // top bar
-
-                m_tft->drawString("Waiting 4G...", 2, 2, 2);
-                m_tft->drawString("...", 457, 2, 2);
-                m_tft->drawString("4G", 406, 2, 2);
-
-                m_tft->drawBitmap(376, 4, Bitmaps::sd_card_icon_11_13, 11, 13, TFT_BLACK);
-                m_tft->drawBitmap(289, 3, Bitmaps::database_icon_11_14, 11, 14, TFT_BLACK);
+            draw_always_on_top_auto(state_changed);
+            for(int p = 0; p < CS::d2u(CS::device_id::_MAX); ++p) {
+                const int real_p = p - m_btns.get_vertical_pos();
+                if (real_p < 0) continue;
+                draw_resumed_at(
+                    shared_data(static_cast<CS::device_id>(real_p)),
+                    m_tft.get(),
+                    p,
+                    state_changed || had_touch_event,
+                    get_fancy_name_for(static_cast<CS::device_id>(real_p)));
             }
-            else {
-                m_tft->setTextColor(TFT_BLACK, 0x34da); // top bar
-
-                // = = = = = = TIME (clock) = = = = = = //
-                if (sim.has_new_data_of(STR::SIMData::test_has_new_data_of::TIME) || (m_clock_update_time.is_time() && sim.get_rssi() != -1)) {
-                    char safe_buffer[96];
-                    m_tft->drawString(sim.get_time(safe_buffer, 96), 2, 2, 2);
-                }
-
-                // = = = = = = SD Card status = = = = = = //
-                if (m_sdcard_update_time.is_time()) {
-                    const char* stat = SDcard::sd_get_type();
-                    const int wd = m_tft->textWidth(stat, 2);
-
-                    m_tft->fillRect(304, 2, 70, 16, 0x34da); // fill color
-                    m_tft->drawString(stat, 374 - wd - 2, 2, 2);
-                }
-
-                // = = = = = = DB connection = = = = = = //
-                
-                // = = = = = = RSSI (bar and text) = = = = = = //
-                if (sim.get_rssi() == -1) {
-                    m_tft->drawString("??", 457, 2, 2);
-
-                    switch((CPU::get_time_ms() / 200) % 4){
-                    case 3:
-                        m_tft->fillRect(448,  3, 5, 14, TFT_BLACK);
-                        m_tft->fillRect(441,  6, 5, 11, 0x34da);
-                        //m_tft->fillRect(434,  9, 5,  8, 0x34da);
-                        //m_tft->fillRect(427, 12, 5,  5, 0x34da);
-                        break;
-                    case 2:
-                        //m_tft->fillRect(448,  3, 5, 14, 0x34da);
-                        m_tft->fillRect(441,  6, 5, 11, TFT_BLACK);
-                        m_tft->fillRect(434,  9, 5,  8, 0x34da);
-                        //m_tft->fillRect(427, 12, 5,  5, 0x34da);
-                        break;
-                    case 1:
-                        //m_tft->fillRect(448,  3, 5, 14, 0x34da);
-                        //m_tft->fillRect(441,  6, 5, 11, 0x34da);
-                        m_tft->fillRect(434,  9, 5,  8, TFT_BLACK);
-                        m_tft->fillRect(427, 12, 5,  5, 0x34da);
-                        break;
-                    default:
-                        m_tft->fillRect(448,  3, 5, 14, 0x34da);
-                        //m_tft->fillRect(441,  6, 5, 11, 0x34da);
-                        //m_tft->fillRect(434,  9, 5,  8, 0x34da);
-                        m_tft->fillRect(427, 12, 5,  5, TFT_BLACK);
-                        break;
-                    }
-                }
-                else if (sim.has_new_data_of(STR::SIMData::test_has_new_data_of::RSSI)) {
-                    const int rssi = sim.get_rssi();
-
-                    char buf_test[32];
-                    snprintf(buf_test, 32, "%i", rssi);
-                    const int wd = m_tft->textWidth(buf_test, 2);
-                    m_tft->drawString(buf_test, 480 - wd - 2, 2, 2);
-                    
-                    if (rssi > -65) m_tft->fillRect(448,  3, 5, 14, TFT_BLACK);
-                    else            m_tft->fillRect(448,  3, 5, 14, 0x34da);
-
-                    if (rssi > -75) m_tft->fillRect(441,  6, 5, 11, TFT_BLACK);
-                    else            m_tft->fillRect(441,  6, 5, 11, 0x34da);
-
-                    if (rssi > -85) m_tft->fillRect(434,  9, 5,  8, TFT_BLACK);
-                    else            m_tft->fillRect(434,  9, 5,  8, 0x34da);
-
-                    if (rssi > -95) m_tft->fillRect(427, 12, 5,  5, TFT_BLACK);
-                    else            m_tft->fillRect(427, 12, 5,  5, 0x34da);
-                }
-            }
-
         }
             break;
         }

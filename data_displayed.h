@@ -59,12 +59,17 @@ namespace STR {
 
     class StoredDataEachDevice {
         std::deque<std::unique_ptr<RepresentedData>> m_data;
-        bool m_online = false;
-        bool m_has_issues = false;
 
         // user settings
         uint32_t m_store_sd_card = 0; // 0 means no, else [seconds]
         uint32_t m_store_influx_db = 0; // 0 means no, else [seconds]
+
+        // remaining props
+        bool m_online = false;
+        bool m_has_issues = false;
+
+        // FOR DISPLAY!
+        bool m_has_new_data_for_display_update = false;
 
         RepresentedData* _find(const char*) const;
     public:
@@ -95,6 +100,8 @@ namespace STR {
 
         uint32_t get_store_sd_card() const;
         uint32_t get_send_influx_db() const;
+
+        bool has_new_data_for_display();
     };
 
     class SIMData {
@@ -120,7 +127,8 @@ namespace STR {
         //time_t m_copy_loc_as_time = 0;
         int m_rssi = -1; // -1 == unknown; ranges (good to bad bars): [ 0..64, 65..74, 75..84, 85..94, 95..inf] (lib shows positive, but it is negative irl)
 
-        bool m_has_new_data_of[static_cast<size_t>(test_has_new_data_of::_MAX)];
+        // for DISPLAY!
+        bool m_has_new_data_for_display_update_of[static_cast<size_t>(test_has_new_data_of::_MAX)];
     public:
         // used by SIM to set current time
         void set_time(const struct tm&);
@@ -135,12 +143,20 @@ namespace STR {
         int get_rssi() const;
 
         // automatic -> false test to check if has new data of type.
-        bool has_new_data_of(test_has_new_data_of);
+        bool has_new_data_for_display(test_has_new_data_of);
+    };
+
+    class InfluxDBData {
+        bool m_online = false;
+    public:
+        void set_is_online(const bool);
+        bool get_is_online() const;
     };
 
     MAKE_SINGLETON_CLASS(SharedData, {
         StoredDataEachDevice m_devices[CS::d2u(CS::device_id::_MAX)]{};
         SIMData m_sim;
+        InfluxDBData m_idb;
     public:
         StoredDataEachDevice& operator()(const CS::device_id&);
         const StoredDataEachDevice& operator[](const CS::device_id&) const;
@@ -150,8 +166,13 @@ namespace STR {
 
         const StoredDataEachDevice* get_ptr_to(const CS::device_id&) const;
 
+        size_t get_total_devices_online() const;
+
         const SIMData& get_sim_data() const;
         SIMData& get_sim_data();
+
+        const InfluxDBData& get_idb_data() const;
+        InfluxDBData& get_idb_data();
     });
     
 

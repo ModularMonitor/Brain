@@ -124,6 +124,7 @@ namespace STR {
     template<typename T>
     inline void StoredDataEachDevice::update_data(const char* s, const T& v)
     {
+        m_has_new_data_for_display_update = true;
         RepresentedData* it = _find(s);
         if (!it) {
             m_data.push_back(std::move(std::unique_ptr<RepresentedData>(new RepresentedData(s, v))));
@@ -140,11 +141,13 @@ namespace STR {
     inline void StoredDataEachDevice::set_has_issues(const bool v)
     {
         m_has_issues = v;
+        m_has_new_data_for_display_update = true;
     }
 
     inline void StoredDataEachDevice::set_is_online(const bool v)
     {
         m_online = v;
+        m_has_new_data_for_display_update = true;
     }
 
     inline bool StoredDataEachDevice::get_has_issues() const
@@ -166,6 +169,7 @@ namespace STR {
     inline RepresentedData* StoredDataEachDevice::operator()(const size_t idx)
     {
         if (idx >= m_data.size()) return nullptr;
+        m_has_new_data_for_display_update = true;
         return (m_data.begin() + idx)->get();
     }
 
@@ -205,6 +209,11 @@ namespace STR {
         return m_store_influx_db;
     }
 
+    inline bool StoredDataEachDevice::has_new_data_for_display()
+    {
+        return EXC_RETURN(m_has_new_data_for_display_update, false);
+    }
+
 
 
     inline void SIMData::set_time(const struct tm& ref)
@@ -212,13 +221,13 @@ namespace STR {
         m_copy_loc = ref;
         //m_copy_loc_as_time = mktime(&m_copy_loc);
         m_copy_loc_off = CPU::get_time_ms();
-        m_has_new_data_of[static_cast<size_t>(test_has_new_data_of::TIME)] = true;
+        m_has_new_data_for_display_update_of[static_cast<size_t>(test_has_new_data_of::TIME)] = true;
     }
 
     inline void SIMData::set_rssi(const int rssi)
     {
         m_rssi = rssi;
-        m_has_new_data_of[static_cast<size_t>(test_has_new_data_of::RSSI)] = true;
+        m_has_new_data_for_display_update_of[static_cast<size_t>(test_has_new_data_of::RSSI)] = true;
     }
 
     inline struct tm SIMData::get_time() const
@@ -285,11 +294,22 @@ namespace STR {
         return m_rssi;
     }
 
-    inline bool SIMData::has_new_data_of(SIMData::test_has_new_data_of t)
+    inline bool SIMData::has_new_data_for_display(SIMData::test_has_new_data_of t)
     {
-        return t == SIMData::test_has_new_data_of::_MAX ? false : EXC_RETURN(m_has_new_data_of[static_cast<size_t>(t)], false);
+        return t == SIMData::test_has_new_data_of::_MAX ? false : EXC_RETURN(m_has_new_data_for_display_update_of[static_cast<size_t>(t)], false);
     }
 
+
+
+    inline void InfluxDBData::set_is_online(const bool v)
+    {
+        m_online = v;
+    }
+
+    inline bool InfluxDBData::get_is_online() const
+    {
+        return m_online;
+    }
 
 
 
@@ -318,6 +338,15 @@ namespace STR {
         return &m_devices[CS::d2u(id)];
     }
 
+    inline size_t SharedData::get_total_devices_online() const
+    {
+        size_t c = 0;
+        for(auto& i : m_devices) {
+            if (i.get_is_online()) ++c;
+        }
+        return c;
+    }
+
     inline const SIMData& SharedData::get_sim_data() const
     {
         return m_sim;
@@ -326,6 +355,16 @@ namespace STR {
     inline SIMData& SharedData::get_sim_data()
     {
         return m_sim;
+    }
+
+    inline const InfluxDBData& SharedData::get_idb_data() const
+    {
+        return m_idb;
+    }
+
+    inline InfluxDBData& SharedData::get_idb_data()
+    {
+        return m_idb;
     }
 
 
