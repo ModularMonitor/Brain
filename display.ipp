@@ -431,17 +431,18 @@ namespace DP {
         }
     }
 
-    inline void draw_resumed_at(::STR::StoredDataEachDevice& m_dev, TFT_eSPI* m_tft, const size_t item_in_list, const bool& state_changed, const char* name)
+    inline void draw_resumed_at(::STR::StoredDataEachDevice& m_dev, TFT_eSPI* m_tft, const size_t item_in_list, const bool& state_changed, const bool& should_update_text, const char* name)
     {
         const uint16_t bgcolor = m_dev.get_has_issues() ? item_has_issues_bg_color : (m_dev.get_is_online() ? item_online_bg_color : TFT_DARKGREY);
         const uint16_t bordercolor = m_dev.get_has_issues() ? item_has_issues_bg_color_border : (m_dev.get_is_online() ? item_online_bg_color_border : TFT_DARKGREY);
 
         const size_t siz = m_dev.size();
         const char no_data[] = "sem dados";
+        const bool dev_has_data = m_dev.has_new_data_for_display();
 
         if (!siz) {
             draw_block_at(name, no_data, nullptr, m_tft, item_in_list,
-                state_changed, state_changed || m_dev.has_new_data_for_display(), bordercolor,
+                state_changed || dev_has_data || should_update_text, state_changed || dev_has_data, bordercolor,
                 bgcolor, TFT_BLACK);
             return;
         }
@@ -456,10 +457,12 @@ namespace DP {
 
         char minibuf[128];
         char secnbuf[64];
-        snprintf(minibuf, 128, "%s = %s  ", path, value);
-        snprintf(secnbuf, 64, "(%" PRIu64 " seg atras)  ", time_since_update_sec);
+        snprintf(minibuf, 128, "%s = %s      ", path, value);
+        snprintf(secnbuf, 64, "(%" PRIu64 " seg atras)   ", time_since_update_sec);
 
-        draw_block_at(name, minibuf, item ? secnbuf : nullptr, m_tft, item_in_list, state_changed, m_dev.has_new_data_for_display(), bordercolor, bgcolor, TFT_BLACK);
+        draw_block_at(name, minibuf, item ? secnbuf : nullptr, m_tft, item_in_list,
+            state_changed || dev_has_data || should_update_text, state_changed || dev_has_data,
+            bordercolor, bgcolor, TFT_BLACK);
     }
 
 
@@ -485,7 +488,7 @@ namespace DP {
         draw_arrow(nx, ny, TFT_WHITE);
     }
 
-    inline void DisplayCtl::draw_always_on_top_auto(const bool& state_changed)
+    inline void DisplayCtl::draw_always_on_top_auto(const bool& state_changed, const bool& one_second_passed_by)
     {
         STR::SharedData& shared_data = STR::get_singleton_of_SharedData();
 
@@ -518,7 +521,7 @@ namespace DP {
             m_tft->setTextColor(TFT_BLACK, bar_top_color); // top bar
 
             // = = = = = = TIME (clock) = = = = = = //
-            if (sim.has_new_data_for_display(STR::SIMData::test_has_new_data_of::TIME) || (m_clock_update_time.is_time() && sim.get_rssi() != -1)) {
+            if (sim.has_new_data_for_display(STR::SIMData::test_has_new_data_of::TIME) || (one_second_passed_by && sim.get_rssi() != -1)) {
                 char safe_buffer[96];
                 m_tft->drawString(sim.get_time(safe_buffer, 96), 2, 2, 2);
             }
@@ -677,7 +680,8 @@ namespace DP {
         // ================ DRAW BLOCK ================ //
 
         // TOOLS:
-        const bool state_changed = next_screen != m_screen;        
+        const bool state_changed = next_screen != m_screen;
+        const bool one_second_passed_by = m_clock_update_time.is_time();
 
         switch(next_screen) {
         case screen::DEBUG_CMD: // only log screen
@@ -703,7 +707,7 @@ namespace DP {
             break;
         case screen::HOME:
         {
-            draw_always_on_top_auto(state_changed);
+            draw_always_on_top_auto(state_changed, one_second_passed_by);
             for(int p = 0; p < CS::d2u(CS::device_id::_MAX); ++p) {
                 const int real_p = p - m_btns.get_vertical_pos();
                 if (real_p < 0 || real_p >= (int)CS::d2u(CS::device_id::_MAX)) continue;
@@ -712,6 +716,7 @@ namespace DP {
                     m_tft.get(),
                     p,
                     state_changed || had_touch_event,
+                    one_second_passed_by,
                     get_fancy_name_for(static_cast<CS::device_id>(real_p)));
             }
         }

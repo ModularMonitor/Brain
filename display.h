@@ -116,7 +116,7 @@ namespace DP {
     };
 
     void draw_block_at(const char* title, const char* subtitle, const char* subsubtitle, TFT_eSPI* m_tft, const size_t offset, const bool update_body, const bool update, const uint16_t border, const uint16_t fill, const uint16_t font_color = TFT_BLACK);
-    void draw_resumed_at(const ::STR::StoredDataEachDevice&, TFT_eSPI*, size_t, const bool&, const char*);
+    void draw_resumed_at(const ::STR::StoredDataEachDevice&, TFT_eSPI*, size_t, const bool&, const bool&, const char*);
 
     // DisplayCtl:
     // - Controls screen overlays and stuff
@@ -135,13 +135,13 @@ namespace DP {
         screen m_screen = screen::DEBUG_CMD;
         bool m_ext_cmd_req = false;
 
-        CPU::AutoWait m_clock_update_time{1000}; // every second makes sense
+        CPU::AutoWait m_clock_update_time{1000}; // every second makes sense, used on clock and 1 sec stuff
         CPU::AutoWait m_sdcard_update_time{5000};
         CPU::AutoWait m_idb_update_time{5000};
 
         // param: with background on last?
         void draw_mouse(bool = true);
-        void draw_always_on_top_auto(const bool&);
+        void draw_always_on_top_auto(const bool&, const bool&);
     public:
         void task();
 

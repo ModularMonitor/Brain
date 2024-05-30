@@ -140,13 +140,13 @@ namespace STR {
 
     inline void StoredDataEachDevice::set_has_issues(const bool v)
     {
-        m_has_new_data_for_display_update = m_has_issues != v;
+        m_has_new_data_for_display_update |= m_has_issues != v;
         m_has_issues = v;
     }
 
     inline void StoredDataEachDevice::set_is_online(const bool v)
     {
-        m_has_new_data_for_display_update = m_online != v;
+        m_has_new_data_for_display_update |= m_online != v;
         m_online = v;
     }
 
