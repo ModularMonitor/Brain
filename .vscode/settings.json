@@ -79,6 +79,7 @@
         "condition_variable": "cpp",
         "semaphore": "cpp",
         "cinttypes": "cpp",
-        "*.tpp": "cpp"
+        "*.tpp": "cpp",
+        "iostream": "cpp"
     }
 }

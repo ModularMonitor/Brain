@@ -6,12 +6,15 @@
 
 #include <deque>
 #include <memory>
+#include <unordered_map>
 
 namespace STR {
 
+    static const char TAG[] = "DataShared";
 
     constexpr size_t max_data_stored_array = 60;
 
+    // Each path value history
     class RepresentedData {
     public:
         class data_storage {
@@ -56,7 +59,7 @@ namespace STR {
         uint64_t get_all_time_dist() const;
     };
 
-
+    // The information about the sensors, each of them
     class StoredDataEachDevice {
         std::deque<std::shared_ptr<RepresentedData>> m_data;
 
@@ -104,6 +107,7 @@ namespace STR {
         bool has_new_data_for_display();
     };
 
+    // All data from 4G
     class SIMData {
     public:
         enum class test_has_new_data_of {
@@ -146,6 +150,7 @@ namespace STR {
         bool has_new_data_for_display(test_has_new_data_of);
     };
 
+    // Related to InfluxDB information
     class InfluxDBData {
         bool m_online = false;
     public:
@@ -153,10 +158,64 @@ namespace STR {
         bool get_is_online() const;
     };
 
+/// FUTURE FUTURE FUTURE MAYBE NO TIME OH NO
+///    // SD card saved stuff, asynchronously. This way, classes like Display can just set things here and expect them to be saved
+///    // All settings here WILL BE loaded and saved asynchronously by SDcard task.
+///    class SDStorageAuto {
+///    public:
+///        class data_stored {
+///            char m_data_path[128]{};
+///            std::unordered_map<std::string, std::string> m_data_map; // key=value, where key must be alphanumeric.
+///            std::mutex m_mtx;
+///            bool m_has_service_loaded_it = false; // if service loaded it, who wants it may read them.
+///            volatile bool m_has_external_updated_it = false; // if external set it, service should save it
+///        public:
+///            using map_cptr = std::unordered_map<std::string, std::string>::const_iterator;
+///
+///            data_stored(const char*); // must have path determined
+///
+///            bool has_config(const std::string&) const;
+///            void set_config(const std::string&, const std::string&);
+///            std::string get_config(const std::string&) const;
+///            
+///            template<typename T>
+///            void set_config_hex_t(const std::string&, const T&);
+///            template<typename T>
+///            bool get_config_hex_t(const std::string&, T&);
+///
+///            const char* get_path() const;
+///
+///            bool _has_to_read_file();
+///            bool _has_to_write_from_file();
+///
+///            std::unique_lock<std::mutex> get_lock();
+///            map_cptr begin() const;
+///            map_cptr end() const;
+///
+///
+///            // used by sdcard service.
+///            //void _load_internally();
+///        };
+///
+///        enum class configs {
+///            DISPLAY_CONFIG
+///        };
+///    private:
+///        data_stored displayConfig[] = {
+///            {"/configs/display.cfg"} /* DISPLAY_CONFIG: {} */
+///        };
+///    public:
+///        const data_stored& operator[](const size_t) const;
+///        data_stored& operator[](const size_t);
+///    };
+
+
+
     MAKE_SINGLETON_CLASS(SharedData, {
         StoredDataEachDevice m_devices[CS::d2u(CS::device_id::_MAX)]{};
         SIMData m_sim;
         InfluxDBData m_idb;
+        /*SDStorageAuto m_asd;*/
     public:
         StoredDataEachDevice& operator()(const CS::device_id&);
         const StoredDataEachDevice& operator[](const CS::device_id&) const;
@@ -173,9 +232,12 @@ namespace STR {
 
         const InfluxDBData& get_idb_data() const;
         InfluxDBData& get_idb_data();
+
+        /*const SDStorageAuto& get_sd_data() const;
+        SDStorageAuto& get_sd_data();*/
     });
     
 
 }
 
-#include "data_displayed.ipp"
+#include "data_shared.ipp"

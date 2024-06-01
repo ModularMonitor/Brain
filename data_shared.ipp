@@ -1,12 +1,44 @@
 #pragma once
 
-#include "data_displayed.h"
+#include "data_shared.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
 
 namespace STR {
+   
+//    template<typename T>
+//    inline size_t _to_hex_format(char* targ_or_calc_null, const T& v)
+//    {
+//        uint8_t* p = (uint8_t*)&v;
+//        const size_t len = sizeof(T);
+//        if (!targ_or_calc_null) return (len * 3); // \0
+//        
+//        for(size_t i = 0; i < len; ++i) {
+//            sprintf(targ_or_calc_null + (i * 3), (i + 1 == len) ? "%02X" : "%02X|", p[i]);
+//        }
+//        
+//        return len * 3 + 1;
+//    }
+//
+//    template<typename T>
+//    inline bool _from_hex_format(const char* str, T& targ)
+//    {
+//        uint8_t* p = (uint8_t*)&targ;
+//        const size_t len = sizeof(T);
+//        const size_t slen = strlen(str);
+//
+//        if ((slen + 1) / 3 < len) return false;
+//        
+//        for(size_t i = 0; i < len; ++i) {
+//            p[i] = std::strtol(str + (i * 3), nullptr, 16);
+//        }
+//        return true;
+//    }
+
+
+
 
     template<typename T>
     inline RepresentedData::data_storage::data_storage(const T& v)
@@ -312,6 +344,98 @@ namespace STR {
     }
 
 
+/// FUTURE FUTURE FUTURE MAYBE NO TIME OH NO
+///    inline SDStorageAuto::data_stored::data_stored(const char* s)
+///    {
+///        const size_t len = strlen(s);
+///        if (len > 0) strncpy(m_data_path, s, sizeof(m_data_path));
+///    }
+///
+///    inline bool SDStorageAuto::has_config(const std::string& key) const
+///    {
+///        const auto it = m_data_map.find(key);
+///        return (it != m_data_map.end());
+///    }
+///
+///    inline void SDStorageAuto::set_config(const std::string& key, const std::string& val)
+///    {
+///        std::lock_guard<std::mutex> l(m_mtx);
+///        m_data_map[key] = val;
+///        m_has_external_updated_it = true;
+///    }
+///
+///    inline std::string SDStorageAuto::get_config(const std::string& key) const
+///    {
+///        std::lock_guard<std::mutex> l(m_mtx);
+///        const auto it = m_data_map.find(key);
+///        if (it != m_data_map.end()) return it->second;
+///        return {};
+///    }
+///
+///    template<typename T>
+///    inline void SDStorageAuto::set_config_hex_t(const std::string& key, const T& val)
+///    {
+///        std::lock_guard<std::mutex> l(m_mtx);
+///        auto str_val = std::unique_ptr<char[]>(new char[_to_hex_format(nullptr, val)]);
+///        _to_hex_format(str_val.get(), val);
+///        m_has_external_updated_it = true;
+///        set_config(key, str_val)
+///    }
+///
+///    template<typename T>
+///    inline bool SDStorageAuto::get_config_hex_t(const std::string& key, T& val)
+///    {
+///        std::lock_guard<std::mutex> l(m_mtx);
+///        const auto it = get_config(key);
+///        return _from_hex_format(it->second.c_str(), val);
+///    }
+///
+///    inline const char* SDStorageAuto::get_path() const
+///    {
+///        return m_data_path;
+///    }
+///
+///    inline std::unique_lock<std::mutex> SDStorageAuto::get_lock()
+///    {
+///        return {m_mtx};
+///    }
+///
+///    inline SDStorageAuto::map_cptr SDStorageAuto::begin() const
+///    {
+///        return m_data_map.begin();
+///    }
+///
+///    inline SDStorageAuto::map_cptr SDStorageAuto::end() const
+///    {
+///        return m_data_map.end();
+///    }
+///
+///
+///
+///
+/////    inline void SDStorageAuto::_load_internally()
+/////    {
+/////        if (CPU::get_core_id() != cpu_core_id_for_sd_card) {
+/////            LOGE(TAG, "SDStoreAuto got _load_internally running on the wrong core! Abort");
+/////            return;
+/////        }
+/////
+/////        if (!m_has_external_updated_it && m_has_service_loaded_it) return;
+/////        std::lock_guard<std::mutex> l(m_mtx);
+/////        m_has_external_updated_it = false;
+/////        
+/////        _recursive_pathing(m_data_path, [](const char* path){
+/////            SDcard::mkdir(path);
+/////        });
+/////
+/////        File fp = SDcard::f_open
+/////
+/////
+/////        m_has_service_loaded_it = true;
+/////    }
+
+
+
 
     inline StoredDataEachDevice& SharedData::operator()(const CS::device_id& id)
     {
@@ -367,5 +491,14 @@ namespace STR {
         return m_idb;
     }
 
+    /*inline const SDStorageAuto& SharedData::get_sd_data() const
+    {
+        return m_asd;
+    }
+
+    inline SDStorageAuto& SharedData::get_sd_data()
+    {
+        return m_asd;
+    }*/
 
 }

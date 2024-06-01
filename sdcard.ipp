@@ -3,10 +3,27 @@
 #include "sdcard.h"
 #include "common.h"
 #include "cpu_ctl.h"
+#include "data_shared.h"
 
 #include "Serial/protocol.h"
 
 namespace SDcard {
+
+
+    inline void _recursive_pathing(const char* path, void (*callback)(const char*))
+    {
+        const size_t len = path ? strlen(path) : 0;
+        if (len == 0) return;
+
+        auto buf = std::unique_ptr<char[]>(new char[len + 1]);
+
+        for(size_t p = 0; path[p] != '\0'; ++p) {
+            if (path[p] == '/' || path[p] == '\\') {
+                callback(buf.get());
+            }
+            buf[p] = path[p];
+        }
+    }
 
     namespace _INTERNAL {
 
@@ -88,6 +105,7 @@ namespace SDcard {
     inline File f_open(const char* src, const char* mode)
     {
         if (CPU::get_core_id() != cpu_core_id_for_sd_card) { LOGE(TAG, "GOT CALL FROM WRONG CORE, ABORTING F_OPEN."); return {}; }
+        if (mode && (mode[0] == 'a' || mode[0] == 'A')) _recursive_pathing(src, [](const char* pa){ SDcard::mkdir(pa); } );
         return SD.open(src, mode);
     }
 

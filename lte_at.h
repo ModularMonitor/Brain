@@ -2,7 +2,7 @@
 
 #include "common.h"
 #include "cpu_ctl.h"
-#include "data_displayed.h"
+#include "data_shared.h"
 
 #define TINY_GSM_MODEM_SIM7600
 #define TINY_GSM_RX_BUFFER 1024 // Set RX buffer to 1Kb
