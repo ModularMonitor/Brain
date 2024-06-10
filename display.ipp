@@ -433,8 +433,8 @@ namespace DP {
 
     inline void draw_resumed_at(::STR::StoredDataEachDevice& m_dev, TFT_eSPI* m_tft, const size_t item_in_list, const bool& state_changed, const bool& should_update_text, const char* name)
     {
-        const uint16_t bgcolor = m_dev.get_has_issues() ? item_has_issues_bg_color : (m_dev.get_is_online() ? item_online_bg_color : TFT_DARKGREY);
-        const uint16_t bordercolor = m_dev.get_has_issues() ? item_has_issues_bg_color_border : (m_dev.get_is_online() ? item_online_bg_color_border : TFT_DARKGREY);
+        const uint16_t bgcolor = m_dev.get_has_issues() ? item_has_issues_bg_color : (m_dev.get_is_online() ? item_online_bg_color : item_offline_bg_color);
+        const uint16_t bordercolor = m_dev.get_has_issues() ? item_has_issues_bg_color_border : (m_dev.get_is_online() ? item_online_bg_color_border : item_offline_bg_color_border);
 
         const size_t siz = m_dev.size();
         const char no_data[] = "sem dados";

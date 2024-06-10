@@ -33,7 +33,9 @@ namespace DP {
     constexpr int32_t item_resumed_border_radius = 8;
 
     const uint16_t item_online_bg_color = 0xc7b8;
+    const uint16_t item_offline_bg_color = 0xcf1e;
     const uint16_t item_online_bg_color_border = 0x9e13;
+    const uint16_t item_offline_bg_color_border = 0xb69b;
     const uint16_t item_has_issues_bg_color = 0xf638;
     const uint16_t item_has_issues_bg_color_border = 0xb410;
 

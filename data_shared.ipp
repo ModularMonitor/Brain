@@ -413,26 +413,26 @@ namespace STR {
 ///
 ///
 ///
-/////    inline void SDStorageAuto::_load_internally()
-/////    {
-/////        if (CPU::get_core_id() != cpu_core_id_for_sd_card) {
-/////            LOGE(TAG, "SDStoreAuto got _load_internally running on the wrong core! Abort");
-/////            return;
-/////        }
-/////
-/////        if (!m_has_external_updated_it && m_has_service_loaded_it) return;
-/////        std::lock_guard<std::mutex> l(m_mtx);
-/////        m_has_external_updated_it = false;
-/////        
-/////        _recursive_pathing(m_data_path, [](const char* path){
-/////            SDcard::mkdir(path);
-/////        });
-/////
-/////        File fp = SDcard::f_open
-/////
-/////
-/////        m_has_service_loaded_it = true;
-/////    }
+/// //    inline void SDStorageAuto::_load_internally()
+/// //    {
+/// //        if (CPU::get_core_id() != cpu_core_id_for_sd_card) {
+/// //            LOGE(TAG, "SDStoreAuto got _load_internally running on the wrong core! Abort");
+/// //            return;
+/// //        }
+/// //
+/// //        if (!m_has_external_updated_it && m_has_service_loaded_it) return;
+/// //        std::lock_guard<std::mutex> l(m_mtx);
+/// //        m_has_external_updated_it = false;
+/// //        
+/// //        _recursive_pathing(m_data_path, [](const char* path){
+/// //            SDcard::mkdir(path);
+/// //        });
+/// //
+/// //        File fp = SDcard::f_open
+/// //
+/// //
+/// //        m_has_service_loaded_it = true;
+/// //    }
 
 
 
