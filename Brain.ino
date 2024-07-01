@@ -15,6 +15,8 @@ void setup()
 
 void loop() {
     LOGI(e_LOG_TAG::TAG_MAIN, "Main loop");
+    LOGI(e_LOG_TAG::TAG_MAIN, "Performance stats: %05.2f%% (%05.2f%% | %05.2f%%)", CPU::get_cpu_usage(), CPU::get_cpu_usage(0), CPU::get_cpu_usage(1));
+
     SLEEP(1000);
     //vTaskDelete(NULL);
 }
