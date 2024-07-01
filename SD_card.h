@@ -12,7 +12,6 @@ to call SD functions.
 
 */
 
-
 #pragma once
 
 #include "defaults.h"
@@ -26,7 +25,6 @@ to call SD functions.
 #include <mutex>
 #include <memory>
 #include <future>
-
 
 enum class SD_type {C_OFFLINE, C_MMC, C_SD, C_SDHC};
 
@@ -93,6 +91,4 @@ public:
     bool is_running() const;
 });
 
-#include "SD_card.ipp"
-
-// Create test cases
+//#include "SD_card.ipp"

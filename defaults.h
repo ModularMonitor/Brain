@@ -7,6 +7,8 @@
 #include "esp_freertos_hooks.h"
 
 #include <chrono>
+#include <vector>
+#include <functional>
 
 constexpr const uint8_t def_spi_core_id = 1; // spi (tft screen, touch)
 constexpr const uint8_t def_alt_core_id = 0; // other tasks (+ sd card)
@@ -15,6 +17,15 @@ constexpr const auto& cpu_core_id_for_ctl     = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_display = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_sd_card = def_alt_core_id;
 //constexpr const auto& cpu_core_id_for_4g_lte  = def_alt_core_id;
+
+// ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
+
+constexpr int logger_serial_speed = 115200;
+constexpr size_t logger_buffer_len = 256;
+constexpr char logger_log_path[] = "/log.txt";
+constexpr char logger_exception_path[] = "/log_exceptions.txt";
+
+// ---- ---- END OF LOGGER DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- SD CARD DEFAULTS BLOCK ---- ---- //
 
@@ -35,6 +46,7 @@ constexpr int sd_thread_priority = 10; // higher is more important.
 
 constexpr auto cpu_task_default_stack = 6144; 
 
+
 // function to create threads easily
 inline TaskHandle_t create_task(void(*fcn)(void*), const char* nam = "ASYNC", UBaseType_t pri = tskIDLE_PRIORITY, size_t stk = cpu_task_default_stack, void* arg = nullptr, int cid = -1) { TaskHandle_t _t = nullptr; if (cid < 0) { xTaskCreate(fcn, nam, stk, arg, pri, &_t); } else { xTaskCreatePinnedToCore(fcn, nam, stk, arg, pri, &_t, cid % portNUM_PROCESSORS); } return _t; }
 // auto create task auto
@@ -52,7 +64,6 @@ inline TaskHandle_t create_task(void(*fcn)(void*), const char* nam = "ASYNC", UB
 // auto run class function as thread on core
 #define async_class_method_pri(CLASSNAME, CLASSMETHOD, PRIORITY, COREID) { create_task([](void* arg){ ((CLASSNAME*)arg)->CLASSMETHOD(); vTaskDelete(NULL); }, "CLASSASYNC", PRIORITY, cpu_task_default_stack, (void*)this, COREID); }
 #define async_class_method(CLASSNAME, CLASSMETHOD, COREID) async_class_method_pri(CLASSNAME, CLASSMETHOD, tskIDLE_PRIORITY, COREID)
-
 
 #define MAKE_SINGLETON_CLASS_F(CLASSNAME, CLASSBODY, FUNCFLAGS) class CLASSNAME CLASSBODY; CLASSNAME& FUNCFLAGS get_singleton_of_##CLASSNAME(){ static CLASSNAME obj; return obj; }
 #define MAKE_SINGLETON_CLASS_CF(CLASSNAME, CONSTRUCTOR, FUNCFLAGS) MAKE_SINGLETON_CLASS_F(CLASSNAME, { public: CLASSNAME() { CONSTRUCTOR; } }, FUNCFLAGS)

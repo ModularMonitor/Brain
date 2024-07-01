@@ -1,26 +1,22 @@
 #pragma once
 
 #include "SD_card.h"
+#include "LOG_ctl.h"
 
 inline void MySDcard::async_sdcard_caller()
 {
-    Serial.println("[SD] Started SD async");
     constexpr const int& sck  = sd_card_pins[0];
     constexpr const int& miso = sd_card_pins[1];
     constexpr const int& mosi = sd_card_pins[2];
     constexpr const int& cs   = sd_card_pins[3];
 
-    Serial.println("[SD] Init SPI");
+ 
     auto spi = std::unique_ptr<SPIClass>(new SPIClass(SPI_SDCARD));
     spi->begin(sck, miso, mosi, cs);
     pinMode(spi->pinSS(), OUTPUT);
 
-    Serial.println("[SD] Init SD itself");
-
-
     const auto sd_card_checker = [&] {
         m_last_type = SD_type::C_OFFLINE;
-        Serial.println("[SD] Offline, check.");
         SD.end();
 
         while(m_last_type == SD_type::C_OFFLINE) {
@@ -28,8 +24,6 @@ inline void MySDcard::async_sdcard_caller()
                 SLEEP(3000);
             }
             else {
-                Serial.println("[SD] Online!");
-
                 switch(SD.cardType()) {
                 case CARD_MMC:
                     m_last_type = SD_type::C_MMC;
@@ -42,7 +36,6 @@ inline void MySDcard::async_sdcard_caller()
                     break;
                 default:
                     m_last_type = SD_type::C_OFFLINE;
-                    Serial.println("[SD] Nevermind?!");
                     break;
                 }
             }
@@ -51,15 +44,13 @@ inline void MySDcard::async_sdcard_caller()
 
     sd_card_checker();
 
-    Serial.println("[SD] Init done");
-
     uint64_t last_time = 0;
     m_initialized = true;
 
     while(1) {
         // check & update type if necessary
         if (get_time_ms() - last_time > sd_check_sd_time_ms || last_time == 0) {
-            //Serial.println("[SD] Check SD existence time");
+            //LOGI(e_LOG_TAG::TAG_SD, "Check SD existence time");
 
             auto fp = SD.open("/__check_card.txt", "w");
             const auto tp = SD.cardType();
@@ -82,11 +73,10 @@ inline void MySDcard::async_sdcard_caller()
                 i();
             }
             catch(const std::exception& e) {
-                Serial.print("[SD] EXCEPTION: ");
-                Serial.println(e.what());
+                Serial.printf("__SDCARD: EXCEPTION: %s", e.what());
             }
             catch(const std::exception& e) {
-                Serial.println("[SD] EXCEPTION: Uncaught");
+                Serial.printf("__SDCARD: EXCEPTION: Uncaught");
             }
         }
         m_tasks.clear();
