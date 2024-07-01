@@ -28,10 +28,10 @@
 #define DISPLAY_MISO       18 //19 // TOUCH_DOUT
 
 
-#define SDCARD_CS     26 // 33
-#define SDCARD_MOSI   25 // 14
-#define SDCARD_MISO   33 // 32
 #define SDCARD_SCK    32 // 12
+#define SDCARD_MISO   33 // 32
+#define SDCARD_MOSI   25 // 14
+#define SDCARD_CS     26 // 33
 
 // G && V == GND && VCC
 #define MODULE4G_S    2  // "Flight"

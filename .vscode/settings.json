@@ -80,6 +80,9 @@
         "semaphore": "cpp",
         "cinttypes": "cpp",
         "*.tpp": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "set": "cpp",
+        "future": "cpp",
+        "any": "cpp"
     }
 }
