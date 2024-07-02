@@ -13,10 +13,34 @@
 constexpr const uint8_t def_spi_core_id = 1; // spi (tft screen, touch)
 constexpr const uint8_t def_alt_core_id = 0; // other tasks (+ sd card)
 
-constexpr const auto& cpu_core_id_for_i2c     = def_alt_core_id;
-constexpr const auto& cpu_core_id_for_display = def_spi_core_id;
-constexpr const auto& cpu_core_id_for_sd_card = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_i2c           = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_core          = def_spi_core_id;
+constexpr const auto& cpu_core_id_for_display_pwm   = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_sd_card       = def_alt_core_id;
 //constexpr const auto& cpu_core_id_for_4g_lte  = def_alt_core_id;
+
+// ---- ---- COREDISPLAY DEFAULTS BLOCK ---- ---- //
+
+#define DISPLAY_CS         23
+#define DISPLAY_RST        22
+#define DISPLAY_DC         21
+#define DISPLAY_MOSI       19
+#define DISPLAY_SCLK       5
+// DISPLAY_MISO disconnected (SDO)
+// TOUCH_CLK = DISPLAY_SCLK
+#define DISPLAY_TOUCH_CS   16
+// TOUCH_DIN = DISPLAY_MOSI
+#define DISPLAY_MISO       18
+
+constexpr int core_display_led_pwm_pin = 17;
+constexpr uint64_t core_display_led_pwn_delay = 30; // ms
+constexpr uint64_t core_display_main_delay = 50; // ms
+constexpr char core_display_config_ini[] = "/display_calibration.ini";
+constexpr uint64_t core_display_screen_saver_steps_time = 10000; // ms
+constexpr int core_thread_priority = 1;
+constexpr int core_led_pwm_thread_priority = tskIDLE_PRIORITY;
+
+// ---- ---- END OF COREDISPLAY DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 

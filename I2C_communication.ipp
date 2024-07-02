@@ -54,16 +54,16 @@ inline void MyI2Ccomm::check_sd_card_paths_existance()
     MySDcard& sd = GET(MySDcard);
 
     if (sd.dir_exists("/i2c") || sd.make_dir("/i2c")) {
-        LOGI(e_LOG_TAG::TAG_I2C, "Preparing SD card ground for devices...");
+        //LOGI(e_LOG_TAG::TAG_I2C, "Preparing SD card ground for devices...");
         for(uint8_t p = 0; p < CS::d2u(CS::device_id::_MAX); ++p) {
             char buf[80];
             snprintf(buf, 80, "/i2c/%s", CS::d2str(static_cast<CS::device_id>(p)));
             if (!sd.dir_exists(buf)) sd.make_dir(buf);
         }
-        LOGI(e_LOG_TAG::TAG_I2C, "Paths are ready!");
+        //LOGI(e_LOG_TAG::TAG_I2C, "Paths are ready!");
     }
     else {
-        LOGW(e_LOG_TAG::TAG_I2C, "SD card not present. Not saving data.");
+        //LOGW(e_LOG_TAG::TAG_I2C, "SD card not present. Not saving data.");
     }
 }
 

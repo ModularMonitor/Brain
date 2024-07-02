@@ -21,6 +21,7 @@ inline int MyLOG::printf(const e_LOG_TAG& tag, const e_LOG_TYPE& typ, const char
         case e_LOG_TAG::TAG_SD:     tag_s = "SDC";      break;
         case e_LOG_TAG::TAG_CPU:    tag_s = "CPU";      break;
         case e_LOG_TAG::TAG_I2C:    tag_s = "I2C";      break;
+        case e_LOG_TAG::TAG_CORE:   tag_s = "COR";      break;
         default: break; // UNK
         }
 

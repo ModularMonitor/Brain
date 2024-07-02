@@ -141,7 +141,7 @@ namespace DP {
     inline const char* get_fancy_name_for(CS::device_id id)
     {
         switch(id) {
-        case CS::device_id::DHT22_SENSOR:       return "Modulo de temperatura e humidade";
+        case CS::device_id::DHT22_SENSOR:       return "Modulo de temperatura e umidade";
         case CS::device_id::MICS_6814_SENSOR:   return "Modulo de NO2, NH3 e CO";
         case CS::device_id::LY038_HW072_SENSOR: return "Modulo de som e luz";
         case CS::device_id::GY87_SENSOR:        return "Modulo acelerometro, giroscopio, barometro";

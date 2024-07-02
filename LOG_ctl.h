@@ -22,7 +22,8 @@ enum class e_LOG_TAG{
     TAG_MAIN,
     TAG_SD,
     TAG_CPU,
-    TAG_I2C
+    TAG_I2C,
+    TAG_CORE
 };
 
 enum class e_LOG_TYPE{
