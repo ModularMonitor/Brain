@@ -9,6 +9,7 @@ void setup()
     //Serial.begin(logger_serial_speed);
     //while(!Serial.available()) SLEEP(100);
     SLEEP(1000);
+    init_all();
 
     LOGI(e_LOG_TAG::TAG_MAIN, "Main has begun.");
 }

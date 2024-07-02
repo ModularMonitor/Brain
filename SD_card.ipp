@@ -9,7 +9,6 @@ inline void MySDcard::async_sdcard_caller()
     constexpr const int& miso = sd_card_pins[1];
     constexpr const int& mosi = sd_card_pins[2];
     constexpr const int& cs   = sd_card_pins[3];
-
  
     auto spi = std::unique_ptr<SPIClass>(new SPIClass(SPI_SDCARD));
     spi->begin(sck, miso, mosi, cs);
@@ -75,7 +74,7 @@ inline void MySDcard::async_sdcard_caller()
             catch(const std::exception& e) {
                 Serial.printf("__SDCARD: EXCEPTION: %s", e.what());
             }
-            catch(const std::exception& e) {
+            catch(...) {
                 Serial.printf("__SDCARD: EXCEPTION: Uncaught");
             }
         }
@@ -85,6 +84,7 @@ inline void MySDcard::async_sdcard_caller()
     }
 
     m_initialized = false;
+    vTaskDelete(NULL);
 }
 
 inline void MySDcard::push_task(std::packaged_task<void(void)>&& moving)

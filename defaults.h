@@ -13,7 +13,7 @@
 constexpr const uint8_t def_spi_core_id = 1; // spi (tft screen, touch)
 constexpr const uint8_t def_alt_core_id = 0; // other tasks (+ sd card)
 
-constexpr const auto& cpu_core_id_for_ctl     = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_i2c     = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_display = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_sd_card = def_alt_core_id;
 //constexpr const auto& cpu_core_id_for_4g_lte  = def_alt_core_id;
@@ -41,6 +41,20 @@ constexpr int sd_max_files_open = 10;
 constexpr int sd_thread_priority = 10; // higher is more important.
 
 // ---- ---- END OF SD CARD DEFAULTS BLOCK ---- ---- //
+
+// ---- ---- I2C CONTROLLER DEFAULTS BLOCK ---- ---- //
+
+constexpr int i2c_pins[] = {
+    4,  // SDA
+    15  // SCL
+};
+
+constexpr size_t i2c_values_history_size = 32;
+constexpr uint64_t i2c_path_checking_time = 30000; // ms
+constexpr uint64_t i2c_packaging_delay = 5000; // ms
+constexpr int i2c_thread_priority = 2; // higher is more important.
+
+// ---- ---- END OF I2C CONTROLLER DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- NON RELATED ---- ---- /
 

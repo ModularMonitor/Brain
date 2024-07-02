@@ -21,7 +21,8 @@ don't overlap. It'll create a log.txt on the SD card, if any is found. It won't 
 enum class e_LOG_TAG{
     TAG_MAIN,
     TAG_SD,
-    TAG_CPU
+    TAG_CPU,
+    TAG_I2C
 };
 
 enum class e_LOG_TYPE{

@@ -83,6 +83,7 @@
         "iostream": "cpp",
         "set": "cpp",
         "future": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "map": "cpp"
     }
 }
