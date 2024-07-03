@@ -4,7 +4,7 @@
 
 #include "SD_card.h"
 #include "Custom_Bitmaps.h"
-
+#include "Configuration.h"
 
 inline void CoreDisplay::task_touch()
 {
@@ -12,7 +12,7 @@ inline void CoreDisplay::task_touch()
 
     if (m_touch_history[0].state = m_tft->getTouch(&m_touch_history[0].x, &m_touch_history[0].y))
     {
-        m_screen_saver.next_step = get_time_ms() + core_display_screen_saver_steps_time;
+        m_screen_saver.next_step = get_time_ms() + GET(MyConfig).get_core_display_screen_saver_steps_time();
         if (m_screen_saver.state != 0) m_screen_saver.state = 3; // touch event on screen saver saves 3
     }
 
@@ -110,7 +110,7 @@ inline void CoreDisplay::_task_calibrate_display_once()
     m_tft->calibrateTouch(calibrationData, TFT_WHITE, TFT_RED, 15);
     m_tft->fillScreen(TFT_BLACK);
 
-    sd.overwrite_on(core_display_config_ini, (char*)calibrationData, 14);
+    sd.async_overwrite_on(core_display_config_ini, (char*)calibrationData, 14);
 }
 
 inline void CoreDisplay::_display_draw_static_overlay()
@@ -164,12 +164,14 @@ inline void CoreDisplay::async_display_screen_saver()
     uint8_t& curr_level = m_screen_saver.current_level;
     uint64_t& time_event = m_screen_saver.next_step; // time for next bright down
 
+    MyConfig& cfg = GET(MyConfig);
+
     while(1) {
         CPU::AutoWait autotime(core_display_led_pwn_delay); // loop control
 
         // if it's time, increase counter, lower screen brightness
         if (get_time_ms() > time_event) {
-            time_event += core_display_screen_saver_steps_time;
+            time_event += cfg.get_core_display_screen_saver_steps_time();
             if (curr_state < 2) ++curr_state;
         }
 
@@ -232,10 +234,10 @@ inline void CoreDisplay::async_display_caller()
         LOGI(e_LOG_TAG::TAG_CORE, "Calibration good.");
         m_tft->setTouch(calibrationData);
     }
-
+    
     LOGI(e_LOG_TAG::TAG_CORE, "Resetting timers...");
 
-    m_screen_saver.next_step = get_time_ms() + core_display_screen_saver_steps_time;
+    m_screen_saver.next_step = get_time_ms() + GET(MyConfig).get_core_display_screen_saver_steps_time();
 
     LOGI(e_LOG_TAG::TAG_CORE, "Ready.");
     

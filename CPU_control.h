@@ -1,3 +1,12 @@
+/*
+CPU_control.h
+
+# Description:
+- This has many important things, some related to performance and some related to monitoring.
+- This has also timing class AutoWait used to make sure timings are met.
+
+*/
+
 #pragma once
 
 #include "esp32-hal.h"

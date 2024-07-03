@@ -1,3 +1,17 @@
+/*
+I2C_communication.h
+
+# Depends on:
+- defaults.h
+- SD_card.h
+- Configuration.h
+- Serial
+
+# Description:
+- This is responsible for the data transmission between devices using I2C.
+- This also automatically saves stuff to SD card when things are connected and store information to show on screen later.
+
+*/
 #pragma once
 
 #include "defaults.h"

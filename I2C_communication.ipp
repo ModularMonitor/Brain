@@ -3,6 +3,7 @@
 #include "I2C_communication.h"
 #include "CPU_control.h"
 #include "SD_card.h"
+#include "Configuration.h"
 
 #include <memory>
 
@@ -53,6 +54,8 @@ inline void MyI2Ccomm::check_sd_card_paths_existance()
 {
     MySDcard& sd = GET(MySDcard);
 
+    if (!sd.is_online()) return;
+
     if (sd.dir_exists("/i2c") || sd.make_dir("/i2c")) {
         //LOGI(e_LOG_TAG::TAG_I2C, "Preparing SD card ground for devices...");
         for(uint8_t p = 0; p < CS::d2u(CS::device_id::_MAX); ++p) {
@@ -91,7 +94,7 @@ inline void MyI2Ccomm::async_i2c_caller()
     };
 
     while(1) {
-        CPU::AutoWait autotime(i2c_packaging_delay); // loop control
+        CPU::AutoWait autotime(GET(MyConfig).get_i2c_packaging_delay()); // loop control
 
         if (m_sdcard_check_time.is_time()) {
             check_sd_card_paths_existance();

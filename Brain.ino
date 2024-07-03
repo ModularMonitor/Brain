@@ -8,10 +8,12 @@ void setup()
 {
     //Serial.begin(logger_serial_speed);
     //while(!Serial.available()) SLEEP(100);
-    SLEEP(1000);
+    SLEEP(1500);
     init_all();
 
-    LOGI(e_LOG_TAG::TAG_MAIN, "Main has begun.");
+    LOGI(e_LOG_TAG::TAG_MAIN, "Main is good.");
+
+    GET(MyConfig).save();
 }
 
 void loop() {

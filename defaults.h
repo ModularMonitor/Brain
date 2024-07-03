@@ -10,6 +10,8 @@
 #include <vector>
 #include <functional>
 
+constexpr char app_version[] = "V0.0.1-BETA";
+
 constexpr const uint8_t def_spi_core_id = 1; // spi (tft screen, touch)
 constexpr const uint8_t def_alt_core_id = 0; // other tasks (+ sd card)
 
@@ -18,6 +20,12 @@ constexpr const auto& cpu_core_id_for_core          = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_display_pwm   = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_sd_card       = def_alt_core_id;
 //constexpr const auto& cpu_core_id_for_4g_lte  = def_alt_core_id;
+
+// ---- ---- CONFIGURATION DEFAULTS BLOCK ---- ---- //
+
+constexpr char config_file_path[] = "/config.ini";
+
+// ---- ---- END OF CONFIGURATION DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- COREDISPLAY DEFAULTS BLOCK ---- ---- //
 
@@ -44,7 +52,7 @@ constexpr int core_led_pwm_thread_priority = tskIDLE_PRIORITY;
 
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 
-constexpr int logger_serial_speed = 115200;
+constexpr int logger_serial_speed = 115200; // in weird situations, may be used by SD card
 constexpr size_t logger_buffer_len = 256;
 constexpr char logger_log_path[] = "/log.txt";
 constexpr char logger_exception_path[] = "/log_exceptions.txt";
@@ -63,6 +71,8 @@ constexpr int sd_card_pins[] = {
 constexpr uint64_t sd_check_sd_time_ms = 5000;
 constexpr int sd_max_files_open = 10;
 constexpr int sd_thread_priority = 10; // higher is more important.
+constexpr uint32_t sd_max_timeout_wait_future = 10000; // ms
+constexpr size_t sd_max_tasks_pending = 64; // should be good for async events lmao
 
 // ---- ---- END OF SD CARD DEFAULTS BLOCK ---- ---- //
 

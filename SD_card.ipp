@@ -3,8 +3,12 @@
 #include "SD_card.h"
 #include "LOG_ctl.h"
 
+#include <chrono>
+
 inline void MySDcard::async_sdcard_caller()
 {
+    LOGI_NOSD(e_LOG_TAG::TAG_SD, "SD card initializing...");
+
     constexpr const int& sck  = sd_card_pins[0];
     constexpr const int& miso = sd_card_pins[1];
     constexpr const int& mosi = sd_card_pins[2];
@@ -18,67 +22,85 @@ inline void MySDcard::async_sdcard_caller()
         m_last_type = SD_type::C_OFFLINE;
         SD.end();
 
-        while(m_last_type == SD_type::C_OFFLINE) {
-            if (!SD.begin(cs, *spi, 4000000, "/sd", sd_max_files_open, false)) {
-                SLEEP(3000);
+        if (!SD.begin(cs, *spi, 4000000, "/sd", sd_max_files_open, false)) {
+            if (!m_initialized) { // must initialize without SD card anyway
+                LOGE_NOSD(e_LOG_TAG::TAG_SD, "__SDCARD: CORE LOAD WARN! SD card is not present, so many stuff MAY NOT be stable. Please consider adding one.");
+                LOGE_NOSD(e_LOG_TAG::TAG_SD, "__SDCARD: CORE LOAD WARN! Starting application in 10 seconds anyway. Good luck.");
+                SLEEP(10000);
             }
-            else {
-                switch(SD.cardType()) {
-                case CARD_MMC:
-                    m_last_type = SD_type::C_MMC;
-                    break;
-                case CARD_SD:
-                    m_last_type = SD_type::C_SD;
-                    break;
-                case CARD_SDHC:
-                    m_last_type = SD_type::C_SDHC;
-                    break;
-                default:
-                    m_last_type = SD_type::C_OFFLINE;
-                    break;
-                }
+            else SLEEP(3000);
+        }
+        else {
+            switch(SD.cardType()) {
+            case CARD_MMC:
+                m_last_type = SD_type::C_MMC;
+                break;
+            case CARD_SD:
+                m_last_type = SD_type::C_SD;
+                break;
+            case CARD_SDHC:
+                m_last_type = SD_type::C_SDHC;
+                break;
+            default:
+                m_last_type = SD_type::C_OFFLINE;
+                break;
             }
         }
+
+        return m_last_type != SD_type::C_OFFLINE;
     };
+
+    LOGI_NOSD(e_LOG_TAG::TAG_SD, "Checking its existance...");
 
     sd_card_checker();
 
     uint64_t last_time = 0;
     m_initialized = true;
 
+    LOGI_NOSD(e_LOG_TAG::TAG_SD, "Working.");
+
     while(1) {
         // check & update type if necessary
         if (get_time_ms() - last_time > sd_check_sd_time_ms || last_time == 0) {
-            //LOGI(e_LOG_TAG::TAG_SD, "Check SD existence time");
 
             auto fp = SD.open("/__check_card.txt", "w");
             const auto tp = SD.cardType();
 
             if (!fp || (tp != CARD_MMC && tp != CARD_SD && tp != CARD_SDHC)) {
-                sd_card_checker();
+                if (sd_card_checker())
+                    last_time = get_time_ms(); // reset time if now good
             }
-
-            last_time = get_time_ms();
+            else last_time = get_time_ms(); // reset time if good
         }
+
+        // tasks may run even if sd card is not present.
 
         if (m_tasks.empty()) {
             SLEEP(20);
             continue;
         }
 
-        std::lock_guard<std::mutex> l(m_tasks_mtx);
-        for(auto& i : m_tasks) {
+
+        while(!m_tasks.empty()) {
+            std::packaged_task<void(void)> i;
+
+            {
+                std::lock_guard<std::mutex> l(m_tasks_mtx);
+                i = std::move(m_tasks.front());
+                m_tasks.pop_front();
+            }
+
             try {
                 i();
             }
             catch(const std::exception& e) {
-                Serial.printf("__SDCARD: EXCEPTION: %s", e.what());
+                LOGE_NOSD(e_LOG_TAG::TAG_SD, "__SDCARD: EXCEPTION: %s\n", e.what());
             }
             catch(...) {
-                Serial.printf("__SDCARD: EXCEPTION: Uncaught");
+                LOGE_NOSD(e_LOG_TAG::TAG_SD, "__SDCARD: EXCEPTION: Uncaught\n");
             }
         }
-        m_tasks.clear();
+
         SLEEP(20);
         last_time = get_time_ms();
     }
@@ -87,10 +109,22 @@ inline void MySDcard::async_sdcard_caller()
     vTaskDelete(NULL);
 }
 
-inline void MySDcard::push_task(std::packaged_task<void(void)>&& moving)
+inline bool MySDcard::push_task(std::packaged_task<void(void)>&& moving)
 {
+    if (!is_online()) {
+        LOGW_NOSD(e_LOG_TAG::TAG_SD, "No task pushed for SD card this time. Skipped nearby task. SD card is not present.");
+        return false;
+    }
+
     std::lock_guard<std::mutex> l(m_tasks_mtx);
-    m_tasks.push_back(std::move(moving));
+    if (m_tasks.size() < sd_max_tasks_pending) {
+        m_tasks.push_back(std::move(moving));
+        return true;
+    }
+    else {
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "SD card queue is too large! Skipping one task, unfortunately. Probably an issue with the SD card itself?");
+        return false;
+    }
 }
 
 inline MySDcard::MySDcard()
@@ -106,8 +140,10 @@ inline bool MySDcard::remove_file(const char* who)
     std::packaged_task<void(void)> task([&ret, &who]() { ret = SD.remove(who); });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
 
     return ret;
 }
@@ -118,8 +154,10 @@ inline bool MySDcard::rename_file(const char* who, const char* to)
     std::packaged_task<void(void)> task([&ret, &who, &to]() { ret = SD.rename(who, to); });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
 }
@@ -136,8 +174,10 @@ inline size_t MySDcard::append_on(const char* path, const char* what, const size
     });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
 }
@@ -154,10 +194,47 @@ inline size_t MySDcard::overwrite_on(const char* path, const char* what, const s
     });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
+}
+
+
+inline void MySDcard::async_append_on(const char* path, const char* what, const size_t len)
+{
+    std::string path_cpy = path;
+    std::unique_ptr<char[]> what_cpy = std::unique_ptr<char[]>(new char[len]);
+    memcpy(what_cpy.get(), what, len);
+
+    std::packaged_task<void(void)> task([path_cpy, what_mov = std::move(what_cpy), len]() { 
+        File fp = SD.open(path_cpy.c_str(), FILE_APPEND);
+        if (!fp) return;
+
+        fp.write((uint8_t*)what_mov.get(), len);
+        fp.close();
+    });
+
+    push_task(std::move(task));
+}
+
+inline void MySDcard::async_overwrite_on(const char* path, const char* what, const size_t len)
+{
+    std::string path_cpy = path;
+    std::unique_ptr<char[]> what_cpy = std::unique_ptr<char[]>(new char[len]);
+    memcpy(what_cpy.get(), what, len);
+
+    std::packaged_task<void(void)> task([path_cpy, what_mov = std::move(what_cpy), len]() { 
+        File fp = SD.open(path_cpy.c_str(), FILE_WRITE);
+        if (!fp) return;
+
+        fp.write((uint8_t*)what_mov.get(), len);
+        fp.close();
+    });
+
+    push_task(std::move(task));
 }
 
 inline size_t MySDcard::read_from(const char* path, char* buffer, const size_t len, const uint32_t seek)
@@ -174,8 +251,10 @@ inline size_t MySDcard::read_from(const char* path, char* buffer, const size_t l
     });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
 }
@@ -186,8 +265,10 @@ inline bool MySDcard::remove_dir(const char* dir)
     std::packaged_task<void(void)> task([&ret, &dir]() { ret = SD.rmdir(dir); });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
 }
@@ -198,8 +279,10 @@ inline bool MySDcard::make_dir(const char* dir)
     std::packaged_task<void(void)> task([&ret, &dir]() { ret = SD.mkdir(dir); });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
 }
@@ -214,8 +297,10 @@ inline bool MySDcard::file_exists(const char* who)
     });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
 }
@@ -230,8 +315,10 @@ inline bool MySDcard::dir_exists(const char* dir)
     });
 
     auto fut = task.get_future();
-    push_task(std::move(task));
-    fut.wait();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
     
     return ret;
 }
@@ -269,4 +356,9 @@ inline size_t MySDcard::tasks_size() const
 inline bool MySDcard::is_running() const
 {
     return m_initialized;
+}
+
+inline bool MySDcard::is_online() const
+{
+    return m_last_type != SD_type::C_OFFLINE && m_initialized;
 }

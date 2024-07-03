@@ -20,7 +20,7 @@ to call SD functions.
 #include <SD.h>
 #include <SPI.h>
 
-#include <vector>
+#include <deque>
 #include <string>
 #include <mutex>
 #include <memory>
@@ -33,12 +33,14 @@ enum class SD_type {C_OFFLINE, C_MMC, C_SD, C_SDHC};
 MAKE_SINGLETON_CLASS(MySDcard, {
     volatile bool m_initialized = false;
 
-    std::vector<std::packaged_task<void(void)>> m_tasks;
+    std::deque<std::packaged_task<void(void)>> m_tasks;
     std::mutex m_tasks_mtx;
     SD_type m_last_type = SD_type::C_OFFLINE;
 
     void async_sdcard_caller();
-    void push_task(std::packaged_task<void(void)>&&);
+
+    // assists on pushing to queue. False only if queue is too large already (super rare if you have SD card)
+    bool push_task(std::packaged_task<void(void)>&&);
 public:
     MySDcard();
 
@@ -56,6 +58,12 @@ public:
 
     // Read some data from file, with offset.
     size_t read_from(const char* path, char* buffer, const size_t len, const uint32_t seek = 0);
+
+    // Abuse the sequential async queue to append to the end of a file, or create if not exists, data.
+    void async_append_on(const char* path, const char* what, const size_t len);
+
+    // Abuse the sequential async queue to create or replace a file with data.
+    void async_overwrite_on(const char* path, const char* what, const size_t len);
 
     // Remove a directory.
     bool remove_dir(const char* dir);
@@ -89,6 +97,9 @@ public:
 
     // Get if it is online already
     bool is_running() const;
+
+    // Get if SD card is functioning
+    bool is_online() const;
 });
 
 //#include "SD_card.ipp"

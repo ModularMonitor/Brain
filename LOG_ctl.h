@@ -23,7 +23,8 @@ enum class e_LOG_TAG{
     TAG_SD,
     TAG_CPU,
     TAG_I2C,
-    TAG_CORE
+    TAG_CORE,
+    TAG_CFG
 };
 
 enum class e_LOG_TYPE{
@@ -34,11 +35,15 @@ enum class e_LOG_TYPE{
 
 // use GET(MyLOG) to get its singleton ref!
 MAKE_SINGLETON_CLASS(MyLOG, {
-    std::mutex m_mtx;
+    std::recursive_mutex m_mtx;
 public:
     int printf(const e_LOG_TAG&, const e_LOG_TYPE&, const char*, ...);
+    int printf_nosd(const e_LOG_TAG&, const e_LOG_TYPE&, const char*, ...);
 });
 
 #define LOGI(TAG, ...) GET(MyLOG).printf(TAG, e_LOG_TYPE::INFO,  __VA_ARGS__)
 #define LOGW(TAG, ...) GET(MyLOG).printf(TAG, e_LOG_TYPE::WARN,  __VA_ARGS__)
 #define LOGE(TAG, ...) GET(MyLOG).printf(TAG, e_LOG_TYPE::ERROR, __VA_ARGS__)
+#define LOGI_NOSD(TAG, ...) GET(MyLOG).printf_nosd(TAG, e_LOG_TYPE::INFO,  __VA_ARGS__)
+#define LOGW_NOSD(TAG, ...) GET(MyLOG).printf_nosd(TAG, e_LOG_TYPE::WARN,  __VA_ARGS__)
+#define LOGE_NOSD(TAG, ...) GET(MyLOG).printf_nosd(TAG, e_LOG_TYPE::ERROR, __VA_ARGS__)
