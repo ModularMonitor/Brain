@@ -1,6 +1,10 @@
 #pragma once
 
 #include "CORE_Display.h"
+#include "CORE_Display_aux_draw.ipp"
+
+#include "Serial/packaging.h"
+#include "Serial/flags.h"
 
 #include "SD_card.h"
 #include "Custom_Bitmaps.h"
@@ -27,9 +31,30 @@ inline void CoreDisplay::task_display()
     //_task_update_screen_saver_state();
     _display_draw_bar_stuff(); // always
 
+    
 
 
-
+    switch(m_state.state) {
+    case core_states::STATE_HOME:
+    {
+        for(size_t p = 0; p < DisplayColors::item_resumed_amount_on_screen; ++p) 
+            m_draw_lines[p].draw(static_cast<int32_t>(p));
+    }
+        break;
+    case core_states::STATE_CONFIG:
+    {
+        for(size_t p = 0; p < DisplayColors::item_resumed_amount_on_screen; ++p) 
+            m_draw_lines[p].draw(static_cast<int32_t>(p));
+    }
+        break;
+    case core_states::STATE_DETAILS:
+    {
+        m_draw_full_graph->draw();
+    }
+        break;
+    case core_states::STATE_DEBUG:
+        break;
+    }
 
 
 
@@ -57,12 +82,21 @@ inline void CoreDisplay::_task_state_only_if_touch(const touch_event& event)
     switch(m_state.state) {
     case core_states::STATE_HOME:
         // check for touch on devices
+    {
+        
+    }
         break;
     case core_states::STATE_CONFIG:
         // touch on configurations
+    {
+        
+    }
         break;
     case core_states::STATE_DETAILS:
         // no touch related stuff. Each one has its own max offset that each shows graph and current value
+    {
+        m_state.offset_max = GET(MyI2Ccomm).get_device_configurations(m_device_select, 0).m_map.size();
+    }
         break;
     case core_states::STATE_DEBUG:
         // on any touch on debug, go back
@@ -98,6 +132,9 @@ inline void CoreDisplay::_task_state_only_if_touch(const touch_event& event)
     default: // if somehow
         return;
     }
+
+    // just check just in case...
+    if (m_state.offset >= m_state.offset_max) m_state.offset = m_state.offset_max - 1;
 }
 
 inline void CoreDisplay::_task_calibrate_display_once()
@@ -135,6 +172,14 @@ inline void CoreDisplay::_display_draw_bar_stuff()
 
     MySDcard& sd = GET(MySDcard);
 
+    // What do I want on my top bar?
+    /*
+    1. SD card usage / online
+    2. Devices connected
+    3. I2C time (delay)
+    */
+
+
     char buf[128];
 
     snprintf(buf, 128, "Time: %llu; SD usage: %.1f%%; CPU: %.1f%% %.1f%%; RAM %.1f%%",
@@ -169,8 +214,12 @@ inline void CoreDisplay::async_display_screen_saver()
     while(1) {
         CPU::AutoWait autotime(core_display_led_pwn_delay); // loop control
 
-        // if it's time, increase counter, lower screen brightness
-        if (get_time_ms() > time_event) {
+        // if it's time, increase counter, lower screen brightness. If 0, keep on.
+        if (cfg.get_core_display_screen_saver_steps_time() == 0) {
+            curr_state = 0;
+            time_event = 0;
+        }
+        else if (get_time_ms() > time_event) {
             time_event += cfg.get_core_display_screen_saver_steps_time();
             if (curr_state < 2) ++curr_state;
         }
@@ -212,8 +261,24 @@ inline void CoreDisplay::async_display_caller()
 
     LOGI(e_LOG_TAG::TAG_CORE, "Initializing Display...");
 
-    m_tft = std::unique_ptr<TFT_eSPI>(new TFT_eSPI());
+    m_tft = std::shared_ptr<TFT_eSPI>(new TFT_eSPI());
     
+    m_draw_lines = std::unique_ptr<DisplayLineBlock[]>(new DisplayLineBlock[DisplayColors::item_resumed_amount_on_screen]);
+    for(size_t p = 0; p < DisplayColors::item_resumed_amount_on_screen; ++p) {
+        m_draw_lines[p].set_tft(m_tft);
+        m_draw_lines[p].set_fill_color(DisplayColors::item_offline_bg_color);
+        m_draw_lines[p].set_border_color(DisplayColors::item_offline_bg_color_border);
+        m_draw_lines[p].set_font_color(DisplayColors::item_font_color);
+    }
+
+    m_draw_full_graph = std::unique_ptr<DisplayFullBlockGraph>(new DisplayFullBlockGraph{});
+    {
+        m_draw_full_graph->set_tft(m_tft);
+        m_draw_full_graph->set_fill_color(DisplayColors::item_offline_bg_color);
+        m_draw_full_graph->set_border_color(DisplayColors::item_offline_bg_color_border);
+        m_draw_full_graph->set_font_color(DisplayColors::item_font_color);
+    }
+
     LOGI(e_LOG_TAG::TAG_CORE, "Setting up Display...");
 
     m_tft->init();

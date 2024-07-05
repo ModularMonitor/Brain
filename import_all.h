@@ -7,6 +7,7 @@
 #include "Configuration.h"
 #include "LOG_ctl.h"
 #include "I2C_communication.h"
+#include "CORE_Display_aux_draw.h"
 #include "CORE_Display.h"
 
 /* Implementations */
@@ -15,6 +16,7 @@
 #include "Configuration.ipp"
 #include "LOG_ctl.ipp"
 #include "I2C_communication.ipp"
+#include "CORE_Display_aux_draw.ipp"
 #include "CORE_Display.ipp"
 
 inline void init_all() {

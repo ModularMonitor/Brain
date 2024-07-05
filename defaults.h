@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Serial/packaging.h"
+#include "Serial/flags.h"
+
 #include <stdint.h>
 #include "esp32-hal.h"
 #include "esp32-hal-cpu.h"
@@ -47,6 +50,49 @@ constexpr char core_display_config_ini[] = "/display_calibration.ini";
 constexpr uint64_t core_display_screen_saver_steps_time = 10000; // ms
 constexpr int core_thread_priority = 1;
 constexpr int core_led_pwm_thread_priority = tskIDLE_PRIORITY;
+
+namespace DisplayColors {
+    constexpr size_t log_line_dist = 20;
+    constexpr size_t log_amount = 320 / log_line_dist;
+    constexpr size_t log_line_max_len = 96;
+
+    constexpr int32_t bar_top_height = 20;
+    constexpr int32_t bar_right_width = 40;
+
+    constexpr int32_t display_real_work_area[2] = {(480 - bar_right_width), (320 - bar_top_height) };
+
+    constexpr int32_t bar_right_buttons_amount = 5;
+    constexpr int32_t bar_right_each_height = display_real_work_area[1] / bar_right_buttons_amount;
+
+    constexpr uint16_t bar_top_color = 0x34da;
+    constexpr uint16_t bar_right_color = 0xcd49;
+
+
+    constexpr int32_t item_resumed_amount_on_screen = 5;
+    constexpr int32_t item_resumed_height_max = display_real_work_area[1] / item_resumed_amount_on_screen;
+    constexpr int32_t item_resumed_total_amount = display_real_work_area[1] / item_resumed_height_max;
+    constexpr int32_t item_resumed_max_offset = (static_cast<int32_t>(CS::device_id::_MAX)) - item_resumed_total_amount;
+    constexpr int32_t item_resumed_width_max = display_real_work_area[0];
+    constexpr int32_t item_resumed_border_radius = 8;
+
+    constexpr int32_t item_full_width_max = display_real_work_area[0];
+    constexpr int32_t item_full_height_max = display_real_work_area[1];
+
+
+    const uint16_t item_font_color = 0;
+
+    const uint16_t item_online_bg_color = 0xc7b8;
+    const uint16_t item_offline_bg_color = 0xcf1e;
+
+    const uint16_t item_online_bg_color_border = 0x9e13;
+    const uint16_t item_offline_bg_color_border = 0xb69b;
+
+    const uint16_t item_has_issues_bg_color = 0xf638;
+    const uint16_t item_has_issues_bg_color_border = 0xb410;
+
+    const uint16_t item_close_button_x_and_border = 0xea8a;
+    const uint16_t item_close_button_body = 0x90c3;
+};
 
 // ---- ---- END OF COREDISPLAY DEFAULTS BLOCK ---- ---- //
 

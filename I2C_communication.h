@@ -22,26 +22,31 @@ I2C_communication.h
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <mutex>
+#include <optional>
 
 using i2c_data_map = std::unordered_map<std::string, char[32]>;
+using i2c_data_pair = std::pair<const std::string, char[32]>;
+
 
 // use GET(MyI2Ccomm) to get its singleton ref!
 MAKE_SINGLETON_CLASS(MyI2Ccomm, {
 public:
     struct device {
         i2c_data_map m_map;
+        mutable std::mutex m_map_mtx;
         uint64_t m_update_time = 0;
         bool m_online = false;
         bool m_issues = false;
 
         // path, value
-        const char* const post_value(const char*, const double&);
+        const char* const post_value_nolock(const char*, const double&);
         // path, value
-        const char* const post_value(const char*, const float&);
+        const char* const post_value_nolock(const char*, const float&);
         // path, value
-        const char* const post_value(const char*, const int64_t&);
+        const char* const post_value_nolock(const char*, const int64_t&);
         // path, value
-        const char* const post_value(const char*, const uint64_t&);
+        const char* const post_value_nolock(const char*, const uint64_t&);
     };
 
     struct device_history {
@@ -52,6 +57,9 @@ public:
         device& get_current_device();
         // advance internal pointer
         void advance_one_device();
+
+        // for read only, shows last or before last information
+        const device& get_in_time(const size_t) const;
     };
 private:
     device_history m_devices[CS::d2u(CS::device_id::_MAX)];
@@ -62,4 +70,16 @@ private:
     void async_i2c_caller();
 public:
     MyI2Ccomm();
+
+    // basically returns i2c_values_history_size
+    static constexpr size_t get_max_history_size() {return i2c_values_history_size;}
+
+    // Goes to m_devices[dev][back_in...] and returns the m_map length.
+    const device& get_device_configurations(const CS::device_id dev, const size_t back_in_time_idx) const;
+
+    // Get a pair of key and value in this device information in time based on index (may change order each run).
+    std::optional<i2c_data_pair> get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const size_t map_idx) const;
+
+    // Get a pair of key and value in this device information in time based on key value.
+    std::optional<i2c_data_pair> get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const std::string& map_key) const;
 });
