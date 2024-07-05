@@ -4,20 +4,6 @@
 #include "CORE_Display_aux_draw.h"
 #include "I2C_communication.h"
 
-inline const char* get_fancy_name_for(CS::device_id id)
-{
-    switch(id) {
-    case CS::device_id::DHT22_SENSOR:       return "Modulo de temperatura e umidade";
-    case CS::device_id::MICS_6814_SENSOR:   return "Modulo de NO2, NH3 e CO";
-    case CS::device_id::LY038_HW072_SENSOR: return "Modulo de som e luz";
-    case CS::device_id::GY87_SENSOR:        return "Modulo acelerometro, giroscopio, barometro";
-    case CS::device_id::CCS811_SENSOR:      return "Modulo de eCO2 e TVOC";
-    case CS::device_id::PMSDS011_SENSOR:    return "Modulo de particulas no ar";
-    case CS::device_id::BATTERY_SENSOR:     return "Modulo da bateria";
-    default:                                return "Desconhecido";
-    }
-}
-
 inline void DisplayLineBlock::draw_rounded_device_box(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r)
 {
     m_tft->fillRoundRect(
@@ -32,8 +18,26 @@ inline void DisplayLineBlock::draw_rounded_device_box(int32_t x, int32_t y, int3
 
 inline void DisplayLineBlock::draw_text_auto(int32_t x, int32_t y)
 {
-    m_tft->setTextColor(m_c_font, m_c_fill);
+    if (m_title_last.length() || m_description_last.length() || m_extra_last.length())
+    {
+        m_tft->setTextColor(m_c_fill, m_c_fill);
+        if (m_extra_last.length()) {
+            m_tft->drawString(m_title_last.c_str(),          6 + x,  5 + y, 2);
+            m_tft->drawString(m_description_last.c_str(),    6 + x, 20 + y, 2);
+            m_tft->drawString(m_extra_last.c_str(),          6 + x, 35 + y, 2);
+        }
+        else {
+            m_tft->drawString(m_title_last.c_str(),          6 + x,  5 + y, 2);
+            m_tft->drawString(m_description_last.c_str(),    6 + x, 30 + y, 2);
+        }
 
+        m_title_last.clear();
+        m_description_last.clear();
+        m_extra_last.clear();
+    }
+
+    m_tft->setTextColor(m_c_font, m_c_fill);
+    
     if (m_extra.length()) {
         m_tft->drawString(m_title.c_str(),          6 + x,  5 + y, 2);
         m_tft->drawString(m_description.c_str(),    6 + x, 20 + y, 2);
@@ -45,26 +49,42 @@ inline void DisplayLineBlock::draw_text_auto(int32_t x, int32_t y)
     }
 }
 
+inline void DisplayLineBlock::set_title(const std::string& s)
+{
+    if (s == m_title) return;
+    m_title_last = m_title;
+    m_title = s;
+}
+
+inline void DisplayLineBlock::set_description(const std::string& s)
+{
+    if (s == m_description) return;
+    m_description_last = m_description;
+    m_description = s;
+}
+
+inline void DisplayLineBlock::set_extra(const std::string& s)
+{
+    if (s == m_extra) return;
+    m_extra_last = m_extra;
+    m_extra = s;
+}
+
 inline void DisplayLineBlock::set_tft(std::shared_ptr<TFT_eSPI> tft)
 {
     m_tft = tft;
 }
 
-inline void DisplayLineBlock::update_should_draw_fully(const bool v)
-{
-    m_has_changes |= v;
-}
-
 inline void DisplayLineBlock::set_texts(const char* title, const char* desc, const char* extra)
 {
-    if (title) m_title = title;
-    else m_title.clear();
+    set_title(title);
+    set_description(desc);
+    set_extra(extra);
+}
 
-    if (desc) m_description = desc;
-    else m_description.clear();
-
-    if (extra) m_extra = extra;
-    else m_extra.clear();
+inline void DisplayLineBlock::set_state_changed()
+{
+    m_has_changes = true;
 }
 
 inline void DisplayLineBlock::set_fill_color(const uint16_t c)
@@ -82,9 +102,16 @@ inline void DisplayLineBlock::set_font_color(const uint16_t c)
     m_c_font = c;
 }
 
+inline void DisplayLineBlock::set_nodata_color(const uint16_t c)
+{
+    m_c_nodata = c;
+}
+
 inline void DisplayLineBlock::draw(const int32_t off_y)
 {
     using namespace DisplayColors;
+
+    const bool is_all_empty = m_title.empty() && m_description.empty() && m_extra.empty();
 
     //const MyI2Ccomm::device& dev_dev = GET(MyI2Ccomm).get_device_configurations(m_last_dev, 0);
 
@@ -94,12 +121,22 @@ inline void DisplayLineBlock::draw(const int32_t off_y)
     //    dev_dev.m_issues ? item_has_issues_bg_color_border : (dev_dev.m_online ? item_online_bg_color_border : item_offline_bg_color_border);
     //const uint16_t font_color = TFT_BLACK;
 
-    if (m_has_changes) {
-        m_has_changes = false;
-        draw_rounded_device_box(0, bar_top_height + off_y * item_resumed_height_max, item_resumed_width_max, item_resumed_height_max, item_resumed_border_radius);
+    if (!m_was_string_empty && is_all_empty) {
+        m_was_string_empty = true;
+        m_has_changes = false; // avoid second draw
+        m_tft->fillRect(0, bar_top_height + off_y * item_resumed_height_max, item_resumed_width_max, item_resumed_height_max, m_c_nodata);
+    }
+    else if (m_was_string_empty && !is_all_empty) {
+        m_was_string_empty = false;
+        m_has_changes = true;
     }
 
-    draw_text_auto(0, bar_top_height + off_y * item_resumed_height_max);
+    if (m_has_changes) {
+        draw_rounded_device_box(0, bar_top_height + off_y * item_resumed_height_max, item_resumed_width_max, item_resumed_height_max, item_resumed_border_radius);
+        m_has_changes = false;
+    }
+
+    if (!is_all_empty) draw_text_auto(0, bar_top_height + off_y * item_resumed_height_max);
 
     // draw graph
 }
@@ -108,7 +145,7 @@ inline void DisplayLineBlock::draw(const int32_t off_y)
 inline void DisplayFullBlockGraph::update_with(CS::device_id current_dev, const int current_off)
 {
     m_last_dev = current_dev;
-    m_title = get_fancy_name_for(current_dev); // TITLE SET!
+    set_title(get_fancy_name_for(current_dev)); // TITLE SET!
 
     if (current_off < 0) {
         for(auto& i : m_history_in_graph) i = 0.0;
@@ -127,8 +164,8 @@ inline void DisplayFullBlockGraph::update_with(CS::device_id current_dev, const 
             return;
         }
 
-        m_description = std::next(ref_map.m_map.begin(), current_off)->first; // DESC SET (as filter too)
-        m_extra = "Atualizado faz " + std::to_string(get_time_ms() - ref_map.m_update_time) + " seg(s).";
+        set_description(std::next(ref_map.m_map.begin(), current_off)->first); // DESC SET (as filter too)
+        set_extra("Atualizado faz " + std::to_string(get_time_ms() - ref_map.m_update_time) + " seg(s).");
     }
 
     double max_found = 1e-10; // max_found must be > 0 this way.

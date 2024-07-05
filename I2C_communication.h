@@ -83,3 +83,6 @@ public:
     // Get a pair of key and value in this device information in time based on key value.
     std::optional<i2c_data_pair> get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const std::string& map_key) const;
 });
+
+
+const char* get_fancy_name_for(CS::device_id id);

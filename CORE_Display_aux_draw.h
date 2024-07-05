@@ -9,23 +9,30 @@
 // A 40px liner with info
 class DisplayLineBlock {
 protected:
-    std::string m_title = "Title test", m_description = "Description test", m_extra;
-    uint16_t m_c_fill, m_c_border, m_c_font;
-    bool m_has_changes = true;
+    std::string m_title, m_description, m_extra;
+    std::string m_title_last, m_description_last, m_extra_last; // using this to print with fill color and clean after use    
+
+    uint16_t m_c_fill, m_c_border, m_c_font, m_c_nodata;
+    bool m_has_changes = true, m_was_string_empty = false;
 
     std::shared_ptr<TFT_eSPI> m_tft;
 
     void draw_rounded_device_box(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r);
     void draw_text_auto(int32_t x, int32_t y);
+
+    void set_title(const std::string&);
+    void set_description(const std::string&);
+    void set_extra(const std::string&);
 public:
     void set_tft(std::shared_ptr<TFT_eSPI>);
 
-    void update_should_draw_fully(const bool);
     void set_texts(const char*, const char*, const char*);
+    void set_state_changed();
 
     void set_fill_color(const uint16_t);
     void set_border_color(const uint16_t);
     void set_font_color(const uint16_t);
+    void set_nodata_color(const uint16_t);
 
     void draw(const int32_t off_y);
 };
@@ -36,10 +43,11 @@ class DisplayFullBlockGraph : public DisplayLineBlock {
 
     using DisplayLineBlock::set_texts; // private it. Use update_with instead
 public:
-    using DisplayLineBlock::update_should_draw_fully;
+    using DisplayLineBlock::set_state_changed;
     using DisplayLineBlock::set_fill_color;
     using DisplayLineBlock::set_border_color;
     using DisplayLineBlock::set_font_color;
+    using DisplayLineBlock::set_nodata_color;
 
     void update_with(CS::device_id current_dev, const int current_off);
 

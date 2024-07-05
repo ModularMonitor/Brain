@@ -33,6 +33,12 @@ enum class core_states {
     STATE_DEBUG     // print debug stuff
 };
 
+enum class core_settings_buttons {
+    BTN_SCREEN_SAVER, // change screen saver speed
+    BTN_SAVE_SPEED,   // change speed of i2c / store
+    _MAX
+};
+
 
 // As of a core itself, it doesn't have public calls. It does by itself everything. This is the CORE. This rules everything
 MAKE_SINGLETON_CLASS(CoreDisplay, {
@@ -50,8 +56,7 @@ public:
     struct state_control {
         core_states state = core_states::STATE_HOME;
         unsigned offset = 0; // up or down, reset on change
-        unsigned offset_max = 0; // maximum value offset can have.
-        uint8_t selected_module = 0; // only useful on STATE_DETAILS
+        unsigned offset_max = CS::d2u(CS::device_id::_MAX) - DisplayColors::item_resumed_amount_on_screen; // maximum value offset can have.
     };
 private:
     touch_event m_touch_history[2];
@@ -63,6 +68,8 @@ private:
     std::unique_ptr<DisplayLineBlock[]> m_draw_lines;
     std::unique_ptr<DisplayFullBlockGraph> m_draw_full_graph;
 
+    CPU::AutoWait m_animations_check_time{core_display_animations_check_time}; // checks paths periodically
+
     std::shared_ptr<TFT_eSPI> m_tft;
     bool m_is_tft_ready = false;
 
@@ -71,14 +78,23 @@ private:
     // Task that shows information on 
     void task_display();
 
+    // tool to check touch on xywz. Tests on last event ([0])
+    bool __is_touch_on(const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h);
+
     // This will be called if task_touch detects a touch event (by that)
     void _task_state_only_if_touch(const touch_event&);
+    // This will be called periodically for the animations we all know (graphs update, flipping text) @ m_animations_check_time.
+    void _task_update_animations();
     // Tool to calibrate and save Display calibration data on the SD card
     void _task_calibrate_display_once();
     // draw bars that should not be overlapped. Call only once.
     void _display_draw_static_overlay();
     // draw stats on top part
     void _display_draw_bar_stuff();
+    // set all Display* objects to update screen
+    void _set_all_state_has_changed();
+    // Work on limits and data, generally called after touch event
+    void _task_work_body_blocks_event();
 
     // Updates screen brightness in its own timing
     void async_display_screen_saver();

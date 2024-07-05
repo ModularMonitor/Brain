@@ -44,12 +44,13 @@ constexpr char config_file_path[] = "/config.ini";
 #define DISPLAY_MISO       18
 
 constexpr int core_display_led_pwm_pin = 17;
-constexpr uint64_t core_display_led_pwn_delay = 30; // ms
-constexpr uint64_t core_display_main_delay = 50; // ms
+constexpr uint64_t core_display_led_pwn_delay = 100; // ms
+constexpr uint64_t core_display_main_delay = 100; // ms
 constexpr char core_display_config_ini[] = "/display_calibration.ini";
 constexpr uint64_t core_display_screen_saver_steps_time = 10000; // ms
-constexpr int core_thread_priority = 1;
+constexpr int core_thread_priority = tskIDLE_PRIORITY;
 constexpr int core_led_pwm_thread_priority = tskIDLE_PRIORITY;
+constexpr uint64_t core_display_animations_check_time = 1000; // ms, updates screen stuff.
 
 namespace DisplayColors {
     constexpr size_t log_line_dist = 20;
@@ -66,6 +67,7 @@ namespace DisplayColors {
 
     constexpr uint16_t bar_top_color = 0x34da;
     constexpr uint16_t bar_right_color = 0xcd49;
+    constexpr uint16_t body_color = 0xFFFF;
 
 
     constexpr int32_t item_resumed_amount_on_screen = 5;
@@ -138,7 +140,7 @@ constexpr int i2c_thread_priority = 2; // higher is more important.
 
 // ---- ---- NON RELATED ---- ---- /
 
-constexpr auto cpu_task_default_stack = 6144; 
+constexpr auto cpu_task_default_stack = 8192; 
 
 
 // function to create threads easily
