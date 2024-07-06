@@ -40,6 +40,9 @@ public:
 class DisplayFullBlockGraph : public DisplayLineBlock {
     double m_history_in_graph[i2c_values_history_size]{0.0}; // normalized to [0..1]
     double m_max = 0.0, m_min = 0.0;
+    uint64_t m_hist_last = -1.0;
+    bool m_hist_should_redraw = true;
+
     CS::device_id m_last_dev = CS::device_id::_MAX;
 
     using DisplayLineBlock::set_texts; // private it. Use update_with instead

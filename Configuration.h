@@ -13,7 +13,6 @@ Configuration.h
 #pragma once
 
 #include "defaults.h"
-//#include "SD_card.h"
 
 // For easier use and no dependency, fixed blocks are used in the config
 struct config_fixed_size_data {

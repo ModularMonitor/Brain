@@ -45,7 +45,7 @@ constexpr char config_file_path[] = "/config.ini";
 
 constexpr int core_display_led_pwm_pin = 17;
 constexpr uint64_t core_display_led_pwn_delay = 25; // ms
-constexpr uint64_t core_display_main_delay = 50; // ms
+constexpr uint64_t core_display_main_delay = 30; // ms
 constexpr char core_display_config_ini[] = "/display_calibration.ini";
 constexpr uint64_t core_display_screen_saver_steps_time = 10000; // ms
 constexpr int core_thread_priority = tskIDLE_PRIORITY;
@@ -62,7 +62,7 @@ namespace DisplayColors {
 
     constexpr int32_t display_real_work_area[2] = {(480 - bar_right_width), (320 - bar_top_height) };
 
-    constexpr int32_t bar_right_buttons_amount = 5;
+    constexpr int32_t bar_right_buttons_amount = 4;
     constexpr int32_t bar_right_each_height = display_real_work_area[1] / bar_right_buttons_amount;
 
     constexpr uint16_t bar_top_color = 0x34da;
@@ -142,7 +142,7 @@ constexpr int i2c_pins[] = {
     15  // SCL
 };
 
-constexpr size_t i2c_values_history_size = 32;
+constexpr size_t i2c_values_history_size = 100;
 constexpr uint64_t i2c_path_checking_time = 30000; // ms
 constexpr uint64_t i2c_packaging_delay = 5000; // ms
 constexpr int i2c_thread_priority = 2; // higher is more important.

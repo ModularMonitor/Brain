@@ -93,21 +93,25 @@ inline void DisplayLineBlock::set_state_changed()
 
 inline void DisplayLineBlock::set_fill_color(const uint16_t c)
 {
+    m_has_changes |= (m_c_fill != c);
     m_c_fill = c;
 }
 
 inline void DisplayLineBlock::set_border_color(const uint16_t c)
 {
+    m_has_changes |= (m_c_border != c);
     m_c_border = c;
 }
 
 inline void DisplayLineBlock::set_font_color(const uint16_t c)
 {
+    m_has_changes |= (m_c_font != c);
     m_c_font = c;
 }
 
 inline void DisplayLineBlock::set_nodata_color(const uint16_t c)
 {
+    m_has_changes |= (m_c_nodata != c);
     m_c_nodata = c;
 }
 
@@ -116,14 +120,6 @@ inline void DisplayLineBlock::draw(const int32_t off_y)
     using namespace DisplayColors;
 
     const bool is_all_empty = m_title.empty() && m_description.empty() && m_extra.empty();
-
-    //const MyI2Ccomm::device& dev_dev = GET(MyI2Ccomm).get_device_configurations(m_last_dev, 0);
-
-    //const uint16_t fill = 
-    //    dev_dev.m_issues ? item_has_issues_bg_color : (dev_dev.m_online ? item_online_bg_color : item_offline_bg_color);
-    //const uint16_t border =
-    //    dev_dev.m_issues ? item_has_issues_bg_color_border : (dev_dev.m_online ? item_online_bg_color_border : item_offline_bg_color_border);
-    //const uint16_t font_color = TFT_BLACK;
 
     if (!m_was_string_empty && is_all_empty) {
         m_was_string_empty = true;
@@ -141,8 +137,6 @@ inline void DisplayLineBlock::draw(const int32_t off_y)
     }
 
     if (!is_all_empty) draw_text_auto(0, bar_top_height + off_y * item_resumed_height_max);
-
-    // draw graph
 }
 
 
@@ -151,6 +145,11 @@ inline void DisplayFullBlockGraph::update_with(CS::device_id current_dev, const 
     using namespace DisplayColors;
 
     m_last_dev = current_dev;
+
+    if (current_dev == CS::device_id::_MAX) return;
+
+    m_hist_should_redraw |= m_last_dev != current_dev;
+
     set_title(get_fancy_name_for(current_dev)); // TITLE SET!
 
     if (current_off < 0) {
@@ -164,6 +163,10 @@ inline void DisplayFullBlockGraph::update_with(CS::device_id current_dev, const 
 
     {
         const MyI2Ccomm::device& ref_map = com.get_device_configurations(current_dev, 0); // get newest map
+        const bool is_on = com.is_device_online(current_dev);
+        const bool is_bad = com.is_device_with_issue(current_dev);
+
+
         std::lock_guard<std::mutex> l(ref_map.m_map_mtx);
 
         if (current_off >= ref_map.m_map.size()) {
@@ -173,8 +176,24 @@ inline void DisplayFullBlockGraph::update_with(CS::device_id current_dev, const 
         
         ms2str(buf, sizeof(buf), get_time_ms() - ref_map.m_update_time);
 
-        set_description(std::next(ref_map.m_map.begin(), current_off)->first); // DESC SET (as filter too)
+        m_hist_should_redraw |= ref_map.m_update_time != m_hist_last;
+        m_hist_last = ref_map.m_update_time;
+        
+        const auto new_desc = std::next(ref_map.m_map.begin(), current_off)->first + "   ";
+
+        m_hist_should_redraw |= new_desc != m_description;
+
+        set_description(new_desc); // DESC SET (as filter too)
+
         set_extra("Atualizado faz " + std::string(buf) + ".");
+
+        const uint16_t fill = 
+            is_bad ? item_has_issues_bg_color : (is_on ? item_online_bg_color : item_offline_bg_color);
+        const uint16_t border =
+            is_bad ? item_has_issues_bg_color_border : (is_on ? item_online_bg_color_border : item_offline_bg_color_border);
+
+        set_fill_color(fill);
+        set_border_color(border);
     }
 
     m_max = -1e80;
@@ -210,31 +229,27 @@ inline void DisplayFullBlockGraph::draw()
     using namespace DisplayColors;
     constexpr size_t max_time_back = MyI2Ccomm::get_max_history_size();
 
-    //const MyI2Ccomm::device& dev_dev = GET(MyI2Ccomm).get_device_configurations(m_last_dev, 0);
-
-    //const uint16_t fill = 
-    //    dev_dev.m_issues ? item_has_issues_bg_color : (dev_dev.m_online ? item_online_bg_color : item_offline_bg_color);
-    //const uint16_t border =
-    //    dev_dev.m_issues ? item_has_issues_bg_color_border : (dev_dev.m_online ? item_online_bg_color_border : item_offline_bg_color_border);
-    //const uint16_t font_color = TFT_BLACK;
-
     if (m_has_changes) {
+        m_hist_should_redraw = true;
         m_has_changes = false;
         draw_rounded_device_box(0, bar_top_height, item_full_width_max, item_full_height_max, item_resumed_border_radius);
     }
 
     draw_text_auto(0, bar_top_height);
 
-    // draw graph
+    // draw graph if necessary
+    if (!m_hist_should_redraw) return;
+    m_hist_should_redraw = false;
+
     m_tft->fillRect(graph_margin_left, graph_margin_top, graph_width_calculated, graph_height_calculated, graph_background_color);
 
-    constexpr float factor_x = static_cast<float>(graph_width_calculated) / max_time_back;
+    constexpr float factor_x = static_cast<float>(graph_width_calculated) / (max_time_back - 1);
     constexpr float factor_y = static_cast<float>(graph_height_calculated);
 
     for(size_t p = 0; p < (max_time_back - 1); ++p)
     {
         const int32_t curr_st_x = (static_cast<float>(p) * factor_x) + graph_margin_left;
-        const int32_t curr_en_x = (static_cast<float>(p + 1) * factor_x) + graph_margin_left;
+        const int32_t curr_en_x = ((static_cast<float>(p + 1) * factor_x) + graph_margin_left) - 1;
         const int32_t curr_st_y = static_cast<float>(0.99 - 0.98 * m_history_in_graph[p]) * factor_y + graph_margin_top;
         const int32_t curr_en_y = static_cast<float>(0.99 - 0.98 * m_history_in_graph[p + 1]) * factor_y + graph_margin_top;
 
@@ -252,53 +267,11 @@ inline void DisplayFullBlockGraph::draw()
     snprintf(buf, sizeof(buf), "        %04.2lf", m_min);
     off_left = m_tft->textWidth(buf, 2) + 2;
     m_tft->drawString(buf, graph_margin_left - off_left, graph_margin_top + graph_height_calculated - 5, 2);
+
+    const uint64_t total_time_shown = GET(MyConfig).get_i2c_packaging_delay() * max_time_back;    
+    ms2str(buf, sizeof(buf), total_time_shown);
+    const std::string res = "Mostrando " + std::string(buf) + " (baseado em config)";
+
+    off_left = m_tft->textWidth(res.c_str(), 2);
+    m_tft->drawString(res.c_str(), graph_margin_left + (graph_width_calculated / 2) - (off_left / 2), graph_margin_top + graph_height_calculated + 2, 2);
 }
-
-
-/*inline void draw_device_detailed_info(std::shared_ptr<TFT_eSPI>& m_tft, const CS::device_id& dev, const int& off)
-{
-    using namespace DisplayColors;
-
-
-    // used on self control for draws. This way the info is stored here, not on a generic place.
-    struct __self_state_ctl {
-        CS::device_id last_dev = CS::device_id::_MAX;
-        int last_off = -1;
-        uint16_t last_fill = 0;
-        uint16_t last_border = 0;
-
-        bool has_changes(CS::device_id d, int o, uint16_t b0, uint16_t b1) {
-            const bool res = (d != last_dev || o != last_off || b0 != last_fill || b1 != last_border);
-            *this = {d, 0, b0, b1};
-            return res;
-        }
-    };
-    static __self_state_ctl _ctl{};
-
-
-    const char* dev_name = get_fancy_name_for(dev);
-    const MyI2Ccomm::device& dev_dev = GET(MyI2Ccomm).get_device_configurations(m_device_select, 0);
-
-    const uint16_t fill = 
-        dev_dev.m_issues ? item_has_issues_bg_color : (dev_dev.m_online ? item_online_bg_color : item_offline_bg_color);
-    const uint16_t border =
-        dev_dev.m_issues ? item_has_issues_bg_color_border : (dev_dev.m_online ? item_online_bg_color_border : item_offline_bg_color_border);
-    const uint16_t font_color = TFT_BLACK;
-
-    const bool has_changes = _ctl.has_changes(dev, off, fill, border);
-
-    const int32_t base_y = static_cast<int32_t>(21 + (off * item_resumed_height_max));
-
-    if (has_changes) {
-        m_tft->fillRoundRect(
-            1, base_y,
-            item_resumed_width_max - 2, item_resumed_height_max - 2, item_resumed_border_radius,
-            border);
-        m_tft->fillRoundRect(
-            3, base_y + 2,
-            item_resumed_width_max - 6, item_resumed_height_max - 6, item_resumed_border_radius,
-            fill);
-    }
-
-
-}*/

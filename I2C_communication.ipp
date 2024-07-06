@@ -113,10 +113,10 @@ inline void MyI2Ccomm::async_i2c_caller()
             device& dev = m_devices[p].get_current_device();
             
             CS::FlagWrapper fw;
-            auto lst = wire->master_smart_request_all(curr, fw, dev.m_online);
-            dev.m_issues = fw & CS::device_flags::HAS_ISSUES;
+            auto lst = wire->master_smart_request_all(curr, fw, m_devices[p].m_online);
+            m_devices[p].m_issues = fw & CS::device_flags::HAS_ISSUES;
 
-            if (!dev.m_online || dev.m_issues) continue;
+            if (!m_devices[p].m_online || m_devices[p].m_issues) continue;
             if (lst.empty()) continue; // ignore if no data to append!
 
             // advance only if online and with no issues!
@@ -189,6 +189,16 @@ inline void MyI2Ccomm::async_i2c_caller()
 inline MyI2Ccomm::MyI2Ccomm()
 {
     async_class_method_pri(MyI2Ccomm, async_i2c_caller, i2c_thread_priority, cpu_core_id_for_i2c);
+}
+
+inline bool MyI2Ccomm::is_device_online(CS::device_id dev) const
+{
+    return m_devices[CS::d2u(dev)].m_online;
+}
+
+inline bool MyI2Ccomm::is_device_with_issue(CS::device_id dev) const
+{
+    return m_devices[CS::d2u(dev)].m_issues;
 }
 
 // Goes to m_devices[dev][back_in...] and returns the m_map length.

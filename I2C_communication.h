@@ -36,8 +36,6 @@ public:
         i2c_data_map m_map;
         mutable std::mutex m_map_mtx;
         uint64_t m_update_time = 0;
-        bool m_online = false;
-        bool m_issues = false;
 
         // path, value
         const char* const post_value_nolock(const char*, const double&);
@@ -52,6 +50,9 @@ public:
     struct device_history {
         device m_hist[i2c_values_history_size];
         size_t m_hist_point = 0;
+
+        bool m_online = false;
+        bool m_issues = false;
 
         // get current target
         device& get_current_device();
@@ -73,6 +74,12 @@ public:
 
     // basically returns i2c_values_history_size
     static constexpr size_t get_max_history_size() {return i2c_values_history_size;}
+
+    // Get if device was online last time it checked its data
+    bool is_device_online(CS::device_id) const;
+
+    // Get if device had issues last time it checked its data
+    bool is_device_with_issue(CS::device_id) const;
 
     // Goes to m_devices[dev][back_in...] and returns the m_map length.
     const device& get_device_configurations(const CS::device_id dev, const size_t back_in_time_idx) const;

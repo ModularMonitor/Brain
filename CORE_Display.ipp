@@ -27,20 +27,20 @@ inline void ms2str(char* targ, const size_t lim, uint64_t to_c)
         snprintf(targ, lim, "%04llu ms", to_c);
     }
     else if (to_c < lim_seconds) {
-        to_c /= lim_millisec; // sec
-        snprintf(targ, lim, "%02llu seg", to_c);
+        double calc = static_cast<double>(to_c) / lim_millisec; // sec
+        snprintf(targ, lim, "%05.2lf seg", calc);
     }
     else if (to_c < lim_minutes) {
-        to_c /= lim_seconds; // min
-        snprintf(targ, lim, "%02llu min", to_c);
+        double calc = static_cast<double>(to_c) / lim_seconds; // min
+        snprintf(targ, lim, "%05.2lf min", calc);
     }
     else if (to_c < lim_hours) {
-        to_c /= lim_minutes; // hour
-        snprintf(targ, lim, "%02llu hora%s", to_c, to_c > 1 ? "s" : "");
+        double calc = static_cast<double>(to_c) / lim_minutes; // hour
+        snprintf(targ, lim, "%05.2lf hora%s", calc, calc >= 2.0 ? "s" : "");
     }
     else {
-        to_c /= lim_hours; // day
-        snprintf(targ, lim, "%02llu dia%s", to_c, to_c > 1 ? "s" : "");
+        double calc = static_cast<double>(to_c) / lim_hours; // day
+        snprintf(targ, lim, "%05.2lf dia%s", calc, calc >= 2.0 ? "s" : "");
     }
 }
 
@@ -68,8 +68,6 @@ inline void CoreDisplay::task_display()
     //_task_update_screen_saver_state();
     _display_draw_bar_stuff(); // always
 
-    
-
 
     switch(m_state.state) {
     case core_states::STATE_HOME:
@@ -84,15 +82,7 @@ inline void CoreDisplay::task_display()
         m_draw_full_graph->draw();
     }
         break;
-    case core_states::STATE_DEBUG:
-        break;
     }
-
-
-
-
-
-
 
 }
 
@@ -107,7 +97,7 @@ inline void CoreDisplay::_task_state_only_if_touch(const touch_event& event)
     using namespace DisplayColors;
     // do tasky tasks related to on_touch event
 
-    LOGI(e_LOG_TAG::TAG_CORE, "Touch called.");
+    //LOGI(e_LOG_TAG::TAG_CORE, "Touch called.");
 
     auto old_state = m_state.state;
         
@@ -133,12 +123,12 @@ inline void CoreDisplay::_task_state_only_if_touch(const touch_event& event)
     case 0x04: // down
         if (m_state.offset < m_state.offset_max) ++m_state.offset;
         break;
-    case 0x08: // debug
-        m_state.state = core_states::STATE_DEBUG;
-        m_state.offset = 0;
-        m_state.offset_max = 0;
-        break;
-    case 0x10: // config
+    //case 0x08: // debug
+    //    m_state.state = core_states::STATE_DEBUG;
+    //    m_state.offset = 0;
+    //    m_state.offset_max = 0;
+    //    break;
+    case 0x08: // config
         m_state.state = core_states::STATE_CONFIG;
         m_state.offset = 0;
         m_state.offset_max = 0;
@@ -151,7 +141,7 @@ inline void CoreDisplay::_task_state_only_if_touch(const touch_event& event)
     if (m_state.offset > m_state.offset_max) m_state.offset = m_state.offset_max;
     if (old_state != m_state.state) _set_all_state_has_changed();
 
-    LOGI_NOSD(e_LOG_TAG::TAG_CORE, "Var %u", m_state.offset);
+    //LOGI_NOSD(e_LOG_TAG::TAG_CORE, "Var %u", m_state.offset);
 
     _task_update_animations(); // update as soon as possible on touch
 }
@@ -172,6 +162,16 @@ inline void CoreDisplay::_task_update_animations()
             const CS::device_id real_off = static_cast<CS::device_id>((p + static_cast<size_t>(m_state.offset)) % static_cast<size_t>(CS::d2u(CS::device_id::_MAX))); // just to be sure 100%
             const MyI2Ccomm::device& dev = com.get_device_configurations(real_off, 0); // real_off cannot be bigger than expected already
 
+            const bool is_on = com.is_device_online(real_off);
+            const bool is_bad = com.is_device_with_issue(real_off);
+
+            const uint16_t fill = 
+                is_bad ? item_has_issues_bg_color : (is_on ? item_online_bg_color : item_offline_bg_color);
+            const uint16_t border =
+                is_bad ? item_has_issues_bg_color_border : (is_on ? item_online_bg_color_border : item_offline_bg_color_border);
+
+            m_draw_lines[p].set_fill_color(fill);
+            m_draw_lines[p].set_border_color(border);
 
             if (dev.m_map.size() != 0) {
                 std::lock_guard<std::mutex> l(dev.m_map_mtx); // security first
@@ -193,7 +193,7 @@ inline void CoreDisplay::_task_update_animations()
             else {
                 m_draw_lines[p].set_texts(
                     get_fancy_name_for(real_off),
-                    "Sem dados ainda",
+                    "Sem dados",
                     ""
                 );
             }
@@ -209,6 +209,8 @@ inline void CoreDisplay::_task_update_animations()
             case static_cast<size_t>(core_settings_buttons::BTN_SCREEN_SAVER):
                 ms2str(buf_time_since, sizeof(buf_time_since), GET(MyConfig).get_core_display_screen_saver_steps_time());
 
+                m_draw_lines[p].set_fill_color(DisplayColors::item_offline_bg_color);
+                m_draw_lines[p].set_border_color(DisplayColors::item_offline_bg_color_border);
                 m_draw_lines[p].set_texts(
                     "Tempo de desligamento de tela:",
                     buf_time_since,
@@ -216,11 +218,29 @@ inline void CoreDisplay::_task_update_animations()
                 );
                 break;
             case static_cast<size_t>(core_settings_buttons::BTN_SAVE_SPEED):
+            {
+                const uint64_t total_time_shown = GET(MyConfig).get_i2c_packaging_delay() * i2c_values_history_size;    
+                ms2str(buf_time_since, sizeof(buf_time_since), total_time_shown);
+                const std::string res = "(" + std::string(buf_time_since) + " no grafico)";
+
                 ms2str(buf_time_since, sizeof(buf_time_since), GET(MyConfig).get_i2c_packaging_delay());
                 
+                m_draw_lines[p].set_fill_color(DisplayColors::item_offline_bg_color);
+                m_draw_lines[p].set_border_color(DisplayColors::item_offline_bg_color_border);
                 m_draw_lines[p].set_texts(
                     "Tempo de dados dos dispositivos:",
                     buf_time_since,
+                    res.c_str()
+                );
+            }
+                break;
+            case static_cast<size_t>(core_settings_buttons::BTN_REDO_CALIBRATION_SCREEN): 
+
+                m_draw_lines[p].set_fill_color(DisplayColors::item_offline_bg_color);
+                m_draw_lines[p].set_border_color(DisplayColors::item_offline_bg_color_border);            
+                m_draw_lines[p].set_texts(
+                    "Recalibrar a tela",
+                    "Ao clicar, siga as setas nos blocos vermelhos para calibrar",
                     ""
                 );
                 break;
@@ -234,12 +254,10 @@ inline void CoreDisplay::_task_update_animations()
     case core_states::STATE_DETAILS:
     {
         const MyI2Ccomm::device& dev = GET(MyI2Ccomm).get_device_configurations(m_device_select, 0);
-        m_state.offset_max = dev.m_map.size();
+        m_state.offset_max = dev.m_map.size() == 0 ? 0 : (dev.m_map.size() - 1);
 
         m_draw_full_graph->update_with(m_device_select, m_state.offset);
     }
-        break;
-    case core_states::STATE_DEBUG:
         break;
     }
 }
@@ -267,10 +285,10 @@ inline void CoreDisplay::_display_draw_static_overlay()
 
 
     m_tft->drawBitmap(442,  28, Bitmaps::config_icon_home,   40, 46, TFT_BLACK);
-    m_tft->drawBitmap(447,  92, Bitmaps::config_icon_up,     26, 35, TFT_BLACK);
-    m_tft->drawBitmap(447, 152, Bitmaps::config_icon_down,   26, 35, TFT_BLACK);
-    m_tft->drawBitmap(444, 211, Bitmaps::config_icon_debug,  32, 38, TFT_BLACK);
-    m_tft->drawBitmap(444, 274, Bitmaps::config_icon_config, 32, 32, TFT_BLACK);
+    m_tft->drawBitmap(447, 107, Bitmaps::config_icon_up,     26, 35, TFT_BLACK);
+    m_tft->drawBitmap(447, 182, Bitmaps::config_icon_down,   26, 35, TFT_BLACK);
+    //m_tft->drawBitmap(444, 211, Bitmaps::config_icon_debug,  32, 38, TFT_BLACK);
+    m_tft->drawBitmap(444, 256, Bitmaps::config_icon_config, 32, 32, TFT_BLACK);
 }
 
 inline void CoreDisplay::_display_draw_bar_stuff()
@@ -324,7 +342,7 @@ inline void CoreDisplay::_task_work_body_blocks_event()
             if (__is_touch_on(0, begin_top, item_resumed_width_max, item_resumed_height_max)) {
                 size_t calc = p + m_state.offset;
 
-                LOGI_NOSD(e_LOG_TAG::TAG_CORE, "Calc %zu", calc);
+                //LOGI_NOSD(e_LOG_TAG::TAG_CORE, "Calc %zu", calc);
 
                 if (calc >= static_cast<size_t>(CS::d2u(CS::device_id::_MAX))) m_device_select = CS::device_id::DHT22_SENSOR;
                 else m_device_select = static_cast<CS::device_id>(calc);
@@ -360,7 +378,7 @@ inline void CoreDisplay::_task_work_body_blocks_event()
             if (__is_touch_on(0, begin_top, item_resumed_width_max, item_resumed_height_max)) {
                 const size_t calc = p + m_state.offset;
 
-                LOGI_NOSD(e_LOG_TAG::TAG_CORE, "Calc %zu", calc);
+                //LOGI_NOSD(e_LOG_TAG::TAG_CORE, "Calc %zu", calc);
 
                 MyConfig& cfg = GET(MyConfig);
 
@@ -495,6 +513,11 @@ inline void CoreDisplay::_task_work_body_blocks_event()
                     cfg.save();
                 }
                     break;
+                case core_settings_buttons::BTN_REDO_CALIBRATION_SCREEN:
+                    _task_calibrate_display_once(); // this will lock.                    
+                    _display_draw_static_overlay();
+                    _set_all_state_has_changed();
+                    break;
                 default:
                     break;
                 }
@@ -511,12 +534,12 @@ inline void CoreDisplay::_task_work_body_blocks_event()
         //m_state.offset_max = GET(MyI2Ccomm).get_device_configurations(m_device_select, 0).m_map.size();
     }
         break;
-    case core_states::STATE_DEBUG:
-        // on any touch on debug, go back
-        m_state.state = core_states::STATE_HOME;
-        m_state.offset = 0;
-        m_state.offset_max = CS::d2u(CS::device_id::_MAX) - item_resumed_amount_on_screen;
-        break;
+    //case core_states::STATE_DEBUG:
+    //    // on any touch on debug, go back
+    //    m_state.state = core_states::STATE_HOME;
+    //    m_state.offset = 0;
+    //    m_state.offset_max = CS::d2u(CS::device_id::_MAX) - item_resumed_amount_on_screen;
+    //    break;
     }
 }
 
@@ -633,9 +656,9 @@ inline void CoreDisplay::async_display_caller()
     LOGI(e_LOG_TAG::TAG_CORE, "Ready.");
     
     m_is_tft_ready = true;
-    //m_tft->fillScreen(body_color);
+    
     _display_draw_static_overlay();
-    //_task_state_only_if_touch(m_touch_history[0]); // trigger to setup variables
+    
 
     SLEEP(25);
     

@@ -29,13 +29,14 @@ to call SD functions.
 enum class core_states {
     STATE_HOME,     // default view, shows every module, has offset
     STATE_CONFIG,   // config allows for recalibration of screen and period of reporting on SD card
-    STATE_DETAILS,  // details of a module. offset is used as which variable is shown in graph
-    STATE_DEBUG     // print debug stuff
+    STATE_DETAILS   // details of a module. offset is used as which variable is shown in graph
+    //STATE_DEBUG     // print debug stuff
 };
 
 enum class core_settings_buttons {
-    BTN_SCREEN_SAVER, // change screen saver speed
-    BTN_SAVE_SPEED,   // change speed of i2c / store
+    BTN_SCREEN_SAVER,               // change screen saver speed
+    BTN_SAVE_SPEED,                 // change speed of i2c / store
+    BTN_REDO_CALIBRATION_SCREEN,    // call calibration again
     _MAX
 };
 
