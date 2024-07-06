@@ -21,11 +21,11 @@ I2C_communication.h
 
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <mutex>
 #include <optional>
 
-using i2c_data_map = std::unordered_map<std::string, char[32]>;
+using i2c_data_map = std::map<std::string, char[32]>;
 using i2c_data_pair = std::pair<const std::string, char[32]>;
 
 
@@ -78,10 +78,10 @@ public:
     const device& get_device_configurations(const CS::device_id dev, const size_t back_in_time_idx) const;
 
     // Get a pair of key and value in this device information in time based on index (may change order each run).
-    std::optional<i2c_data_pair> get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const size_t map_idx) const;
+    const i2c_data_pair& get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const size_t map_idx) const;
 
     // Get a pair of key and value in this device information in time based on key value.
-    std::optional<i2c_data_pair> get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const std::string& map_key) const;
+    //const i2c_data_pair& get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const std::string& map_key) const;
 });
 
 

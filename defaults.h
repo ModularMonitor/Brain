@@ -44,8 +44,8 @@ constexpr char config_file_path[] = "/config.ini";
 #define DISPLAY_MISO       18
 
 constexpr int core_display_led_pwm_pin = 17;
-constexpr uint64_t core_display_led_pwn_delay = 100; // ms
-constexpr uint64_t core_display_main_delay = 100; // ms
+constexpr uint64_t core_display_led_pwn_delay = 25; // ms
+constexpr uint64_t core_display_main_delay = 50; // ms
 constexpr char core_display_config_ini[] = "/display_calibration.ini";
 constexpr uint64_t core_display_screen_saver_steps_time = 10000; // ms
 constexpr int core_thread_priority = tskIDLE_PRIORITY;
@@ -81,19 +81,30 @@ namespace DisplayColors {
     constexpr int32_t item_full_height_max = display_real_work_area[1];
 
 
-    const uint16_t item_font_color = 0;
+    constexpr uint16_t item_font_color = 0;
 
-    const uint16_t item_online_bg_color = 0xc7b8;
-    const uint16_t item_offline_bg_color = 0xcf1e;
+    constexpr uint16_t item_online_bg_color = 0xc7b8;
+    constexpr uint16_t item_offline_bg_color = 0xcf1e;
 
-    const uint16_t item_online_bg_color_border = 0x9e13;
-    const uint16_t item_offline_bg_color_border = 0xb69b;
+    constexpr uint16_t item_online_bg_color_border = 0x9e13;
+    constexpr uint16_t item_offline_bg_color_border = 0xb69b;
 
-    const uint16_t item_has_issues_bg_color = 0xf638;
-    const uint16_t item_has_issues_bg_color_border = 0xb410;
+    constexpr uint16_t item_has_issues_bg_color = 0xf638;
+    constexpr uint16_t item_has_issues_bg_color_border = 0xb410;
 
-    const uint16_t item_close_button_x_and_border = 0xea8a;
-    const uint16_t item_close_button_body = 0x90c3;
+    constexpr uint16_t item_close_button_x_and_border = 0xea8a;
+    constexpr uint16_t item_close_button_body = 0x90c3;
+
+    constexpr int32_t graph_margin_left = 70; // px
+    constexpr int32_t graph_margin_right = 20; // px
+    constexpr int32_t graph_margin_top = 80; // px
+    constexpr int32_t graph_margin_bottom = 10; // px
+    constexpr int32_t graph_width_calculated = display_real_work_area[0] - graph_margin_left - graph_margin_right;
+    constexpr int32_t graph_height_calculated = display_real_work_area[1] - graph_margin_top - graph_margin_bottom;
+
+    constexpr uint16_t graph_background_color = 0x9e13;
+    constexpr uint16_t graph_line_color = 0xF800;
+
 };
 
 // ---- ---- END OF COREDISPLAY DEFAULTS BLOCK ---- ---- //

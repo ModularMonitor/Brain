@@ -175,7 +175,7 @@ inline void CoreDisplay::_task_update_animations()
 
             if (dev.m_map.size() != 0) {
                 std::lock_guard<std::mutex> l(dev.m_map_mtx); // security first
-                const unsigned sel = get_time_ms() % dev.m_map.size();
+                const unsigned sel = (get_time_ms() / 3000) % dev.m_map.size();
 
                 const i2c_data_pair& sel_pair = *std::next(dev.m_map.begin(), sel);
                 const std::string tmp = sel_pair.first + ": " + sel_pair.second;
@@ -233,9 +233,10 @@ inline void CoreDisplay::_task_update_animations()
         break;
     case core_states::STATE_DETAILS:
     {
-        m_state.offset_max = GET(MyI2Ccomm).get_device_configurations(m_device_select, 0).m_map.size();
+        const MyI2Ccomm::device& dev = GET(MyI2Ccomm).get_device_configurations(m_device_select, 0);
+        m_state.offset_max = dev.m_map.size();
 
-
+        m_draw_full_graph->update_with(m_device_select, m_state.offset);
     }
         break;
     case core_states::STATE_DEBUG:
@@ -288,12 +289,12 @@ inline void CoreDisplay::_display_draw_bar_stuff()
 
     char buf[128];
 
-    snprintf(buf, 128, "Time: %llu; SD usage: %.1f%%; CPU: %.1f%% %.1f%%; RAM %.1f%%",
+    snprintf(buf, 128, "Time: %llu; SD: %s; CPU: %.1f%% %.1f%%",//; RAM %.1f%%", // SD usage: %.1f%%;
         (get_time_ms() / 1000),
-        sd.sd_used_perc() * 100.0f,
+        sd.is_online() ? "ON" : "OFF", //sd.sd_used_perc() * 100.0f,
         CPU::get_cpu_usage(0) * 100.0f,
-        CPU::get_cpu_usage(1) * 100.0f,
-        CPU::get_ram_usage() * 100.0f
+        CPU::get_cpu_usage(1) * 100.0f
+        //CPU::get_ram_usage() * 100.0f
     );
 
     m_tft->setTextSize(1);
@@ -409,6 +410,7 @@ inline void CoreDisplay::_task_work_body_blocks_event()
                         cfg.set_core_display_screen_saver_steps_time(10000);
                         break;
                     }
+                    cfg.save();
                 }
                     break;
                 case core_settings_buttons::BTN_SAVE_SPEED:
@@ -490,6 +492,7 @@ inline void CoreDisplay::_task_work_body_blocks_event()
                         cfg.set_i2c_packaging_delay(1000);
                         break;
                     }
+                    cfg.save();
                 }
                     break;
                 default:

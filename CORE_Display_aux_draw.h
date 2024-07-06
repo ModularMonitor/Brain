@@ -39,6 +39,7 @@ public:
 
 class DisplayFullBlockGraph : public DisplayLineBlock {
     double m_history_in_graph[i2c_values_history_size]{0.0}; // normalized to [0..1]
+    double m_max = 0.0, m_min = 0.0;
     CS::device_id m_last_dev = CS::device_id::_MAX;
 
     using DisplayLineBlock::set_texts; // private it. Use update_with instead
@@ -49,7 +50,7 @@ public:
     using DisplayLineBlock::set_font_color;
     using DisplayLineBlock::set_nodata_color;
 
-    void update_with(CS::device_id current_dev, const int current_off);
+    void update_with(CS::device_id current_dev, const unsigned current_off);
 
     void draw();
 };

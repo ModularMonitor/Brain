@@ -84,6 +84,7 @@
         "set": "cpp",
         "future": "cpp",
         "any": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "unordered_set": "cpp"
     }
 }

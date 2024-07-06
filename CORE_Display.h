@@ -103,3 +103,5 @@ private:
 public:
     CoreDisplay();
 })
+
+void ms2str(char* targ, const size_t lim, uint64_t to_c);

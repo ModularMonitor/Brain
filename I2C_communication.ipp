@@ -48,6 +48,7 @@ inline MyI2Ccomm::device& MyI2Ccomm::device_history::get_current_device()
 inline void MyI2Ccomm::device_history::advance_one_device()
 {
     m_hist_point = ((m_hist_point + 1) % i2c_values_history_size);
+    //Serial.printf("IDCIDCIDC %zu\n", m_hist_point);
 }
 
 inline const MyI2Ccomm::device& MyI2Ccomm::device_history::get_in_time(const size_t idx) const
@@ -116,6 +117,7 @@ inline void MyI2Ccomm::async_i2c_caller()
             dev.m_issues = fw & CS::device_flags::HAS_ISSUES;
 
             if (!dev.m_online || dev.m_issues) continue;
+            if (lst.empty()) continue; // ignore if no data to append!
 
             // advance only if online and with no issues!
             m_devices[p].advance_one_device();
@@ -195,27 +197,27 @@ inline const MyI2Ccomm::device& MyI2Ccomm::get_device_configurations(const CS::d
     return m_devices[CS::d2u(dev)].get_in_time(back_in_time_idx);
 }
 
-// Get a pair of key and value in this device information in time based on index (may change order each run).
-inline std::optional<i2c_data_pair> MyI2Ccomm::get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const size_t map_idx) const
+inline const i2c_data_pair& MyI2Ccomm::get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const size_t map_idx) const
 {
+    static i2c_data_pair nul;
     const auto& ref = m_devices[CS::d2u(dev)].get_in_time(back_in_time_idx);
     std::lock_guard<std::mutex> l(ref.m_map_mtx);
-    return map_idx< ref.m_map.size() ?
-        std::optional<i2c_data_pair>{*std::next(ref.m_map.begin(), map_idx)} :
-        std::optional<i2c_data_pair>{};
+    return map_idx < ref.m_map.size() ? *std::next(ref.m_map.begin(), map_idx) : nul;
 }
 
-std::optional<i2c_data_pair> MyI2Ccomm::get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const std::string& map_key) const
-{
-    const auto& ref = m_devices[CS::d2u(dev)].get_in_time(back_in_time_idx);
-    std::lock_guard<std::mutex> l(ref.m_map_mtx);
-
-    const auto& mmap = ref.m_map;
-
-    auto it = mmap.find(map_key);
-
-    return it != mmap.end() ? std::optional<i2c_data_pair>{*it} : std::optional<i2c_data_pair>{};
-}
+//inline const i2c_data_pair& MyI2Ccomm::get_device_data_in_time(const CS::device_id dev, const size_t back_in_time_idx, const std::string& map_key) const
+//{
+//    static i2c_data_pair nul;
+//
+//    const auto& ref = m_devices[CS::d2u(dev)].get_in_time(back_in_time_idx);
+//    std::lock_guard<std::mutex> l(ref.m_map_mtx);
+//
+//    const auto& mmap = ref.m_map;
+//
+//    auto it = mmap.find(map_key);
+//
+//    return it != mmap.end() ? *it : nul;
+//}
 
 
 
