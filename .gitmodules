@@ -4,6 +4,3 @@
 [submodule "TFT"]
 	path = TFT
 	url = https://www.github.com/ModularMonitor/lib-TFT
-[submodule "TinyGSM"]
-	path = TinyGSM
-	url = https://github.com/ModularMonitor/lib-TinyGSM
