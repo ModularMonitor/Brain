@@ -82,6 +82,11 @@ inline void CoreDisplay::task_display()
         m_draw_full_graph->draw();
     }
         break;
+    case core_states::STATE_QRCODE:
+    {
+        m_draw_qrcode->draw();
+    }
+        break;
     }
 
 }
@@ -123,12 +128,12 @@ inline void CoreDisplay::_task_state_only_if_touch(const touch_event& event)
     case 0x04: // down
         if (m_state.offset < m_state.offset_max) ++m_state.offset;
         break;
-    //case 0x08: // debug
-    //    m_state.state = core_states::STATE_DEBUG;
-    //    m_state.offset = 0;
-    //    m_state.offset_max = 0;
-    //    break;
-    case 0x08: // config
+    case 0x08: // qrcode
+        m_state.state = core_states::STATE_QRCODE;
+        m_state.offset = 0;
+        m_state.offset_max = 0;
+        break;
+    case 0x10: // config
         m_state.state = core_states::STATE_CONFIG;
         m_state.offset = 0;
         m_state.offset_max = 0;
@@ -244,6 +249,16 @@ inline void CoreDisplay::_task_update_animations()
                     ""
                 );
                 break;
+            case static_cast<size_t>(core_settings_buttons::BTN_ENABLE_HOTSPOT): 
+
+                m_draw_lines[p].set_fill_color(DisplayColors::item_offline_bg_color);
+                m_draw_lines[p].set_border_color(DisplayColors::item_offline_bg_color_border);            
+                m_draw_lines[p].set_texts(
+                    "Hotspot para monitoramento pela rede",
+                    "Habilitar ou desabilitar conectividade WiFi",
+                    GET(MyConfig).get_wifi_hotspot() ? "LIGADO" : "DESLIGADO"
+                );
+                break;
             default:
                 m_draw_lines[p].set_texts("","","");
                 break;
@@ -257,6 +272,15 @@ inline void CoreDisplay::_task_update_animations()
         m_state.offset_max = dev.m_map.size() == 0 ? 0 : (dev.m_map.size() - 1);
 
         m_draw_full_graph->update_with(m_device_select, m_state.offset);
+
+        for (size_t p = 0; p < item_resumed_amount_on_screen; ++p) m_draw_lines[p].set_texts("", "", "");
+    }
+        break;
+    case core_states::STATE_QRCODE:
+    {
+        m_draw_qrcode->update();
+
+        for (size_t p = 0; p < item_resumed_amount_on_screen; ++p) m_draw_lines[p].set_texts("", "", "");
     }
         break;
     }
@@ -285,10 +309,10 @@ inline void CoreDisplay::_display_draw_static_overlay()
 
 
     m_tft->drawBitmap(442,  28, Bitmaps::config_icon_home,   40, 46, TFT_BLACK);
-    m_tft->drawBitmap(447, 107, Bitmaps::config_icon_up,     26, 35, TFT_BLACK);
-    m_tft->drawBitmap(447, 182, Bitmaps::config_icon_down,   26, 35, TFT_BLACK);
-    //m_tft->drawBitmap(444, 211, Bitmaps::config_icon_debug,  32, 38, TFT_BLACK);
-    m_tft->drawBitmap(444, 256, Bitmaps::config_icon_config, 32, 32, TFT_BLACK);
+    m_tft->drawBitmap(447,  92, Bitmaps::config_icon_up,     26, 35, TFT_BLACK);
+    m_tft->drawBitmap(447, 152, Bitmaps::config_icon_down,   26, 35, TFT_BLACK);
+    m_tft->drawBitmap(444, 214, Bitmaps::qr_code_icon,       32, 32, TFT_BLACK);
+    m_tft->drawBitmap(444, 274, Bitmaps::config_icon_config, 32, 32, TFT_BLACK);
 }
 
 inline void CoreDisplay::_display_draw_bar_stuff()
@@ -307,11 +331,13 @@ inline void CoreDisplay::_display_draw_bar_stuff()
 
     char buf[128];
 
-    snprintf(buf, 128, "Time: %llu; SD: %s; CPU: %.1f%% %.1f%%",//; RAM %.1f%%", // SD usage: %.1f%%;
+    snprintf(buf, 128, "Time: %llu; SD: %s; CPU: %.1f%% %.1f%%; WiFi: %s / %s",//; RAM %.1f%%", // SD usage: %.1f%%;
         (get_time_ms() / 1000),
         sd.is_online() ? "ON" : "OFF", //sd.sd_used_perc() * 100.0f,
         CPU::get_cpu_usage(0) * 100.0f,
-        CPU::get_cpu_usage(1) * 100.0f
+        CPU::get_cpu_usage(1) * 100.0f,
+        m_qrcode.has_value() ? custom_wifi_get_ssid() : "-----",
+        m_qrcode.has_value() ? custom_wifi_get_password() : "-----"
         //CPU::get_ram_usage() * 100.0f
     );
 
@@ -325,6 +351,7 @@ inline void CoreDisplay::_set_all_state_has_changed()
 {
     for(size_t p = 0; p < DisplayColors::item_resumed_amount_on_screen; ++p) m_draw_lines[p].set_state_changed();
     m_draw_full_graph->set_state_changed();
+    m_draw_qrcode->set_state_changed();
 }
 
 inline void CoreDisplay::_task_work_body_blocks_event()
@@ -355,17 +382,6 @@ inline void CoreDisplay::_task_work_body_blocks_event()
                 break;
             }
         }
-//        const auto& off_now = m_state.offset;
-//        const MyI2Ccomm& com = GET(MyI2Ccomm);
-//
-//        for (size_t p = 0; p < item_resumed_amount_on_screen; ++p) 
-//        {
-//            const CS::device_id real_off = static_cast<CS::device_id>((p + static_cast<size_t>(m_state.offset)) % static_cast<size_t>(CS::d2u(CS::device_id::_MAX) - 1)); // just to be sure 100%
-//            //const MyI2Ccomm::device& dev = com.get_device_configurations(static_cast<CS::device_id>(real_off), 0); // real_off cannot be bigger than expected already
-//            const char* name = get_fancy_name_for(real_off);
-//
-//            m_draw_lines[p].set_texts(name, "Loading...", "        ");
-//        }
     }
         break;
     case core_states::STATE_CONFIG:
@@ -514,9 +530,17 @@ inline void CoreDisplay::_task_work_body_blocks_event()
                 }
                     break;
                 case core_settings_buttons::BTN_REDO_CALIBRATION_SCREEN:
-                    _task_calibrate_display_once(); // this will lock.                    
+                    _task_calibrate_display_once(); // this will lock.
                     _display_draw_static_overlay();
                     _set_all_state_has_changed();
+                    break;
+                case core_settings_buttons::BTN_ENABLE_HOTSPOT:
+                {
+                    const auto current_wifi = !cfg.get_wifi_hotspot();
+                    cfg.set_wifi_hotspot(current_wifi);
+                    
+                    async_class_method(CoreDisplay, _check_wifi, cpu_core_id_for_wifi_setup);
+                }
                     break;
                 default:
                     break;
@@ -534,12 +558,36 @@ inline void CoreDisplay::_task_work_body_blocks_event()
         //m_state.offset_max = GET(MyI2Ccomm).get_device_configurations(m_device_select, 0).m_map.size();
     }
         break;
+    case core_states::STATE_QRCODE:
+    {
+        m_draw_qrcode->update();
+        // nothing to do related to touch
+    }
+        break;
     //case core_states::STATE_DEBUG:
     //    // on any touch on debug, go back
     //    m_state.state = core_states::STATE_HOME;
     //    m_state.offset = 0;
     //    m_state.offset_max = CS::d2u(CS::device_id::_MAX) - item_resumed_amount_on_screen;
     //    break;
+    }
+}
+
+inline void CoreDisplay::_check_wifi()
+{
+    if (GET(MyConfig).get_wifi_hotspot()) {
+        LOGI(e_LOG_TAG::TAG_CORE, "WiFi initializing...");
+        
+        custom_wifi_start();// do stuff, start wifi
+        m_qrcode = custom_wifi_gen_QR();
+
+        LOGI(e_LOG_TAG::TAG_CORE, "WiFi initialized with QR code ready.");
+    }
+    else {
+        LOGI(e_LOG_TAG::TAG_CORE, "Stopping WiFi...");
+        custom_wifi_stop();// do stuff, end wifi
+        m_qrcode.reset();
+        LOGI(e_LOG_TAG::TAG_CORE, "WiFi stuff cleaned.");
     }
 }
 
@@ -626,6 +674,14 @@ inline void CoreDisplay::async_display_caller()
         m_draw_full_graph->set_font_color(DisplayColors::item_font_color);
         m_draw_full_graph->set_nodata_color(DisplayColors::body_color);
     }
+    m_draw_qrcode = std::unique_ptr<DisplayQRcodeDrawer>(new DisplayQRcodeDrawer(m_qrcode));
+    {
+        m_draw_qrcode->set_tft(m_tft);
+        m_draw_qrcode->set_fill_color(DisplayColors::item_offline_bg_color);
+        m_draw_qrcode->set_border_color(DisplayColors::item_offline_bg_color_border);
+        m_draw_qrcode->set_font_color(DisplayColors::item_font_color);
+        m_draw_qrcode->set_nodata_color(DisplayColors::body_color);
+    }
 
     LOGI(e_LOG_TAG::TAG_CORE, "Setting up Display...");
 
@@ -656,7 +712,8 @@ inline void CoreDisplay::async_display_caller()
     LOGI(e_LOG_TAG::TAG_CORE, "Ready.");
     
     m_is_tft_ready = true;
-    
+
+    async_class_method(CoreDisplay, _check_wifi, cpu_core_id_for_wifi_setup);
     _display_draw_static_overlay();
     
 

@@ -22,6 +22,7 @@ constexpr const auto& cpu_core_id_for_i2c           = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_core          = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_display_pwm   = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_sd_card       = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_wifi_setup    = def_alt_core_id;
 //constexpr const auto& cpu_core_id_for_4g_lte  = def_alt_core_id;
 
 // ---- ---- CONFIGURATION DEFAULTS BLOCK ---- ---- //
@@ -62,7 +63,7 @@ namespace DisplayColors {
 
     constexpr int32_t display_real_work_area[2] = {(480 - bar_right_width), (320 - bar_top_height) };
 
-    constexpr int32_t bar_right_buttons_amount = 4;
+    constexpr int32_t bar_right_buttons_amount = 5;
     constexpr int32_t bar_right_each_height = display_real_work_area[1] / bar_right_buttons_amount;
 
     constexpr uint16_t bar_top_color = 0x34da;
@@ -102,6 +103,10 @@ namespace DisplayColors {
     constexpr int32_t graph_width_calculated = display_real_work_area[0] - graph_margin_left - graph_margin_right;
     constexpr int32_t graph_height_calculated = display_real_work_area[1] - graph_margin_top - graph_margin_bottom;
 
+    constexpr int32_t qrcode_margin_left = 80; // px
+    constexpr int32_t qrcode_margin_top = 80; // px
+    constexpr int32_t qrcode_size_pixel = 8; // px
+
     constexpr uint16_t graph_background_color = 0x9e13;
     constexpr uint16_t graph_line_color = 0xF800;
 
@@ -112,7 +117,7 @@ namespace DisplayColors {
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 
 constexpr int logger_serial_speed = 115200; // in weird situations, may be used by SD card
-constexpr size_t logger_buffer_len = 256;
+constexpr size_t logger_buffer_len = 128;
 constexpr char logger_log_path[] = "/log.txt";
 constexpr char logger_exception_path[] = "/log_exceptions.txt";
 
@@ -128,10 +133,11 @@ constexpr int sd_card_pins[] = {
     26  // CS
 };
 constexpr uint64_t sd_check_sd_time_ms = 5000;
-constexpr int sd_max_files_open = 10;
+constexpr int sd_max_files_open = 3;
 constexpr int sd_thread_priority = 10; // higher is more important.
 constexpr uint32_t sd_max_timeout_wait_future = 10000; // ms
-constexpr size_t sd_max_tasks_pending = 64; // should be good for async events lmao
+constexpr uint32_t sd_max_timeout_sd_card_full_of_tasks = 2500; // ms
+constexpr size_t sd_max_tasks_pending = 4; // should be good for async events lmao
 
 // ---- ---- END OF SD CARD DEFAULTS BLOCK ---- ---- //
 
@@ -142,16 +148,17 @@ constexpr int i2c_pins[] = {
     15  // SCL
 };
 
-constexpr size_t i2c_values_history_size = 100;
+constexpr size_t i2c_values_history_size = 30;
 constexpr uint64_t i2c_path_checking_time = 30000; // ms
 constexpr uint64_t i2c_packaging_delay = 5000; // ms
 constexpr int i2c_thread_priority = 2; // higher is more important.
+constexpr bool wifi_hotspot_default = false;
 
 // ---- ---- END OF I2C CONTROLLER DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- NON RELATED ---- ---- /
 
-constexpr auto cpu_task_default_stack = 8192; 
+constexpr auto cpu_task_default_stack = 6144; 
 
 
 // function to create threads easily

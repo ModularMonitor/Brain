@@ -116,14 +116,25 @@ inline bool MySDcard::push_task(std::packaged_task<void(void)>&& moving)
         return false;
     }
 
-    std::lock_guard<std::mutex> l(m_tasks_mtx);
-    if (m_tasks.size() < sd_max_tasks_pending) {
-        m_tasks.push_back(std::move(moving));
-        return true;
-    }
-    else {
-        LOGE_NOSD(e_LOG_TAG::TAG_SD, "SD card queue is too large! Skipping one task, unfortunately. Probably an issue with the SD card itself?");
-        return false;
+    bool second_try = false;
+
+    while(1) {
+        {
+            std::lock_guard<std::mutex> l(m_tasks_mtx);
+            if (m_tasks.size() < sd_max_tasks_pending) {
+                m_tasks.push_back(std::move(moving));
+                return true;
+            }
+            else if (second_try) {
+                LOGE_NOSD(e_LOG_TAG::TAG_SD, "SD card queue is still too large! Skipping one task, unfortunately. Probably an issue with the SD card itself?");
+                return false;
+            }
+        }
+
+        const auto max_wait = get_time_ms() + sd_max_timeout_sd_card_full_of_tasks;
+        LOGW_NOSD(e_LOG_TAG::TAG_SD, "SD card queue is too large! Waiting on timeout");
+        while(get_time_ms() < max_wait && m_tasks.size() >= sd_max_tasks_pending) SLEEP(50);
+        second_try = true;        
     }
 }
 

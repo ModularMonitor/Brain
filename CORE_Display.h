@@ -20,6 +20,7 @@ to call SD functions.
 #include "LOG_ctl.h"
 #include "I2C_communication.h"
 #include "CORE_Display_aux_draw.h"
+#include "CORE_Display_aux_web.h"
 
 #include "FS.h"
 #include "SPI.h"
@@ -29,14 +30,15 @@ to call SD functions.
 enum class core_states {
     STATE_HOME,     // default view, shows every module, has offset
     STATE_CONFIG,   // config allows for recalibration of screen and period of reporting on SD card
-    STATE_DETAILS   // details of a module. offset is used as which variable is shown in graph
-    //STATE_DEBUG     // print debug stuff
+    STATE_DETAILS,  // details of a module. offset is used as which variable is shown in graph
+    STATE_QRCODE    // Show QR code for WiFi connectivity
 };
 
 enum class core_settings_buttons {
     BTN_SCREEN_SAVER,               // change screen saver speed
     BTN_SAVE_SPEED,                 // change speed of i2c / store
     BTN_REDO_CALIBRATION_SCREEN,    // call calibration again
+    BTN_ENABLE_HOTSPOT,             // WiFi hotspot ON/OFF
     _MAX
 };
 
@@ -68,6 +70,9 @@ private:
     // drawing stuff
     std::unique_ptr<DisplayLineBlock[]> m_draw_lines;
     std::unique_ptr<DisplayFullBlockGraph> m_draw_full_graph;
+    std::unique_ptr<DisplayQRcodeDrawer> m_draw_qrcode;
+
+    std::optional<qrcodegen::QrCode> m_qrcode; // valid when wifi is on
 
     CPU::AutoWait m_animations_check_time{core_display_animations_check_time}; // checks paths periodically
 
@@ -96,6 +101,8 @@ private:
     void _set_all_state_has_changed();
     // Work on limits and data, generally called after touch event
     void _task_work_body_blocks_event();
+    // update wifi based on config
+    void _check_wifi();
 
     // Updates screen brightness in its own timing
     void async_display_screen_saver();

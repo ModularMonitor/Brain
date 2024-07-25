@@ -36,6 +36,9 @@ inline void MyConfig::load()
     constexpr char i2c_packaging_delay_str[]                  = "i2c_packaging_delay";
     constexpr size_t i2c_packaging_delay_l                    = sizeof(i2c_packaging_delay_str) - 1;
 
+    constexpr char wifi_hotspot_str[]                         = "wifi_hotspot";
+    constexpr size_t wifi_hotspot_l                           = sizeof(wifi_hotspot_str) - 1;
+
     LOGI(e_LOG_TAG::TAG_CFG, "Loading config...");
 
     for(size_t off = 0;; ++off)
@@ -51,6 +54,8 @@ inline void MyConfig::load()
             set_core_display_screen_saver_steps_time(std::strtoull(dat.value, nullptr, 10));
         else if (strncmp(dat.key, i2c_packaging_delay_str, i2c_packaging_delay_l) == 0)
             set_i2c_packaging_delay(std::strtoull(dat.value, nullptr, 10));
+        else if (strncmp(dat.key, wifi_hotspot_str, wifi_hotspot_l) == 0)
+            set_wifi_hotspot(std::strtoull(dat.value, nullptr, 10) != 0);
     }
 
     LOGI(e_LOG_TAG::TAG_CFG, "Config loaded from %s.", config_file_path);
@@ -80,6 +85,12 @@ inline void MyConfig::save() const
     dat.check_and_fix_eof();
     sd.append_on(config_file_path, (char*)&dat, sizeof(dat));
 
+    dat.reset();
+    snprintf(dat.key, sizeof(dat.key),      "wifi_hotspot");
+    snprintf(dat.value, sizeof(dat.value),  "%s", m_wifi_hotspot ? "1" : "0");
+    dat.check_and_fix_eof();
+    sd.append_on(config_file_path, (char*)&dat, sizeof(dat));
+
     LOGI(e_LOG_TAG::TAG_CFG, "Config saved on %s.", config_file_path);
 }
 
@@ -91,6 +102,11 @@ inline uint64_t MyConfig::get_core_display_screen_saver_steps_time() const
 inline uint64_t MyConfig::get_i2c_packaging_delay() const
 {
     return m_i2c_packaging_delay;
+}
+
+inline bool MyConfig::get_wifi_hotspot() const
+{
+    return m_wifi_hotspot;
 }
 
 inline void MyConfig::set_core_display_screen_saver_steps_time(uint64_t v)
@@ -107,4 +123,10 @@ inline void MyConfig::set_i2c_packaging_delay(uint64_t v)
         m_i2c_packaging_delay = v; // min 1 sec, max 1 day
         LOGI(e_LOG_TAG::TAG_CFG, "Config changed: i2c_packaging_delay => %llu", m_i2c_packaging_delay);
     }
+}
+
+inline void MyConfig::set_wifi_hotspot(bool v)
+{    
+    m_wifi_hotspot = v; // min 1 sec, max 1 day
+    LOGI(e_LOG_TAG::TAG_CFG, "Config changed: wifi_hotspot => %s", m_wifi_hotspot ? "ON" : "OFF");
 }
