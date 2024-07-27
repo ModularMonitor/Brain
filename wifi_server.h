@@ -3,18 +3,21 @@
 #include "qr_code.h"
 #include "defaults.h"
 #include "LOG_ctl.h"
+#include "I2C_communication.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
 #include <DNSServer.h>
 #include <WebServer.h>
 
-enum class wifi_endpoints {
-    ROOT,       // base
-    NOT_FOUND   // 404
+enum class wifi_page_endpoints {
+    ROOT,               // base
+    NOT_FOUND           // 404
 };
 
-void __handle_wifi_event(const wifi_endpoints& ev);
+
+void __handle_wifi_event(const wifi_page_endpoints& ev);
+void __handle_wifi_getdata(const uint8_t dev);
 
 MAKE_SINGLETON_CLASS(MyWiFiPortal, {
     const std::string m_ssid;
@@ -31,7 +34,8 @@ MAKE_SINGLETON_CLASS(MyWiFiPortal, {
 
     std::unique_ptr<ref> m_build;
 
-    friend void __handle_wifi_event(const wifi_endpoints& ev);
+    friend void __handle_wifi_event(const wifi_page_endpoints& ev);
+    friend void __handle_wifi_getdata(const uint8_t dev);
 
     void handle_requests();
 public:

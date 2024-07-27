@@ -1,12 +1,7 @@
 #pragma once
 
 #include "wifi_server.h"
-
-
-constexpr char responsePortal[] = R"===(
-<!DOCTYPE html><html><head><title>ESP32 CaptivePortal</title></head><body>
-<h1>Hello World!</h1><p>This is a captive portal example page.</p></body></html>
-)===";
+#include "wifi_server_pages.h"
 
 /* hostname for mDNS. Should work at least on windows. Try http://esp8266.local */
 static const String myHostname = "modularmonitor.local";
@@ -15,8 +10,7 @@ static const IPAddress apIP(8, 8, 8, 8);
 static const IPAddress netMsk(255, 255, 255, 0);
 constexpr byte DNS_PORT = 53;
 
-
-inline void __handle_wifi_event(const wifi_endpoints& ev)
+inline void __handle_wifi_event(const wifi_page_endpoints& ev)
 {
     auto& wifi = GET(MyWiFiPortal);
     if (!wifi.m_build) {
@@ -60,16 +54,75 @@ inline void __handle_wifi_event(const wifi_endpoints& ev)
     if (captivePortal()) return;
 
     switch(ev) {
-    case wifi_endpoints::NOT_FOUND:
+    case wifi_page_endpoints::NOT_FOUND:
+        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested %s, redirect...", wifi.m_build->server.hostHeader().c_str());
         redirectAuto();
         break;
-    case wifi_endpoints::ROOT:
+    case wifi_page_endpoints::ROOT:
         LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /, replying.");
-        wifi.m_build->server.send(200, "text/html", responsePortal);
+        wifi.m_build->server.send(200, "text/html", webserver_home);
         break;
     }
 }
 
+inline void __handle_wifi_getdata(const uint8_t dev)
+{
+    LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested data of device %i, replying.", static_cast<int>(dev));
+
+    auto& wifi = GET(MyWiFiPortal);
+    if (!wifi.m_build) {
+        LOGE(e_LOG_TAG::TAG_WIFI, "WiFi event handler being called without a WiFi set up! How? Unhandled!");
+        return;
+    }
+
+    auto& sv = wifi.m_build->server;
+
+    //if (!request) {
+    //    LOGE(e_LOG_TAG::TAG_WIFI, "WiFi event handler being called with NULL request! Failed");
+    //    sv.send(500, "text/plain", ""); // Internal Server Error
+    //    sv.client().stop();
+    //    return;
+    //}
+
+    if (dev >= CS::d2u(CS::device_id::_MAX)) { // cancel on numbers not valid
+        sv.send(501, "text/plain", ""); // Not Implemented
+        sv.client().stop();
+        return;
+    }
+
+    const CS::device_id dev_id = static_cast<CS::device_id>(dev);
+    const MyI2Ccomm& com = GET(MyI2Ccomm);
+    
+    
+    
+    // show resumed only (online, has issues)
+    const bool resumed = sv.hasArg("resumed") ? (sv.arg("resumed") == "true") : false;
+
+
+    String json_build = "{";
+
+    if (com.is_device_online(dev_id)) json_build += "online:true,";
+    else                              json_build += "online:false,";
+
+    if (com.is_device_with_issue(dev_id)) json_build += "has_issues:true,";
+    else                                  json_build += "has_issues:false,";
+
+    json_build += "data:[";
+
+    if (!resumed) {
+        // CONTINUE LATER
+    }
+
+    json_build += "]}";
+
+    sv.send(200, "application/json", json_build);
+
+    //
+//
+    //switch(dev_id){
+    //    case CS::device_id::DHT22_SENSOR
+    //}
+}
 
 std::string random_wifi_name();
 std::string random_wifi_password();
@@ -121,11 +174,15 @@ inline void MyWiFiPortal::start()
     m_build->dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     m_build->dnsServer.start(DNS_PORT, "*", apIP);
 
-    m_build->server.on("/",             [] { __handle_wifi_event(wifi_endpoints::ROOT);         });
+    m_build->server.on("/",             [] { __handle_wifi_event(wifi_page_endpoints::ROOT);         });
+
+    for(uint8_t dev = 0; dev < CS::d2u(CS::device_id::_MAX); ++dev) {
+        m_build->server.on(String("/get_device/") + dev, [cur = dev]() { __handle_wifi_getdata(cur); });
+    }
     
     // Android fix from "https://github.com/espressif/arduino-esp32/issues/1037"
-    //m_build->server.on("/generate_204", [] { __handle_wifi_event(wifi_endpoints::NOT_FOUND);    });
-    m_build->server.onNotFound([]{ __handle_wifi_event(wifi_endpoints::NOT_FOUND); });
+    //m_build->server.on("/generate_204", [] { __handle_wifi_event(wifi_page_endpoints::NOT_FOUND);    });
+    m_build->server.onNotFound([]{ __handle_wifi_event(wifi_page_endpoints::NOT_FOUND); });
 
     m_build->server.begin();
 
