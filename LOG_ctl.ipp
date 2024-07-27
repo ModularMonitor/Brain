@@ -23,6 +23,7 @@ inline int MyLOG::printf(const e_LOG_TAG& tag, const e_LOG_TYPE& typ, const char
         case e_LOG_TAG::TAG_I2C:    tag_s = "I2C";      break;
         case e_LOG_TAG::TAG_CORE:   tag_s = "COR";      break;
         case e_LOG_TAG::TAG_CFG:    tag_s = "CFG";      break;
+        case e_LOG_TAG::TAG_WIFI:   tag_s = "WFP";      break;
         default: break; // UNK
         }
 

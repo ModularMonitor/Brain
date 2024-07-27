@@ -20,7 +20,6 @@ to call SD functions.
 #include "LOG_ctl.h"
 #include "I2C_communication.h"
 #include "CORE_Display_aux_draw.h"
-#include "CORE_Display_aux_web.h"
 
 #include "FS.h"
 #include "SPI.h"
@@ -71,8 +70,6 @@ private:
     std::unique_ptr<DisplayLineBlock[]> m_draw_lines;
     std::unique_ptr<DisplayFullBlockGraph> m_draw_full_graph;
     std::unique_ptr<DisplayQRcodeDrawer> m_draw_qrcode;
-
-    std::optional<qrcodegen::QrCode> m_qrcode; // valid when wifi is on
 
     CPU::AutoWait m_animations_check_time{core_display_animations_check_time}; // checks paths periodically
 

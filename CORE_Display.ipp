@@ -320,6 +320,7 @@ inline void CoreDisplay::_display_draw_bar_stuff()
     using namespace DisplayColors;
 
     MySDcard& sd = GET(MySDcard);
+    MyWiFiPortal& wifi = GET(MyWiFiPortal);
 
     // What do I want on my top bar?
     /*
@@ -336,8 +337,8 @@ inline void CoreDisplay::_display_draw_bar_stuff()
         sd.is_online() ? "ON" : "OFF", //sd.sd_used_perc() * 100.0f,
         CPU::get_cpu_usage(0) * 100.0f,
         CPU::get_cpu_usage(1) * 100.0f,
-        m_qrcode.has_value() ? custom_wifi_get_ssid() : "-----",
-        m_qrcode.has_value() ? custom_wifi_get_password() : "-----"
+        wifi.get_ssid().c_str(),
+        wifi.get_password().c_str()
         //CPU::get_ram_usage() * 100.0f
     );
 
@@ -575,18 +576,17 @@ inline void CoreDisplay::_task_work_body_blocks_event()
 
 inline void CoreDisplay::_check_wifi()
 {
+    auto& wifi = GET(MyWiFiPortal);
     if (GET(MyConfig).get_wifi_hotspot()) {
         LOGI(e_LOG_TAG::TAG_CORE, "WiFi initializing...");
         
-        custom_wifi_start();// do stuff, start wifi
-        m_qrcode = custom_wifi_gen_QR();
+        wifi.start();
 
         LOGI(e_LOG_TAG::TAG_CORE, "WiFi initialized with QR code ready.");
     }
     else {
         LOGI(e_LOG_TAG::TAG_CORE, "Stopping WiFi...");
-        custom_wifi_stop();// do stuff, end wifi
-        m_qrcode.reset();
+        wifi.stop();
         LOGI(e_LOG_TAG::TAG_CORE, "WiFi stuff cleaned.");
     }
 }
@@ -674,7 +674,7 @@ inline void CoreDisplay::async_display_caller()
         m_draw_full_graph->set_font_color(DisplayColors::item_font_color);
         m_draw_full_graph->set_nodata_color(DisplayColors::body_color);
     }
-    m_draw_qrcode = std::unique_ptr<DisplayQRcodeDrawer>(new DisplayQRcodeDrawer(m_qrcode));
+    m_draw_qrcode = std::unique_ptr<DisplayQRcodeDrawer>(new DisplayQRcodeDrawer());
     {
         m_draw_qrcode->set_tft(m_tft);
         m_draw_qrcode->set_fill_color(DisplayColors::item_offline_bg_color);

@@ -10,6 +10,8 @@
 #include "CORE_Display_aux_draw.h"
 #include "CORE_Display.h"
 
+#include "wifi_server.h"
+
 /* Implementations */
 #include "CPU_control.ipp"
 #include "SD_card.ipp"

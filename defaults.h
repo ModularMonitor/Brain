@@ -176,7 +176,7 @@ inline TaskHandle_t create_task(void(*fcn)(void*), const char* nam = "ASYNC", UB
 // auto create task core prio body argument
 #define actcpba(BODY, COREID, PRIORITY, ARG) { create_task([](void* arg){ BODY; vTaskDelete(NULL); }, "ASYNCAUTO", PRIORITY, cpu_task_default_stack, ARG, COREID); }
 // auto run class function as thread on core
-#define async_class_method_pri(CLASSNAME, CLASSMETHOD, PRIORITY, COREID) { create_task([](void* arg){ ((CLASSNAME*)arg)->CLASSMETHOD(); vTaskDelete(NULL); }, "CLASSASYNC", PRIORITY, cpu_task_default_stack, (void*)this, COREID); }
+#define async_class_method_pri(CLASSNAME, CLASSMETHOD, PRIORITY, COREID) create_task([](void* arg){ ((CLASSNAME*)arg)->CLASSMETHOD(); vTaskDelete(NULL); }, "CLASSASYNC", PRIORITY, cpu_task_default_stack, (void*)this, COREID);
 #define async_class_method(CLASSNAME, CLASSMETHOD, COREID) async_class_method_pri(CLASSNAME, CLASSMETHOD, tskIDLE_PRIORITY, COREID)
 
 #define MAKE_SINGLETON_CLASS_F(CLASSNAME, CLASSBODY, FUNCFLAGS) class CLASSNAME CLASSBODY; CLASSNAME& FUNCFLAGS get_singleton_of_##CLASSNAME(){ static CLASSNAME obj; return obj; }

@@ -60,13 +60,10 @@ public:
 };
 
 class DisplayQRcodeDrawer : public DisplayLineBlock {
-    std::optional<qrcodegen::QrCode>& m_qrsrc;
     bool m_last_had_qrcode = false;
 
     using DisplayLineBlock::set_texts; // private it. Use update instead
 public:
-    DisplayQRcodeDrawer(std::optional<qrcodegen::QrCode>&);
-
     using DisplayLineBlock::set_state_changed;
     using DisplayLineBlock::set_fill_color;
     using DisplayLineBlock::set_border_color;

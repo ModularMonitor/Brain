@@ -277,10 +277,6 @@ inline void DisplayFullBlockGraph::draw()
     m_tft->drawString(res.c_str(), graph_margin_left + (graph_width_calculated / 2) - (off_left / 2), graph_margin_top + graph_height_calculated + 2, 2);
 }
 
-inline DisplayQRcodeDrawer::DisplayQRcodeDrawer(std::optional<qrcodegen::QrCode>& q)
-    : m_qrsrc(q)
-{}
-
 inline void DisplayQRcodeDrawer::update()
 {
     const auto& cfg = GET(MyConfig);
@@ -302,28 +298,24 @@ inline void DisplayQRcodeDrawer::update()
 
 inline void DisplayQRcodeDrawer::draw()
 {
-
     using namespace DisplayColors;
 
+    const auto& wifi = GET(MyWiFiPortal);
+    const auto& qr = wifi.get_qr_code();
 
     if (m_has_changes) {
         m_has_changes = false;
         draw_rounded_device_box(0, bar_top_height, item_full_width_max, item_full_height_max, item_resumed_border_radius);
 
-        if (m_qrsrc.has_value()) {
-
-            auto& qr = m_qrsrc.value();
-
-            for(int y = 0; y < qr.getSize(); ++y) {
-                for(int x = 0; x < qr.getSize(); ++x) {
-                    const auto color_box = qr.getModule(x, y) ? TFT_BLACK : TFT_WHITE;
-                    m_tft->fillRect(
-                        qrcode_margin_left + qrcode_size_pixel * x,
-                        qrcode_margin_top + qrcode_size_pixel * y,
-                        qrcode_size_pixel, qrcode_size_pixel,
-                        color_box
-                    );
-                }
+        for(int y = 0; y < qr.getSize(); ++y) {
+            for(int x = 0; x < qr.getSize(); ++x) {
+                const auto color_box = qr.getModule(x, y) ? TFT_BLACK : TFT_WHITE;
+                m_tft->fillRect(
+                    qrcode_margin_left + qrcode_size_pixel * x,
+                    qrcode_margin_top + qrcode_size_pixel * y,
+                    qrcode_size_pixel, qrcode_size_pixel,
+                    color_box
+                );
             }
         }
     }
