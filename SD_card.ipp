@@ -319,10 +319,32 @@ inline bool MySDcard::file_exists(const char* who)
 inline bool MySDcard::dir_exists(const char* dir)
 {
     bool ret = false;
-    std::packaged_task<void(void)> task([&ret, &dir]() {         
+    std::packaged_task<void(void)> task([&ret, &dir]() {
         File fp = SD.open(dir);
         ret = fp && fp.isDirectory();
         if (fp) fp.close();
+    });
+
+    auto fut = task.get_future();
+    if (!push_task(std::move(task))) return ret;
+    
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
+    
+    return ret;
+}
+
+std::deque<file_info> MySDcard::ls(const char* dir)
+{
+    std::deque<file_info> ret;
+
+    std::packaged_task<void(void)> task([&ret, &dir]() {
+        File root = SD.open(dir);
+        if (!root || !root.isDirectory()) return;
+        
+        for(File file = root.openNextFile(); file; file = root.openNextFile()) {
+            ret.push_back(file_info{std::string(file.name()), file.size(), !file.isDirectory() });
+        }
     });
 
     auto fut = task.get_future();

@@ -22,8 +22,25 @@ constexpr const auto& cpu_core_id_for_i2c           = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_core          = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_display_pwm   = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_sd_card       = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_serialstdin   = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_wifi_setup    = def_alt_core_id;
 //constexpr const auto& cpu_core_id_for_4g_lte  = def_alt_core_id;
+
+// ---- ---- WEBPAGE DEFAULTS BLOCK ---- ---- //
+
+constexpr char web_file_html[] = "/webpage/index.html";
+constexpr char web_file_js[]   = "/webpage/js.js";
+constexpr char web_file_css[]  = "/webpage/css.css";
+constexpr size_t web_slice_read = 64;
+
+// ---- ---- END OF WEBPAGE DEFAULTS BLOCK ---- ---- //
+
+// ---- ---- SERIAL STDIN DEFAULTS BLOCK ---- ---- //
+
+constexpr size_t serialstdin_buffer_size = 128;
+constexpr int serialstdin_thread_priority = 15; // higher is more important.
+
+// ---- ---- END OF SERIAL STDIN DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- CONFIGURATION DEFAULTS BLOCK ---- ---- //
 

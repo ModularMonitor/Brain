@@ -24,6 +24,7 @@ inline int MyLOG::printf(const e_LOG_TAG& tag, const e_LOG_TYPE& typ, const char
         case e_LOG_TAG::TAG_CORE:   tag_s = "COR";      break;
         case e_LOG_TAG::TAG_CFG:    tag_s = "CFG";      break;
         case e_LOG_TAG::TAG_WIFI:   tag_s = "WFP";      break;
+        case e_LOG_TAG::TAG_STDIN:  tag_s = "INN";      break;
         default: break; // UNK
         }
 

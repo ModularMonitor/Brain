@@ -9,6 +9,7 @@
 #include "I2C_communication.h"
 #include "CORE_Display_aux_draw.h"
 #include "CORE_Display.h"
+#include "Serial_input_handler.h"
 
 #include "wifi_server.h"
 
@@ -20,6 +21,7 @@
 #include "I2C_communication.ipp"
 #include "CORE_Display_aux_draw.ipp"
 #include "CORE_Display.ipp"
+#include "Serial_input_handler.ipp"
 
 inline void init_all() {
     // CPU does by itself
@@ -39,4 +41,5 @@ inline void init_all() {
     const auto& cfg = GET(MyConfig);
     const auto& i2c = GET(MyI2Ccomm);
     const auto& core = GET(CoreDisplay);
+    const auto& serial = GET(MySerialReader);
 }
