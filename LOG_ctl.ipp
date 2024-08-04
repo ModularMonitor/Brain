@@ -86,6 +86,7 @@ inline int MyLOG::printf_nosd(const e_LOG_TAG& tag, const e_LOG_TYPE& typ, const
         case e_LOG_TAG::TAG_I2C:    tag_s = "I2C";      break;
         case e_LOG_TAG::TAG_CORE:   tag_s = "COR";      break;
         case e_LOG_TAG::TAG_CFG:    tag_s = "CFG";      break;
+        case e_LOG_TAG::TAG_STDIN:  tag_s = "INN";      break;
         default: break; // UNK
         }
 
@@ -112,6 +113,34 @@ inline int MyLOG::printf_nosd(const e_LOG_TAG& tag, const e_LOG_TYPE& typ, const
         Serial.printf("%.*s", siz + 1, buf_write);
 
         return siz + 1;
+    }
+    catch(const std::exception& e) {
+        const int siz = snprintf(buf_write, sizeof(buf_write), "!EXC @%i$%llu: %s\n", (int)xPortGetCoreID(), get_time_ms(), e.what());
+
+        Serial.printf("%.*s", siz, buf_write);
+    }
+    catch(...) {
+        const int siz = snprintf(buf_write, sizeof(buf_write), "!EXC @%i$%llu: UNCAUGHT\n", (int)xPortGetCoreID(), get_time_ms());
+
+        Serial.printf("%.*s", siz, buf_write);
+    }
+    return 0;
+}
+
+inline int MyLOG::printf_nosd_raw(const char* format, ...)
+{
+    std::lock_guard<std::recursive_mutex> l(m_mtx);
+    if (!Serial) Serial.begin(logger_serial_speed);
+
+    char buf_write[logger_buffer_len]{};
+
+    try {
+        va_list args;
+        va_start(args, format);
+        const auto siz = Serial.vprintf(format, args);
+        va_end(args);
+
+        return static_cast<int>(siz) + 1;
     }
     catch(const std::exception& e) {
         const int siz = snprintf(buf_write, sizeof(buf_write), "!EXC @%i$%llu: %s\n", (int)xPortGetCoreID(), get_time_ms(), e.what());

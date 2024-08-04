@@ -63,12 +63,17 @@ inline void __handle_wifi_event(const wifi_page_endpoints& ev)
         wifi.m_build->server.send(200, "text/html", get_webserver_home());
         break;
     case wifi_page_endpoints::CSS:
-        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /, replying.");
-        wifi.m_build->server.send(200, "text/html", get_webserver_css());
+        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /css.css, replying.");
+        wifi.m_build->server.send(200, "text/css", get_webserver_css());
+        break;
         break;
     case wifi_page_endpoints::JS:
-        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /, replying.");
-        wifi.m_build->server.send(200, "text/html", get_webserver_js());
+        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /js.js, replying.");
+        wifi.m_build->server.send(200, "text/javascript", get_webserver_js());
+        break;
+    case wifi_page_endpoints::DATETIME:
+        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /time, replying.");
+        wifi.m_build->server.send(200, "application/json", String("{time:") + String(get_time_ms()) + String("}"));
         break;
     }
 }
@@ -185,6 +190,7 @@ inline void MyWiFiPortal::start()
     m_build->server.on("/",             [] { __handle_wifi_event(wifi_page_endpoints::ROOT);         });
     m_build->server.on("/js.js",        [] { __handle_wifi_event(wifi_page_endpoints::JS);           });
     m_build->server.on("/css.css",      [] { __handle_wifi_event(wifi_page_endpoints::CSS);          });
+    m_build->server.on("/time",         [] { __handle_wifi_event(wifi_page_endpoints::DATETIME);     });
 
     for(uint8_t dev = 0; dev < CS::d2u(CS::device_id::_MAX); ++dev) {
         m_build->server.on(String("/get_device/") + dev, [cur = dev]() { __handle_wifi_getdata(cur); });

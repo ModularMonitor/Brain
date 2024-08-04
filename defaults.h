@@ -32,6 +32,7 @@ constexpr char web_file_html[] = "/webpage/index.html";
 constexpr char web_file_js[]   = "/webpage/js.js";
 constexpr char web_file_css[]  = "/webpage/css.css";
 constexpr size_t web_slice_read = 64;
+constexpr size_t web_timeout_write = 15; // sec
 
 // ---- ---- END OF WEBPAGE DEFAULTS BLOCK ---- ---- //
 
@@ -134,7 +135,7 @@ namespace DisplayColors {
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 
 constexpr int logger_serial_speed = 115200; // in weird situations, may be used by SD card
-constexpr size_t logger_buffer_len = 128;
+constexpr size_t logger_buffer_len = 192;
 constexpr char logger_log_path[] = "/log.txt";
 constexpr char logger_exception_path[] = "/log_exceptions.txt";
 
@@ -149,12 +150,12 @@ constexpr int sd_card_pins[] = {
     25, // MOSI
     26  // CS
 };
-constexpr uint64_t sd_check_sd_time_ms = 5000;
-constexpr int sd_max_files_open = 3;
-constexpr int sd_thread_priority = 10; // higher is more important.
+constexpr uint64_t sd_check_sd_time_ms = 1000;
+constexpr int sd_max_files_open = 2;
+constexpr int sd_thread_priority = 3; // higher is more important.
 constexpr uint32_t sd_max_timeout_wait_future = 10000; // ms
-constexpr uint32_t sd_max_timeout_sd_card_full_of_tasks = 2500; // ms
-constexpr size_t sd_max_tasks_pending = 4; // should be good for async events lmao
+constexpr uint32_t sd_max_timeout_sd_card_full_of_tasks = 3500; // ms
+constexpr size_t sd_max_tasks_pending = 16; // should be good for async events lmao
 
 // ---- ---- END OF SD CARD DEFAULTS BLOCK ---- ---- //
 

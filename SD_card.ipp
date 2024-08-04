@@ -28,7 +28,7 @@ inline void MySDcard::async_sdcard_caller()
                 LOGE_NOSD(e_LOG_TAG::TAG_SD, "__SDCARD: CORE LOAD WARN! Starting application in 10 seconds anyway. Good luck.");
                 SLEEP(10000);
             }
-            else SLEEP(3000);
+            else SLEEP(200);
         }
         else {
             switch(SD.cardType()) {
@@ -67,8 +67,12 @@ inline void MySDcard::async_sdcard_caller()
             const auto tp = SD.cardType();
 
             if (!fp || (tp != CARD_MMC && tp != CARD_SD && tp != CARD_SDHC)) {
-                if (sd_card_checker())
+                LOGE_NOSD(e_LOG_TAG::TAG_SD, "SD card got offline?! Trying to reconnect it...");
+
+                if (sd_card_checker()) {
                     last_time = get_time_ms(); // reset time if now good
+                    LOGI_NOSD(e_LOG_TAG::TAG_SD, "SD card back online.");
+                }
             }
             else last_time = get_time_ms(); // reset time if good
         }
@@ -111,14 +115,12 @@ inline void MySDcard::async_sdcard_caller()
 
 inline bool MySDcard::push_task(std::packaged_task<void(void)>&& moving)
 {
-    if (!is_online()) {
-        LOGW_NOSD(e_LOG_TAG::TAG_SD, "No task pushed for SD card this time. Skipped nearby task. SD card is not present.");
-        return false;
-    }
+    //if (!is_online()) {
+    //    LOGW_NOSD(e_LOG_TAG::TAG_SD, "No task pushed for SD card this time. Skipped nearby task. SD card is not present.");
+    //    return false;
+    //}
 
-    bool second_try = false;
-
-    while(1) {
+    for (bool second_try = false;;) {
         {
             std::lock_guard<std::mutex> l(m_tasks_mtx);
             if (m_tasks.size() < sd_max_tasks_pending) {
@@ -126,7 +128,8 @@ inline bool MySDcard::push_task(std::packaged_task<void(void)>&& moving)
                 return true;
             }
             else if (second_try) {
-                LOGE_NOSD(e_LOG_TAG::TAG_SD, "SD card queue is still too large! Skipping one task, unfortunately. Probably an issue with the SD card itself?");
+                if (!is_online())   LOGE_NOSD(e_LOG_TAG::TAG_SD, "SD card queue is too large! Skipping one task, unfortunately. SD card seems to be offline. Sad news!");
+                else                LOGE_NOSD(e_LOG_TAG::TAG_SD, "SD card queue is too large! Skipping one task, unfortunately. Probably an issue with the SD card itself?");
                 return false;
             }
         }
@@ -149,6 +152,26 @@ inline bool MySDcard::remove_file(const char* who)
 {
     bool ret = false;
     std::packaged_task<void(void)> task([&ret, &who]() { ret = SD.remove(who); });
+
+    auto fut = task.get_future();
+    if (!push_task(std::move(task))) return ret;
+
+    if (fut.wait_for(std::chrono::milliseconds(sd_max_timeout_wait_future)) != std::future_status::ready)
+        LOGE_NOSD(e_LOG_TAG::TAG_SD, "Task response on SD card took too long to work! Timed out or deferred!");
+
+    return ret;
+}
+
+inline size_t MySDcard::get_file_size(const char* path)
+{
+    size_t ret = 0;
+    std::packaged_task<void(void)> task([&ret, &path]() { 
+        File fp = SD.open(path, FILE_READ);
+        if (!fp) return;
+
+        ret = fp.size();
+        fp.close();
+    });
 
     auto fut = task.get_future();
     if (!push_task(std::move(task))) return ret;

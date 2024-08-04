@@ -14,7 +14,8 @@ enum class wifi_page_endpoints {
     ROOT,               // base
     CSS,                // css file
     JS,                 // js file
-    NOT_FOUND           // 404
+    NOT_FOUND,          // 404
+    DATETIME            // just experiments
 };
 
 

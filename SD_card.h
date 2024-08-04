@@ -53,6 +53,9 @@ public:
     // Removes a file from SD card.
     bool remove_file(const char* who);
 
+    // Get file size
+    size_t get_file_size(const char* path);
+
     // Renames a file from SD card.
     bool rename_file(const char* who, const char* to);
 
