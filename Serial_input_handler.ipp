@@ -38,6 +38,7 @@ inline void MySerialReader::async_serial_reader()
         constexpr char cmd_rf[] = "read";
         constexpr char cmd_wf[] = "write";
         constexpr char cmd_sd[] = "sd";
+        constexpr char cmd_builddate[] = "build";
 
         //const auto check_current_arg_is_num = [&]{
         //    if (off >= serialstdin_buffer_size) return false;
@@ -55,6 +56,12 @@ inline void MySerialReader::async_serial_reader()
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- rmdir [directory]: delete a directory (like '/path')");
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- rm [file]: delete a file (like '/path/file.txt')");
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- sd: Tells SD card info");
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- build: Tells build date time");
+
+        }
+        else if (strncmp(cmd_builddate, buffer + off, sizeof(cmd_builddate) - 1) == 0) { // BUILD DATE!
+
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Build date: %s %s (localtime of build)", __DATE__, __TIME__ );
 
         }
         else if (strncmp(cmd_ls, buffer + off, sizeof(cmd_ls) - 1) == 0) { // LS / READ FOLDER!
@@ -176,81 +183,207 @@ inline void MySerialReader::async_serial_reader()
             }
 
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, 
-                "Please paste raw data on the terminal ONCE. On a %u second(s) timeout after the "
-                "last character read the file will be saved and closed.", web_timeout_write
+                "Please paste raw data on the terminal. On a %u milliseconds timeout after the "
+                "last character read the file will be saved and closed. Everything is buffered before parsing and writing!", web_timeout_write
             );
 
-            while(!Serial.available()) SLEEP(100);
+            while(!Serial.available()) SLEEP(15);
 
-            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Reading stdin buffer has begun. Writing to file '%s'.", aux_buffer);
+//            struct _auto_data_handler {
+//                char m_buffer[serialstdin_buffer_size]{};
+//                size_t m_read = 0, m_tail = 0;
+//                
+//                void read() { m_read = Serial.readBytes((uint8_t*)m_buffer, serialstdin_buffer_size); }
+//                int _raw_next() {
+//                    if (m_tail == m_read) {
+//                        read();
+//                        m_tail = 0;
+//                        if (m_read == 0) return -1; // nothing to read
+//                    }
+//                    return static_cast<int>(m_buffer[m_read++]);
+//                }
+//                int get_next(bool& backslash_was_there_but_not_recognized) {
+//                    backslash_was_there_but_not_recognized = false;
+//                    int ch = _raw_next();
+//                    switch(ch) {
+//                    case -1: return -1; // bad
+//                    case '\\': // assume escape simple sequence
+//                        switch(ch = _raw_next()) {
+//                        case 'a':   return '\a';
+//                        case 'b':   return '\b';
+//                        case 'e':   return '\e';
+//                        case 'f':   return '\f';
+//                        case 'n':   return '\n';
+//                        case 'r':   return '\r';
+//                        case 't':   return '\t';
+//                        case 'v':   return '\v';
+//                        case '\\':  return '\\';
+//                        case '\'':  return '\'';
+//                        case '\"':  return '\"';
+//                        case '\?':  return '\?';
+//                        default: 
+//                            backslash_was_there_but_not_recognized = true;
+//                            return ch;
+//                        }
+//                    default:
+//                        return ch;
+//                    }
+//                }
+//            } hnd;
+//
+//            bool first = true, add_slash_before = false;
+//            size_t total_bytes = 0;
+//            off = 0;
+//
+//            const auto autowrite_flush = [&] {
+//                if (off == 0) return;
+//
+//                if (first) sd.overwrite_on(aux_buffer, buffer, off);
+//                else       sd.append_on(aux_buffer, buffer, off);
+//
+//                total_bytes += static_cast<size_t>(off);
+//                off = 0;
+//                first = false;
+//            };
+//            const auto autoput = [&] (const char ch) {
+//                buffer[off++] = ch;
+//                if (off >= serialstdin_buffer_size)
+//                    autowrite_flush();
+//            };
+//
+//
+//            while(Serial.available()) {
+//                const int ch = hnd.get_next(add_slash_before);
+//
+//                if (ch >= 0)
+//                {
+//                    if (add_slash_before) autoput('\\');
+//                    autoput(ch);
+//                }
+//
+//                if (Serial.available()) continue;
+//
+//                for (const auto rn = get_time_ms(); !Serial.available();) {
+//                    if (get_time_ms() - rn > 250) SLEEP(15);
+//                    if (get_time_ms() - rn > web_timeout_write) break; // the other while will cancel itself
+//                }
+//            }
+//            autowrite_flush();
+
+
+            class self_refd {
+                char m_buf[serialstdin_readblock_buffer_size];
+                size_t m_buf_len = 0;
+                self_refd* m_next = nullptr;
+            public:
+                self_refd() = default;
+                self_refd(const self_refd&) = delete;
+                self_refd(self_refd&&) = delete;
+                void operator=(const self_refd&) = delete;
+                void operator=(self_refd&&) = delete;
+
+                ~self_refd() {
+                    if (m_next) delete m_next;
+                }
+            private:
+                // utility for internal use
+                void _move_left_all_reduce_recursive(size_t from_point = 0) {
+                    for(size_t p = from_point; p < m_buf_len - 1; p++) {
+                        m_buf[p] = m_buf[p+1];
+                    }
+                    if (m_next && m_next->m_buf_len > 0) {
+                        m_buf[m_buf_len-1] = m_next->m_buf[0];
+                        m_next->_move_left_all_reduce_recursive(0); // yes, from 0
+                    }
+                    else --m_buf_len;
+                }
+
+                // utility to auto wait for Serial stuff
+                bool _auto_wait() {
+                    if (Serial.available()) return true;
+                    for (const auto rn = get_time_ms(); !Serial.available();) {
+                        if (get_time_ms() - rn > 250) SLEEP(15);
+                        if (get_time_ms() - rn > web_timeout_write) return false;
+                    }
+                    return true;
+                }
+
+                // read all from Serial automatically
+                size_t fill_buffer() {
+                    m_buf_len = Serial.readBytes((uint8_t*)m_buf, serialstdin_readblock_buffer_size);
+                    if (m_buf_len > 0 && _auto_wait()) {
+                        m_next = new self_refd();                        
+                        return m_buf_len + m_next->fill_buffer();
+                    }
+                    return m_buf_len;
+                }
+
+                // After read, you can work on \code codes
+                void auto_fix_backslashes_recursive()
+                {
+                    for(size_t p = 0; p < m_buf_len; ++p) {
+                        if (m_buf[p] == '\\') {
+                            const int test = 
+                                (p + 1 == m_buf_len) ?
+                                    (m_next && m_next->m_buf_len > 0 ? m_next->m_buf[0] : -1) :
+                                    m_buf[p+1];
+                            switch(test) {
+                            case 'a':  m_buf[p] = '\a'; _move_left_all_reduce_recursive(p + 1); break;
+                            case 'b':  m_buf[p] = '\b'; _move_left_all_reduce_recursive(p + 1); break;
+                            case 'e':  m_buf[p] = '\e'; _move_left_all_reduce_recursive(p + 1); break;
+                            case 'f':  m_buf[p] = '\f'; _move_left_all_reduce_recursive(p + 1); break;
+                            case 'n':  m_buf[p] = '\n'; _move_left_all_reduce_recursive(p + 1); break;
+                            case 'r':  m_buf[p] = '\r'; _move_left_all_reduce_recursive(p + 1); break;
+                            case 't':  m_buf[p] = '\t'; _move_left_all_reduce_recursive(p + 1); break;
+                            case 'v':  m_buf[p] = '\v'; _move_left_all_reduce_recursive(p + 1); break;
+                            case '\\': m_buf[p] = '\\'; _move_left_all_reduce_recursive(p + 1); break;
+                            case '\'': m_buf[p] = '\''; _move_left_all_reduce_recursive(p + 1); break;
+                            case '\"': m_buf[p] = '\"'; _move_left_all_reduce_recursive(p + 1); break;
+                            case '\?': m_buf[p] = '\?'; _move_left_all_reduce_recursive(p + 1); break;
+                            default: break;
+                            }
+                        }
+                    }
+                    if (m_next) m_next->auto_fix_backslashes_recursive();
+                    else if (m_buf[m_buf_len - 1] == '\n') --m_buf_len; // last breakline
+                }
+            public:
+
+                // write on file
+                size_t flush_to(const char* path, const bool first = true)
+                {
+                    if (!path) return 0;
+
+                    auto& sd = GET(MySDcard);
+
+                    if (first) sd.overwrite_on(path, m_buf, m_buf_len);
+                    else       sd.append_on(path, m_buf, m_buf_len);
+                    
+                    if (m_next) return m_buf_len + m_next->flush_to(path, false);
+                    return m_buf_len;
+                }
+
+                // use this to create, fill, and fix automatically
+                static self_refd* auto_make_self() {
+                    self_refd* root = new self_refd();
+                    if (root->fill_buffer() == 0) {
+                        delete root;
+                        return nullptr;
+                    }
+                    root->auto_fix_backslashes_recursive();
+                    return root;
+                }
+            };
             
-            bool first = true;
-            auto timeout_track = get_time_ms() + web_timeout_write;
-            size_t total_bytes = 0;
-            bool last_was_backslash = false;
-            off = 0;
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Reading stdin buffer has begun.");
 
-            const auto autowrite_flush = [&] {
-                if (off == 0) return;
-                if (first) sd.overwrite_on(aux_buffer, buffer, off);
-                else       sd.append_on(aux_buffer, buffer, off);
-                total_bytes += static_cast<size_t>(off);
-                off = 0;
-                first = false;
-            };
+            auto hnd = std::unique_ptr<self_refd>(self_refd::auto_make_self());
+            
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Writing to file '%s'...", aux_buffer);
 
-            const auto autoput = [&] (const char ch) {
-                buffer[off++] = ch;
-                if (off >= serialstdin_buffer_size)
-                    autowrite_flush();
-            };
+            const auto total_bytes = hnd->flush_to(aux_buffer);
 
-
-            while(Serial.available()) {
-                const char curr = Serial.read();
-
-                // ref: https://en.wikipedia.org/wiki/Escape_sequences_in_C
-                if (last_was_backslash) {
-                    switch(curr) {
-                    case 'a':   autoput('\a'); break;
-                    case 'b':   autoput('\b'); break;
-                    case 'e':   autoput('\e'); break;
-                    case 'f':   autoput('\f'); break;
-                    case 'n':   autoput('\n'); break;
-                    case 'r':   autoput('\r'); break;
-                    case 't':   autoput('\t'); break;
-                    case 'v':   autoput('\v'); break;
-                    case '\\':  autoput('\\'); break;
-                    case '\'':  autoput('\''); break;
-                    case '\"':  autoput('\"'); break;
-                    case '\?':  autoput('\?'); break;                    
-                    default: // not handled
-                        autoput('\\');
-                        autoput(curr);
-                        break;
-                    }
-
-                    last_was_backslash = false;
-                }
-                else {
-                    if (curr == '\\') {
-                        last_was_backslash = true;
-                    }
-                    else {
-                        autoput(curr);
-                    }
-                }
-
-                timeout_track = get_time_ms() + web_timeout_write;
-
-                while (!Serial.available()) {
-                    SLEEP(3);
-                    if (get_time_ms() > timeout_track) break; // the other while will cancel itself
-                }
-            }
-            autowrite_flush();
-
-            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Ended writing to '%s' (timed out). Total bytes written: %zu.", aux_buffer, total_bytes);
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Ended writing to '%s'. Total bytes written: %zu.", aux_buffer, total_bytes);
         }
         else if (strncmp(cmd_sd, buffer + off, sizeof(cmd_sd) - 1) == 0) { // SD INFO!
 

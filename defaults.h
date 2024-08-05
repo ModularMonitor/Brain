@@ -32,13 +32,14 @@ constexpr char web_file_html[] = "/webpage/index.html";
 constexpr char web_file_js[]   = "/webpage/js.js";
 constexpr char web_file_css[]  = "/webpage/css.css";
 constexpr size_t web_slice_read = 64;
-constexpr size_t web_timeout_write = 15; // sec
+constexpr size_t web_timeout_write = 15000; // msec
 
 // ---- ---- END OF WEBPAGE DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- SERIAL STDIN DEFAULTS BLOCK ---- ---- //
 
 constexpr size_t serialstdin_buffer_size = 128;
+constexpr size_t serialstdin_readblock_buffer_size = 512;
 constexpr int serialstdin_thread_priority = 15; // higher is more important.
 
 // ---- ---- END OF SERIAL STDIN DEFAULTS BLOCK ---- ---- //
