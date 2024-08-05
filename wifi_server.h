@@ -15,7 +15,8 @@ enum class wifi_page_endpoints {
     CSS,                // css file
     JS,                 // js file
     NOT_FOUND,          // 404
-    DATETIME            // just experiments
+    DATETIME,           // just experiments
+    BUILDTIME           // show build time
 };
 
 

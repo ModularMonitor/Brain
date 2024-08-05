@@ -55,25 +55,29 @@ inline void __handle_wifi_event(const wifi_page_endpoints& ev)
 
     switch(ev) {
     case wifi_page_endpoints::NOT_FOUND:
-        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested %s, redirect...", wifi.m_build->server.hostHeader().c_str());
+        //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested %s, redirect...", wifi.m_build->server.hostHeader().c_str());
         redirectAuto();
         break;
     case wifi_page_endpoints::ROOT:
-        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /, replying.");
+        //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /, replying.");
         wifi.m_build->server.send(200, "text/html", get_webserver_home());
         break;
     case wifi_page_endpoints::CSS:
-        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /css.css, replying.");
+        //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /css.css, replying.");
         wifi.m_build->server.send(200, "text/css", get_webserver_css());
         break;
         break;
     case wifi_page_endpoints::JS:
-        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /js.js, replying.");
+        //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /js.js, replying.");
         wifi.m_build->server.send(200, "text/javascript", get_webserver_js());
         break;
     case wifi_page_endpoints::DATETIME:
-        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /time, replying.");
-        wifi.m_build->server.send(200, "application/json", String("{time:") + String(get_time_ms()) + String("}"));
+        //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /time, replying.");
+        wifi.m_build->server.send(200, "application/json", String("{\"time\":") + String(get_time_ms()) + String("}"));
+        break;
+    case wifi_page_endpoints::BUILDTIME:
+        //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /build, replying.");
+        wifi.m_build->server.send(200, "application/json", String("{\"build\":\"") + String(__DATE__) + " " + String(__TIME__) + String("\"}"));
         break;
     }
 }
@@ -90,13 +94,6 @@ inline void __handle_wifi_getdata(const uint8_t dev)
 
     auto& sv = wifi.m_build->server;
 
-    //if (!request) {
-    //    LOGE(e_LOG_TAG::TAG_WIFI, "WiFi event handler being called with NULL request! Failed");
-    //    sv.send(500, "text/plain", ""); // Internal Server Error
-    //    sv.client().stop();
-    //    return;
-    //}
-
     if (dev >= CS::d2u(CS::device_id::_MAX)) { // cancel on numbers not valid
         sv.send(501, "text/plain", ""); // Not Implemented
         sv.client().stop();
@@ -105,7 +102,7 @@ inline void __handle_wifi_getdata(const uint8_t dev)
 
     const CS::device_id dev_id = static_cast<CS::device_id>(dev);
     const MyI2Ccomm& com = GET(MyI2Ccomm);
-    
+    constexpr size_t max_time_back = MyI2Ccomm::get_max_history_size();   
     
     
     // show resumed only (online, has issues)
@@ -114,33 +111,44 @@ inline void __handle_wifi_getdata(const uint8_t dev)
 
     String json_build = "{";
 
-    if (com.is_device_online(dev_id)) json_build += "online:true,";
-    else                              json_build += "online:false,";
+    if (com.is_device_online(dev_id)) json_build += "\"online\":true,";
+    else                              json_build += "\"online\":false,";
 
-    if (com.is_device_with_issue(dev_id)) json_build += "has_issues:true,";
-    else                                  json_build += "has_issues:false,";
+    if (com.is_device_with_issue(dev_id)) json_build += "\"has_issues\":true,";
+    else                                  json_build += "\"has_issues\":false,";
 
-    json_build += "data:[";
+    json_build += "\"data\":[";
 
     if (!resumed) {
-        // CONTINUE LATER
+        
+        bool first = true;
+        const unsigned maxx = com.get_device_configurations(dev_id, 0).m_map.size();
+
+        for (unsigned properties = 0; properties < maxx; ++properties)
+        {
+            if (!first) json_build += ",";
+            first = false;
+
+            json_build += "{\"index\":" + String(properties) + ",\"history\":[";
+            
+            for(size_t p = 0; p < max_time_back; ++p) {
+                const i2c_data_pair& it = com.get_device_data_in_time(dev_id, (p + 1) % max_time_back, properties);
+
+                json_build += "{\"name\":\"" + String(it.first.c_str()) + "\",\"value\":" + String(std::strtod(it.second, nullptr)) + "}";
+                if (p + 1 != max_time_back) json_build += ",";
+            }
+
+            json_build += "]}";
+        }
     }
 
     json_build += "]}";
 
     sv.send(200, "application/json", json_build);
-
-    //
-//
-    //switch(dev_id){
-    //    case CS::device_id::DHT22_SENSOR
-    //}
 }
 
 std::string random_wifi_name();
 std::string random_wifi_password();
-
-//void __wifi_handler(void*, esp_event_base_t, int32_t, void*);
 
 
 inline MyWiFiPortal::ref::ref()
@@ -191,6 +199,7 @@ inline void MyWiFiPortal::start()
     m_build->server.on("/js.js",        [] { __handle_wifi_event(wifi_page_endpoints::JS);           });
     m_build->server.on("/css.css",      [] { __handle_wifi_event(wifi_page_endpoints::CSS);          });
     m_build->server.on("/time",         [] { __handle_wifi_event(wifi_page_endpoints::DATETIME);     });
+    m_build->server.on("/build",        [] { __handle_wifi_event(wifi_page_endpoints::BUILDTIME);    });
 
     for(uint8_t dev = 0; dev < CS::d2u(CS::device_id::_MAX); ++dev) {
         m_build->server.on(String("/get_device/") + dev, [cur = dev]() { __handle_wifi_getdata(cur); });

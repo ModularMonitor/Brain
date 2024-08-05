@@ -173,8 +173,6 @@ inline void MySerialReader::async_serial_reader()
         else if (strncmp(cmd_wf, buffer + off, sizeof(cmd_wf) - 1) == 0) { // WRITE FILE!
             off += sizeof(cmd_wf);
 
-            LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Not yet implemented.");
-
             const int res = sscanf(buffer + off, "%s", aux_buffer);
 
             if (res <= 0) {
