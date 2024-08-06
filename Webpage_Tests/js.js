@@ -1,7 +1,13 @@
 function httpGetAsync(u, cb) { 
     let x = new XMLHttpRequest();
-    x.onreadystatechange = function() { if (x.readyState == 4 && (x.status >= 200 || x.status < 300)) cb(x.responseText);}
-    x.open("GET", u, true); // true for asynchronous 
+    x.onreadystatechange = function() {         
+        if (x.readyState == 4 && (x.status >= 200 || x.status < 300)) {
+            cb(x.responseText);
+        }
+    };
+    x.onerror = function(err) { console.log("Error on HTTP request '" + u + "': " + err);}
+    x.onabort = function(err) { console.log("Error on HTTP request '" + u + "': " + err);}
+    x.open("GET", u, true);
     x.send(null);
 }
 
@@ -14,5 +20,10 @@ function update_el_date()
     });
 }
 
+function _get_all_of_device(device_id)
+{
+    
+}
 
-setInterval(update_el_date, 1000);
+
+/*setInterval(update_el_date, 1000);*/

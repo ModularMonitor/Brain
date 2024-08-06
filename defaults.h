@@ -135,7 +135,7 @@ namespace DisplayColors {
 
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 
-constexpr int logger_serial_speed = 115200; // in weird situations, may be used by SD card
+constexpr int logger_serial_speed = 9600; // in weird situations, may be used by SD card
 constexpr size_t logger_buffer_len = 192;
 constexpr char logger_log_path[] = "/log.txt";
 constexpr char logger_exception_path[] = "/log_exceptions.txt";

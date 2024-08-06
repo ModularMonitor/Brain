@@ -79,12 +79,16 @@ inline void __handle_wifi_event(const wifi_page_endpoints& ev)
         //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /build, replying.");
         wifi.m_build->server.send(200, "application/json", String("{\"build\":\"") + String(__DATE__) + " " + String(__TIME__) + String("\"}"));
         break;
+    case wifi_page_endpoints::DEVICECOUNT:
+        //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested /get_device/count, replying.");
+        wifi.m_build->server.send(200, "application/json", String("{\"count\":") + String(CS::d2u(CS::device_id::_MAX)) + String("}"));
+        break;
     }
 }
 
 inline void __handle_wifi_getdata(const uint8_t dev)
 {
-    LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested data of device %i, replying.", static_cast<int>(dev));
+    //LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Requested data of device %i, replying.", static_cast<int>(dev));
 
     auto& wifi = GET(MyWiFiPortal);
     if (!wifi.m_build) {
@@ -103,11 +107,12 @@ inline void __handle_wifi_getdata(const uint8_t dev)
     const CS::device_id dev_id = static_cast<CS::device_id>(dev);
     const MyI2Ccomm& com = GET(MyI2Ccomm);
     constexpr size_t max_time_back = MyI2Ccomm::get_max_history_size();   
+    const unsigned maxx = com.get_device_configurations(dev_id, 0).m_map.size();
     
-    
-    // show resumed only (online, has issues)
-    const bool resumed = sv.hasArg("resumed") ? (sv.arg("resumed") == "true") : false;
+    const long index = sv.hasArg("index") ? sv.arg("index").toInt() : -1;
 
+    // show resumed only (online, has issues)
+    const bool resumed = sv.hasArg("resumed") ? (sv.arg("resumed") == "true") : (index < 0 || index >= maxx);
 
     String json_build = "{";
 
@@ -117,32 +122,27 @@ inline void __handle_wifi_getdata(const uint8_t dev)
     if (com.is_device_with_issue(dev_id)) json_build += "\"has_issues\":true,";
     else                                  json_build += "\"has_issues\":false,";
 
-    json_build += "\"data\":[";
+    json_build += "\"max_index\":" + String(maxx) + ","
+        "\"last_updated\":" + String(com.get_device_configurations(dev_id, 0).m_update_time);
+
 
     if (!resumed) {
-        
-        bool first = true;
-        const unsigned maxx = com.get_device_configurations(dev_id, 0).m_map.size();
+        json_build += ",\"path\":\"" + String(com.get_device_data_in_time(dev_id, 0, static_cast<size_t>(index)).first.c_str()) +  "\""
+            ",\"data\":[";
 
-        for (unsigned properties = 0; properties < maxx; ++properties)
-        {
-            if (!first) json_build += ",";
-            first = false;
+        for(int p = static_cast<int>(max_time_back) - 1; p >= 0; --p) {
+            const i2c_data_pair& it = com.get_device_data_in_time(dev_id, (p + 1) % max_time_back, static_cast<size_t>(index));
 
-            json_build += "{\"index\":" + String(properties) + ",\"history\":[";
-            
-            for(size_t p = 0; p < max_time_back; ++p) {
-                const i2c_data_pair& it = com.get_device_data_in_time(dev_id, (p + 1) % max_time_back, properties);
+            //json_build += "{\"name\":\"" + String(it.first.c_str()) + "\",\"value\":" + String(std::strtod(it.second, nullptr)) + "}";
 
-                json_build += "{\"name\":\"" + String(it.first.c_str()) + "\",\"value\":" + String(std::strtod(it.second, nullptr)) + "}";
-                if (p + 1 != max_time_back) json_build += ",";
-            }
-
-            json_build += "]}";
+            json_build += String(std::strtod(it.second, nullptr), 6);
+            if (p > 0) json_build += ",";
         }
+
+        json_build += "]";
     }
 
-    json_build += "]}";
+    json_build += "}";
 
     sv.send(200, "application/json", json_build);
 }
@@ -195,11 +195,12 @@ inline void MyWiFiPortal::start()
     m_build->dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     m_build->dnsServer.start(DNS_PORT, "*", apIP);
 
-    m_build->server.on("/",             [] { __handle_wifi_event(wifi_page_endpoints::ROOT);         });
-    m_build->server.on("/js.js",        [] { __handle_wifi_event(wifi_page_endpoints::JS);           });
-    m_build->server.on("/css.css",      [] { __handle_wifi_event(wifi_page_endpoints::CSS);          });
-    m_build->server.on("/time",         [] { __handle_wifi_event(wifi_page_endpoints::DATETIME);     });
-    m_build->server.on("/build",        [] { __handle_wifi_event(wifi_page_endpoints::BUILDTIME);    });
+    m_build->server.on("/",                 [] { __handle_wifi_event(wifi_page_endpoints::ROOT);         });
+    m_build->server.on("/js.js",            [] { __handle_wifi_event(wifi_page_endpoints::JS);           });
+    m_build->server.on("/css.css",          [] { __handle_wifi_event(wifi_page_endpoints::CSS);          });
+    m_build->server.on("/time",             [] { __handle_wifi_event(wifi_page_endpoints::DATETIME);     });
+    m_build->server.on("/build",            [] { __handle_wifi_event(wifi_page_endpoints::BUILDTIME);    });
+    m_build->server.on("/get_device/count", [] { __handle_wifi_event(wifi_page_endpoints::DEVICECOUNT);  });
 
     for(uint8_t dev = 0; dev < CS::d2u(CS::device_id::_MAX); ++dev) {
         m_build->server.on(String("/get_device/") + dev, [cur = dev]() { __handle_wifi_getdata(cur); });

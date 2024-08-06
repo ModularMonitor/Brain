@@ -16,7 +16,8 @@ enum class wifi_page_endpoints {
     JS,                 // js file
     NOT_FOUND,          // 404
     DATETIME,           // just experiments
-    BUILDTIME           // show build time
+    BUILDTIME,          // show build time
+    DEVICECOUNT,        // device_id::MAX
 };
 
 
