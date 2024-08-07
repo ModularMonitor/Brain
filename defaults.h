@@ -15,8 +15,8 @@
 
 constexpr char app_version[] = "V0.0.1-BETA";
 
-constexpr const uint8_t def_spi_core_id = 1; // spi (tft screen, touch)
-constexpr const uint8_t def_alt_core_id = 0; // other tasks (+ sd card)
+constexpr const uint8_t def_spi_core_id = 0; // spi (tft screen, touch)
+constexpr const uint8_t def_alt_core_id = 1; // other tasks (+ sd card)
 
 constexpr const auto& cpu_core_id_for_i2c           = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_core          = def_spi_core_id;
@@ -38,8 +38,8 @@ constexpr size_t web_timeout_write = 5000; // msec
 
 // ---- ---- SERIAL STDIN DEFAULTS BLOCK ---- ---- //
 
-constexpr size_t serialstdin_buffer_size = 128;
-constexpr size_t serialstdin_readblock_buffer_size = 512;
+constexpr size_t serialstdin_buffer_size = 96;
+constexpr size_t serialstdin_readblock_buffer_size = 256;
 constexpr int serialstdin_thread_priority = 1; // higher is more important.
 
 // ---- ---- END OF SERIAL STDIN DEFAULTS BLOCK ---- ---- //
@@ -64,8 +64,8 @@ constexpr char config_file_path[] = "/config.ini";
 #define DISPLAY_MISO       18
 
 constexpr int core_display_led_pwm_pin = 17;
-constexpr uint64_t core_display_led_pwn_delay = 25; // ms
-constexpr uint64_t core_display_main_delay = 30; // ms
+constexpr uint64_t core_display_led_pwn_delay = 35; // ms
+constexpr uint64_t core_display_main_delay = 50; // ms
 constexpr char core_display_config_ini[] = "/display_calibration.ini";
 constexpr uint64_t core_display_screen_saver_steps_time = 10000; // ms
 constexpr int core_thread_priority = tskIDLE_PRIORITY;
@@ -73,9 +73,9 @@ constexpr int core_led_pwm_thread_priority = tskIDLE_PRIORITY;
 constexpr uint64_t core_display_animations_check_time = 1000; // ms, updates screen stuff.
 
 namespace DisplayColors {
-    constexpr size_t log_line_dist = 20;
-    constexpr size_t log_amount = 320 / log_line_dist;
-    constexpr size_t log_line_max_len = 96;
+    //constexpr size_t log_line_dist = 20;
+    //constexpr size_t log_amount = 320 / log_line_dist;
+    //constexpr size_t log_line_max_len = 96;
 
     constexpr int32_t bar_top_height = 20;
     constexpr int32_t bar_right_width = 40;
@@ -136,7 +136,7 @@ namespace DisplayColors {
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 
 constexpr int logger_serial_speed = 19200; // in weird situations, may be used by SD card
-constexpr size_t logger_buffer_len = 192;
+constexpr size_t logger_buffer_len = 160;
 constexpr char logger_log_path[] = "/log.txt";
 constexpr char logger_exception_path[] = "/log_exceptions.txt";
 
@@ -153,10 +153,10 @@ constexpr int sd_card_pins[] = {
 };
 constexpr uint64_t sd_check_sd_time_ms = 1000;
 constexpr int sd_max_files_open = 2;
-constexpr int sd_thread_priority = 3; // higher is more important.
+constexpr int sd_thread_priority = 20; // higher is more important.
 constexpr uint32_t sd_max_timeout_wait_future = 10000; // ms
 constexpr uint32_t sd_max_timeout_sd_card_full_of_tasks = 3500; // ms
-constexpr size_t sd_max_tasks_pending = 16; // should be good for async events lmao
+constexpr size_t sd_max_tasks_pending = 6; // should be good for async events lmao
 
 // ---- ---- END OF SD CARD DEFAULTS BLOCK ---- ---- //
 
@@ -167,17 +167,17 @@ constexpr int i2c_pins[] = {
     15  // SCL
 };
 
-constexpr size_t i2c_values_history_size = 30;
+constexpr size_t i2c_values_history_size = 20;
 constexpr uint64_t i2c_path_checking_time = 30000; // ms
 constexpr uint64_t i2c_packaging_delay = 5000; // ms
-constexpr int i2c_thread_priority = 2; // higher is more important.
+constexpr int i2c_thread_priority = tskIDLE_PRIORITY; // higher is more important.
 constexpr bool wifi_hotspot_default = false;
 
 // ---- ---- END OF I2C CONTROLLER DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- NON RELATED ---- ---- /
 
-constexpr auto cpu_task_default_stack = 6144; 
+constexpr auto cpu_task_default_stack = 5120; 
 
 
 // function to create threads easily

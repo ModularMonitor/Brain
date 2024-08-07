@@ -10,7 +10,7 @@ inline void MySerialReader::async_serial_reader()
     auto& sd = GET(MySDcard);
 
     while(1) {
-        while (!Serial.available()) SLEEP(100);
+        while (!Serial.available()) SLEEP(250);
 
         memset(buffer, '\0', serialstdin_buffer_size);
         uint16_t off = 0;
@@ -223,9 +223,16 @@ inline void MySerialReader::async_serial_reader()
                     for(size_t p = from_point; p < m_buf_len - 1; p++) {
                         m_buf[p] = m_buf[p+1];
                     }
-                    if (m_next && m_next->m_buf_len > 0) {
-                        m_buf[m_buf_len-1] = m_next->m_buf[0];
-                        m_next->_move_left_all_reduce_recursive(0); // yes, from 0
+                    if (m_next) {
+                        if (m_next->m_buf_len > 0) {
+                            m_buf[m_buf_len-1] = m_next->m_buf[0];
+                            m_next->_move_left_all_reduce_recursive(0); // yes, from 0
+                        }
+                        else {
+                            delete m_next;
+                            m_next = nullptr;
+                            --m_buf_len;
+                        }
                     }
                     else --m_buf_len;
                 }
@@ -256,22 +263,22 @@ inline void MySerialReader::async_serial_reader()
                     for(size_t p = 0; p < m_buf_len; ++p) {
                         if (m_buf[p] == '\\') {
                             const int test = 
-                                (p + 1 == m_buf_len) ?
+                                (p + 1 >= m_buf_len) ?
                                     (m_next && m_next->m_buf_len > 0 ? m_next->m_buf[0] : -1) :
                                     m_buf[p+1];
                             switch(test) {
-                            case 'a':  m_buf[p] = '\a'; _move_left_all_reduce_recursive(p + 1); break;
-                            case 'b':  m_buf[p] = '\b'; _move_left_all_reduce_recursive(p + 1); break;
-                            case 'e':  m_buf[p] = '\e'; _move_left_all_reduce_recursive(p + 1); break;
-                            case 'f':  m_buf[p] = '\f'; _move_left_all_reduce_recursive(p + 1); break;
-                            case 'n':  m_buf[p] = '\n'; _move_left_all_reduce_recursive(p + 1); break;
-                            case 'r':  m_buf[p] = '\r'; _move_left_all_reduce_recursive(p + 1); break;
-                            case 't':  m_buf[p] = '\t'; _move_left_all_reduce_recursive(p + 1); break;
-                            case 'v':  m_buf[p] = '\v'; _move_left_all_reduce_recursive(p + 1); break;
-                            case '\\': m_buf[p] = '\\'; _move_left_all_reduce_recursive(p + 1); break;
-                            case '\'': m_buf[p] = '\''; _move_left_all_reduce_recursive(p + 1); break;
-                            case '\"': m_buf[p] = '\"'; _move_left_all_reduce_recursive(p + 1); break;
-                            case '\?': m_buf[p] = '\?'; _move_left_all_reduce_recursive(p + 1); break;
+                            //case 'a':  _move_left_all_reduce_recursive(p); m_buf[p] = '\a'; break;
+                            //case 'b':  _move_left_all_reduce_recursive(p); m_buf[p] = '\b'; break;
+                            //case 'e':  _move_left_all_reduce_recursive(p); m_buf[p] = '\e'; break;
+                            //case 'f':  _move_left_all_reduce_recursive(p); m_buf[p] = '\f'; break;
+                            case 'n':  _move_left_all_reduce_recursive(p); m_buf[p] = '\n'; break;
+                            case 'r':  _move_left_all_reduce_recursive(p); m_buf[p] = '\r'; break;
+                            case 't':  _move_left_all_reduce_recursive(p); m_buf[p] = '\t'; break;
+                            //case 'v':  _move_left_all_reduce_recursive(p); m_buf[p] = '\v'; break;
+                            //case '\\': _move_left_all_reduce_recursive(p); m_buf[p] = '\\'; break;
+                            //case '\'': _move_left_all_reduce_recursive(p); m_buf[p] = '\''; break;
+                            //case '\"': _move_left_all_reduce_recursive(p); m_buf[p] = '\"'; break;
+                            //case '\?': _move_left_all_reduce_recursive(p); m_buf[p] = '\?'; break;
                             default: break;
                             }
                         }
