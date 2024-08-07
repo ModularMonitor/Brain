@@ -39,6 +39,7 @@ inline void MySerialReader::async_serial_reader()
         constexpr char cmd_wf[] = "write";
         constexpr char cmd_sd[] = "sd";
         constexpr char cmd_builddate[] = "build";
+        constexpr char cmd_reloadpages[] = "reloadweb";
 
         //const auto check_current_arg_is_num = [&]{
         //    if (off >= serialstdin_buffer_size) return false;
@@ -57,6 +58,20 @@ inline void MySerialReader::async_serial_reader()
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- rm [file]: delete a file (like '/path/file.txt')");
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- sd: Tells SD card info");
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- build: Tells build date time");
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- reloadweb: Reload the web pages from SD card to RAM.");
+
+        }
+        else if (strncmp(cmd_reloadpages, buffer + off, sizeof(cmd_reloadpages) - 1) == 0) { // RELOAD WEB
+
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Reloading pages...");
+
+            reload_webserver_items();
+
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Reloaded pages, sizes: %u, %u, %u",
+                _get_webserver_idx(0).length(),
+                _get_webserver_idx(1).length(),
+                _get_webserver_idx(2).length()
+            );
 
         }
         else if (strncmp(cmd_builddate, buffer + off, sizeof(cmd_builddate) - 1) == 0) { // BUILD DATE!
@@ -186,87 +201,6 @@ inline void MySerialReader::async_serial_reader()
             );
 
             while(!Serial.available()) SLEEP(15);
-
-//            struct _auto_data_handler {
-//                char m_buffer[serialstdin_buffer_size]{};
-//                size_t m_read = 0, m_tail = 0;
-//                
-//                void read() { m_read = Serial.readBytes((uint8_t*)m_buffer, serialstdin_buffer_size); }
-//                int _raw_next() {
-//                    if (m_tail == m_read) {
-//                        read();
-//                        m_tail = 0;
-//                        if (m_read == 0) return -1; // nothing to read
-//                    }
-//                    return static_cast<int>(m_buffer[m_read++]);
-//                }
-//                int get_next(bool& backslash_was_there_but_not_recognized) {
-//                    backslash_was_there_but_not_recognized = false;
-//                    int ch = _raw_next();
-//                    switch(ch) {
-//                    case -1: return -1; // bad
-//                    case '\\': // assume escape simple sequence
-//                        switch(ch = _raw_next()) {
-//                        case 'a':   return '\a';
-//                        case 'b':   return '\b';
-//                        case 'e':   return '\e';
-//                        case 'f':   return '\f';
-//                        case 'n':   return '\n';
-//                        case 'r':   return '\r';
-//                        case 't':   return '\t';
-//                        case 'v':   return '\v';
-//                        case '\\':  return '\\';
-//                        case '\'':  return '\'';
-//                        case '\"':  return '\"';
-//                        case '\?':  return '\?';
-//                        default: 
-//                            backslash_was_there_but_not_recognized = true;
-//                            return ch;
-//                        }
-//                    default:
-//                        return ch;
-//                    }
-//                }
-//            } hnd;
-//
-//            bool first = true, add_slash_before = false;
-//            size_t total_bytes = 0;
-//            off = 0;
-//
-//            const auto autowrite_flush = [&] {
-//                if (off == 0) return;
-//
-//                if (first) sd.overwrite_on(aux_buffer, buffer, off);
-//                else       sd.append_on(aux_buffer, buffer, off);
-//
-//                total_bytes += static_cast<size_t>(off);
-//                off = 0;
-//                first = false;
-//            };
-//            const auto autoput = [&] (const char ch) {
-//                buffer[off++] = ch;
-//                if (off >= serialstdin_buffer_size)
-//                    autowrite_flush();
-//            };
-//
-//
-//            while(Serial.available()) {
-//                const int ch = hnd.get_next(add_slash_before);
-//
-//                if (ch >= 0)
-//                {
-//                    if (add_slash_before) autoput('\\');
-//                    autoput(ch);
-//                }
-//
-//                if (Serial.available()) continue;
-//
-//                for (const auto rn = get_time_ms(); !Serial.available();) {
-//                    if (get_time_ms() - rn > 250) SLEEP(15);
-//                    if (get_time_ms() - rn > web_timeout_write) break; // the other while will cancel itself
-//                }
-//            }
-//            autowrite_flush();
 
 
             class self_refd {

@@ -32,7 +32,7 @@ constexpr char web_file_html[] = "/webpage/index.html";
 constexpr char web_file_js[]   = "/webpage/js.js";
 constexpr char web_file_css[]  = "/webpage/css.css";
 constexpr size_t web_slice_read = 64;
-constexpr size_t web_timeout_write = 15000; // msec
+constexpr size_t web_timeout_write = 5000; // msec
 
 // ---- ---- END OF WEBPAGE DEFAULTS BLOCK ---- ---- //
 
@@ -40,7 +40,7 @@ constexpr size_t web_timeout_write = 15000; // msec
 
 constexpr size_t serialstdin_buffer_size = 128;
 constexpr size_t serialstdin_readblock_buffer_size = 512;
-constexpr int serialstdin_thread_priority = 15; // higher is more important.
+constexpr int serialstdin_thread_priority = 1; // higher is more important.
 
 // ---- ---- END OF SERIAL STDIN DEFAULTS BLOCK ---- ---- //
 
@@ -135,7 +135,7 @@ namespace DisplayColors {
 
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 
-constexpr int logger_serial_speed = 9600; // in weird situations, may be used by SD card
+constexpr int logger_serial_speed = 19200; // in weird situations, may be used by SD card
 constexpr size_t logger_buffer_len = 192;
 constexpr char logger_log_path[] = "/log.txt";
 constexpr char logger_exception_path[] = "/log_exceptions.txt";
