@@ -47,6 +47,31 @@ h4 {
     /*border: black 2px solid;*/
 }
 
+.popup {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    align-items: center;
+    text-align: center;
+    background-color: hsla(0, 0%, 20%, 0.7);
+}
+
+.popup device_custom {
+    position: relative;
+    display: block;
+    left: 50%;
+    top: 50%;
+    width: 80vw;
+    height: 80vh;
+    transform: translate(-50%, -50%);
+}
+.popup device_custom canvas {
+    width: 70vw;
+    height: 60vh;
+}
+
 device_custom {
     width: 250px;
     max-width: 340px;
@@ -60,6 +85,7 @@ device_custom {
     border: 2px solid black;
     border-radius: 10px;
     min-width: min-content;
+    pointer-events: all;
 }
 
 device_custom.online {

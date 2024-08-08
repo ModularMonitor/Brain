@@ -52,6 +52,63 @@ const tools = {
 
     log: function(prefix, text) {
         console.log(`#${Number(new Date())} ${(prefix ? prefix : "INFO")}: ${text}`);
+    },
+
+    fill_device_list: function(total) {
+        const els = document.getElementById("blob-devices");
+
+        while(els.children.length > 0) /* reset */
+            els.removeChild(els.children[els.children.length - 1]);
+
+        while(els.children.length < total) {
+            const nel = document.createElement("device_custom");
+            const id = els.children.length;
+
+            nel.setAttribute("name", storage.devices[id].name);
+            nel.setAttribute("id", `${id}`);
+            nel.setAttribute("offset", `${id}`);
+            nel.setAttribute("selected", "false");
+            nel.addEventListener("click", function() {
+                if (nel.getAttribute("selected") == "false") {
+                    nel.setAttribute("selected", "true");
+                    const root = document.getElementById("el-root");
+                    let _nel = document.getElementById("el-show-big");
+                    if (_nel != null) _nel.parentNode.removeChild(_nel);
+                    _nel = document.createElement("section");
+                    _nel.className = "popup";
+                    _nel.setAttribute("id", "el-show-big");
+                    _nel.appendChild(nel);
+                    _nel.addEventListener("click", function(){
+                        nel.click();
+                    });                    
+                    root.appendChild(_nel);
+                }
+                else {
+                    nel.setAttribute("selected", "false");
+                    els.insertBefore(nel, els.children[Number(nel.getAttribute("offset"))]);
+                    const _nel = document.getElementById("el-show-big");
+                    if (_nel) _nel.parentNode.removeChild(_nel);
+                }
+            });
+
+            const nel_titl = document.createElement("h2");
+            const nel_desc = document.createElement("p");
+            const nel_ctx = document.createElement("canvas");
+
+            nel_titl.innerText = "Carregando...";
+            nel_desc.innerText = "Carregando...";
+
+            nel.appendChild(nel_titl);
+            nel.appendChild(nel_desc);
+            nel.appendChild(nel_ctx);
+
+            els.appendChild(nel);
+        }
+
+        storage.elements = [];
+        for(let i = 0; i < els.children.length; ++i) {
+            storage.elements[i] = els.children[i];
+        }
     }
 };
 
@@ -103,7 +160,8 @@ const workers = {
                         curr_dev_max_idx: 0, /* max_index */
                         curr_dev_idx: -1 /* if -1, read max_index and props, then ++ until < max_idx */
                     };
-
+                    
+                    tools.fill_device_list(total);
                 }
                 else {
                     if (self.step.curr_dev_idx == -1) {
@@ -198,44 +256,9 @@ const workers = {
             self.can_continue = false;
 
             try {
-                const els = document.getElementById("blob-devices");
-                const total = storage.devices.length;
-                const exists = els.children.length;
-
-                if (exists != total) {
-                    while(els.children.length > total) 
-                        els.removeChild(els.children[els.children.length - 1]);
-
-                    while(els.children.length < total) {
-                        const nel = document.createElement("device_custom");
-                        const id = els.children.length;
-
-                        nel.setAttribute("name", storage.devices[id].name);
-                        nel.setAttribute("id", `${id}`);
-
-                        const nel_titl = document.createElement("h2");
-                        const nel_desc = document.createElement("p");
-                        const nel_ctx = document.createElement("canvas");
-
-                        nel_titl.innerText = "Carregando...";
-                        nel_desc.innerText = "Carregando...";
-
-                        nel.appendChild(nel_titl);
-                        nel.appendChild(nel_desc);
-                        nel.appendChild(nel_ctx);
-                        els.appendChild(nel);
-                    }
-
-                    storage.elements = [];
-
-                    for(let i = 0; i < els.children.length; ++i) {
-                        storage.elements[i] = els.children[i];
-                    }
-                }
-
                 for(let i = 0; i < storage.elements.length; ++i) {
                     const dev = storage.devices[i];
-                    if (!dev) break;
+                    if (!dev) continue;
 
                     const el = storage.elements[i];
 
@@ -255,7 +278,6 @@ const workers = {
                         else el.classList.remove("online");
                     }
                 }
-
             }
             catch(err) {
                 console.log(`ERR: ${JSON.stringify(err)}`);
@@ -268,13 +290,14 @@ const workers = {
 
 const testers = {
     prepare: function(){
-        const json_example = '[{"online":true,"has_issues":false,"last_updated":556651,"name":"DHT22_SENSOR","data":[{"path":"/dht/humidity","values":[44.5,44.599998,44.799999,44.599998,44.799999,44.400002,44.599998,44.700001,44.599998,44.700001,44.700001,44.900002,44.599998,44.900002,44.700001,44.900002,44.5,44.700001,44.599998,44.599998]},{"path":"/dht/temperature","values":[26.9,26.9,27,26.9,27,26.9,26.9,26.9,26.9,26.9,26.9,27,26.799999,26.9,26.799999,26.799999,26.799999,26.799999,26.9,26.9]}]},{"online":false,"has_issues":false,"last_updated":0,"name":"MICS_6814_SENSOR","data":[{}]},{"online":false,"has_issues":false,"last_updated":0,"name":"LY038_HW072_SENSOR","data":[{}]},{"online":true,"has_issues":false,"last_updated":595549,"name":"GY87_SENSOR","data":[{"path":"/gy87/bmp085/altitude","values":[898.165771,898.165771,898.71106,898.165771,898.528931,897.711548,898.256836,898.619995,897.984192,898.347351,897.984192,898.528931,898.71106,897.711548,898.074707,898.347351,898.256836,898.528931,898.074707,898.438416]},{"path":"/gy87/bmp085/altitude_real","values":[912.607483,912.335022,912.69812,912.69812,912.335022,912.244385,912.789307,912.789307,912.425659,911.608765,912.69812,912.425659,912.789307,912.69812,912.335022,912.153748,912.879944,912.789307,912.69812,912.69812]},{"path":"/gy87/bmp085/pressure","values":[90990,90989,90996,90989,90989,90989,90992,90986,90990,90988,90989,90995,90990,90984,90989,90991,90991,90986,90987,90988]},{"path":"/gy87/bmp085/pressure_sea_level","values":[90991,90993,90993,90988,90992,90995,90990,90990,90992,90988,90988,90990,90989,90985,90985,90987,90994,90990,90989,90989]}]},{"online":true,"has_issues":true,"last_updated":513481,"name":"CCS811_SENSOR","data":[{"path":"/ccs811/eco2","values":[409,441,506,439,447,434,423,460,410,422,496,408,433,445,445,475,441,415,441,481]},{"path":"/ccs811/tvoc","values":[1,6,16,5,7,5,3,9,1,3,14,1,5,6,6,11,6,2,6,12]}]},{"online":false,"has_issues":false,"last_updated":0,"name":"PMSDS011_SENSOR","data":[{}]},{"online":false,"has_issues":false,"last_updated":0,"name":"BATTERY_SENSOR","data":[{}]}]';
-        storage.devices = JSON.parse(json_example);        
+        const json_example = '[{"empty":false,"online":true,"has_issues":false,"last_updated":737144,"name":"DHT22_SENSOR","data":[{"path":"/dht/humidity","values":[51.099998,50.799999,50.799999,50.599998,50.5,50.299999,50.099998,49.599998,49.5,49.400002,49,49,48.799999,48.700001,48.599998,48.299999,48.200001,48.299999,48.299999,48.400002]},{"path":"/dht/temperature","values":[20.200001,20.200001,20.200001,20.200001,20.200001,20.200001,20.1,20.1,20.1,20.1,20.1,20.1,20.1,20.1,20.1,20,20.1,20,20,20]}]},{"empty":false,"online":false,"has_issues":false,"last_updated":0,"name":"MICS_6814_SENSOR","data":[]},{"empty":false,"online":false,"has_issues":false,"last_updated":0,"name":"LY038_HW072_SENSOR","data":[]},{"empty":false,"online":true,"has_issues":false,"last_updated":693673,"name":"GY87_SENSOR","data":[{"path":"/gy87/bmp085/altitude","values":[897.075806,897.166809,896.985291,896.531128,897.438904,897.711548,896.621643,897.166809,897.075806,897.529968,897.166809,897.711548,897.438904,897.438904,896.985291,896.894226,897.257324,897.348389,898.074707,897.166809]},{"path":"/gy87/bmp085/altitude_real","values":[911.608765,911.245728,911.154541,910.88208,911.608765,911.608765,911.245728,912.153748,911.154541,912.153748,911.790039,911.881226,911.699402,911.154541,911.699402,910.973267,911.699402,911.790039,911.336365,911.881226]},{"path":"/gy87/bmp085/pressure","values":[91004,91000,91006,91005,90997,91006,91003,91007,91000,91000,90999,91004,91003,91002,90998,91002,91005,91005,91002,91003]},{"path":"/gy87/bmp085/pressure_sea_level","values":[91009,91004,91005,91007,91004,91001,91001,91010,90994,91002,91005,90999,91005,91002,91006,91003,91005,91002,91004,91001]},{"path":"/gy87/bmp085/temperature","values":[19.299999,19.200001,19.200001,19.200001,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1,19.1]},{"path":"/gy87/mpu6050/accel/x","values":[0,1,-27,1,2,1,0,6,3,3,3,-1,-4,8,0,7,3,8,5,3]},{"path":"/gy87/mpu6050/accel/x/raw","values":[262,260,-384,210,250,214,224,242,234,234,274,244,220,286,242,248,270,300,238,248]},{"path":"/gy87/mpu6050/accel/y","values":[-128,-134,-130,-125,-123,-131,-130,-124,-125,-135,-134,-123,-137,-125,-126,-126,-131,-127,-125,-133]},{"path":"/gy87/mpu6050/accel/y/raw","values":[-16632,-16636,-16610,-16642,-16620,-16636,-16610,-16568,-16626,-16672,-16660,-16606,-16640,-16608,-16606,-16668,-16590,-16582,-16636,-16658]},{"path":"/gy87/mpu6050/accel/z","values":[19,3,-4,54,11,0,7,-1,4,0,11,3,3,5,9,8,4,19,-4,4]},{"path":"/gy87/mpu6050/accel/z/raw","values":[886,852,772,920,844,758,756,794,810,758,850,762,804,812,836,858,854,782,756,846]},{"path":"/gy87/mpu6050/gyro/x/raw","values":[-101,-102,-102,-100,-101,-101,-102,-101,-101,-101,-101,-101,-102,-101,-101,-100,-101,-101,-101,-101]},{"path":"/gy87/mpu6050/gyro/y/raw","values":[17,18,17,17,17,16,18,18,18,17,18,18,17,18,18,18,17,18,16,17]},{"path":"/gy87/mpu6050/gyro/z/raw","values":[-5,-4,-4,-3,-5,-4,-3,-4,-4,-4,-4,-3,-4,-4,-4,-4,-4,-4,-5,-3]},{"path":"/gy87/mpu6050/pitch","values":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"path":"/gy87/mpu6050/roll","values":[-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87,-87]},{"path":"/gy87/mpu6050/yaw","values":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}]},{"empty":false,"online":true,"has_issues":false,"last_updated":731853,"name":"CCS811_SENSOR","data":[{"path":"/ccs811/eco2","values":[420,447,486,530,505,533,518,545,548,503,459,477,443,400,414,520,464,493,482,492]},{"path":"/ccs811/tvoc","values":[3,7,13,19,15,20,17,22,22,3,8,11,6,0,2,18,9,14,12,14]}]},{"empty":false,"online":false,"has_issues":false,"last_updated":0,"name":"PMSDS011_SENSOR","data":[]},{"empty":false,"online":false,"has_issues":false,"last_updated":0,"name":"BATTERY_SENSOR","data":[]}]';
+        storage.devices = JSON.parse(json_example);
+        tools.fill_device_list(storage.devices.length);
     }
 };
 
 /* arg: true -> for local test without server (ESP32) */
-function start_timers(only_testing_ones) {
+function start_stuff(only_testing_ones) {
     const check_is_debug_only = (only_testing_ones === true);    
     const task_list = Object.keys(workers);
 
