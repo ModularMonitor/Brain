@@ -31,7 +31,7 @@ constexpr const auto& cpu_core_id_for_wifi_setup    = def_alt_core_id;
 constexpr char web_file_html[] = "/webpage/index.html";
 constexpr char web_file_js[]   = "/webpage/js.js";
 constexpr char web_file_css[]  = "/webpage/css.css";
-constexpr size_t web_slice_read = 64;
+constexpr size_t web_slice_read = 32;
 constexpr size_t web_timeout_write = 5000; // msec
 
 // ---- ---- END OF WEBPAGE DEFAULTS BLOCK ---- ---- //
@@ -153,7 +153,7 @@ constexpr int sd_card_pins[] = {
 };
 constexpr uint64_t sd_check_sd_time_ms = 1000;
 constexpr int sd_max_files_open = 2;
-constexpr int sd_thread_priority = 20; // higher is more important.
+constexpr int sd_thread_priority = 17; // higher is more important.
 constexpr uint32_t sd_max_timeout_wait_future = 10000; // ms
 constexpr uint32_t sd_max_timeout_sd_card_full_of_tasks = 3500; // ms
 constexpr size_t sd_max_tasks_pending = 6; // should be good for async events lmao
@@ -215,5 +215,8 @@ inline TaskHandle_t create_task(void(*fcn)(void*), const char* nam = "ASYNC", UB
 #define GET(SINGLETON_NAME) get_singleton_of_##SINGLETON_NAME()
 
 #define SLEEP(MILLISEC) { yield(); vTaskDelay(MILLISEC / portTICK_PERIOD_MS); }
+
+//#define ASSERT_SD_LOCK_OVERWRITE(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = (_e == 0 ? SDREF.overwrite_on(PATH, BUFFER, LEN) : SDREF.append_on(PATH, BUFFER + _e, LEN - _e)); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
+//#define ASSERT_SD_LOCK_APPEND_ON(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = SDREF.append_on(PATH, BUFFER + _e, LEN - _e); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
 
 inline uint64_t get_time_ms() {return std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count(); }

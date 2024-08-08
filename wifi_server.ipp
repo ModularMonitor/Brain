@@ -123,6 +123,7 @@ inline void __handle_wifi_getdata(const uint8_t dev)
     else                                  json_build += "\"has_issues\":false,";
 
     json_build += "\"max_index\":" + String(maxx) + ","
+        "\"name\":\"" + String(CS::d2str(dev_id)) + "\","
         "\"last_updated\":" + String(com.get_device_configurations(dev_id, 0).m_update_time);
 
 

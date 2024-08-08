@@ -23,7 +23,7 @@ inline void reload_webserver_items() {
         buf.clear();
 
         char tmp_buf[web_slice_read];
-        uint32_t off = 0, current_read = 0;
+        size_t off = 0, current_read = 0;
 
         const char* page = [&i]() -> const char* { switch(i){
             case 0: return web_file_html;
@@ -31,16 +31,23 @@ inline void reload_webserver_items() {
             default: return web_file_css;
         }}();
 
-        LOGI(e_LOG_TAG::TAG_WIFI, "Reloading webpage index %i...", i);
+        const size_t file_expected_size = sd.get_file_size(page);
 
-        while(1) {
+        LOGI(e_LOG_TAG::TAG_WIFI, "Reloading webpage index %i '%s' of size %zu...", i, page, file_expected_size);
+
+        while(off < file_expected_size) {
             current_read = sd.read_from(page, tmp_buf, web_slice_read, off);
             off += current_read;
-            buf += String(tmp_buf, current_read);
-            if (current_read < web_slice_read) break;
+            if (current_read) {
+                buf += String(tmp_buf, current_read);
+            }
+            else {
+                LOGW_NOSD(e_LOG_TAG::TAG_WIFI, "Got zero bytes read. Current: %zu, progress: %.2f%%. Waiting a second before retry.", off, (100.0f * off / file_expected_size));
+                SLEEP(1000);
+            }
         }
 
-        LOGI(e_LOG_TAG::TAG_WIFI, "Reloaded webpage index %i now with size %u.", i, buf.length());
+        LOGI(e_LOG_TAG::TAG_WIFI, "Reloaded webpage index %i '%s' now with size %u.", i, page, buf.length());
     }
 }
 

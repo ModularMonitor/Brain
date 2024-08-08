@@ -195,13 +195,11 @@ inline void MySerialReader::async_serial_reader()
                 continue;
             }
 
-            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, 
-                "Please paste raw data on the terminal. On a %u milliseconds timeout after the "
-                "last character read the file will be saved and closed. Everything is buffered before parsing and writing!", web_timeout_write
-            );
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Please paste raw data on the terminal.");
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "On a %u milliseconds timeout after the last character read the file will be saved and closed.", web_timeout_write);
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Everything is buffered before parsing and writing!");
 
             while(!Serial.available()) SLEEP(15);
-
 
             class self_refd {
                 char m_buf[serialstdin_readblock_buffer_size];
@@ -220,21 +218,24 @@ inline void MySerialReader::async_serial_reader()
             private:
                 // utility for internal use
                 void _move_left_all_reduce_recursive(size_t from_point = 0) {
-                    for(size_t p = from_point; p < m_buf_len - 1; p++) {
-                        m_buf[p] = m_buf[p+1];
-                    }
-                    if (m_next) {
-                        if (m_next->m_buf_len > 0) {
-                            m_buf[m_buf_len-1] = m_next->m_buf[0];
-                            m_next->_move_left_all_reduce_recursive(0); // yes, from 0
+                    for (self_refd* self = this; self != nullptr; self = self->m_next) {
+                        for(size_t p = from_point; p < self->m_buf_len - 1; p++) {
+                            self->m_buf[p] = self->m_buf[p+1];
                         }
-                        else {
-                            delete m_next;
-                            m_next = nullptr;
-                            --m_buf_len;
+                        if (self->m_next) {
+                            if (self->m_next->m_buf_len > 0) {
+                                self->m_buf[m_buf_len-1] = self->m_next->m_buf[0];
+                                from_point = 0;
+                                continue;
+                            }
+                            else {
+                                delete self->m_next;
+                                self->m_next = nullptr;
+                                --self->m_buf_len;                                
+                            }
                         }
+                        else --self->m_buf_len;
                     }
-                    else --m_buf_len;
                 }
 
                 // utility to auto wait for Serial stuff
@@ -249,57 +250,97 @@ inline void MySerialReader::async_serial_reader()
 
                 // read all from Serial automatically
                 size_t fill_buffer() {
-                    m_buf_len = Serial.readBytes((uint8_t*)m_buf, serialstdin_readblock_buffer_size);
-                    if (m_buf_len > 0 && _auto_wait()) {
-                        m_next = new self_refd();                        
-                        return m_buf_len + m_next->fill_buffer();
+                    self_refd* self = this;
+                    size_t c = 0;
+
+                    while(1) {
+                        c += self->m_buf_len = Serial.readBytes((uint8_t*)self->m_buf, serialstdin_readblock_buffer_size);
+
+                        if (self->m_buf_len > 0 && _auto_wait()) {
+                            self->m_next = new self_refd();
+                            self = self->m_next;
+                        }
+                        else break;
                     }
-                    return m_buf_len;
+                    
+                    return c;
                 }
 
                 // After read, you can work on \code codes
-                void auto_fix_backslashes_recursive()
+                void auto_fix_backslashes()
                 {
-                    for(size_t p = 0; p < m_buf_len; ++p) {
-                        if (m_buf[p] == '\\') {
-                            const int test = 
-                                (p + 1 >= m_buf_len) ?
-                                    (m_next && m_next->m_buf_len > 0 ? m_next->m_buf[0] : -1) :
-                                    m_buf[p+1];
-                            switch(test) {
-                            //case 'a':  _move_left_all_reduce_recursive(p); m_buf[p] = '\a'; break;
-                            //case 'b':  _move_left_all_reduce_recursive(p); m_buf[p] = '\b'; break;
-                            //case 'e':  _move_left_all_reduce_recursive(p); m_buf[p] = '\e'; break;
-                            //case 'f':  _move_left_all_reduce_recursive(p); m_buf[p] = '\f'; break;
-                            case 'n':  _move_left_all_reduce_recursive(p); m_buf[p] = '\n'; break;
-                            case 'r':  _move_left_all_reduce_recursive(p); m_buf[p] = '\r'; break;
-                            case 't':  _move_left_all_reduce_recursive(p); m_buf[p] = '\t'; break;
-                            //case 'v':  _move_left_all_reduce_recursive(p); m_buf[p] = '\v'; break;
-                            //case '\\': _move_left_all_reduce_recursive(p); m_buf[p] = '\\'; break;
-                            //case '\'': _move_left_all_reduce_recursive(p); m_buf[p] = '\''; break;
-                            //case '\"': _move_left_all_reduce_recursive(p); m_buf[p] = '\"'; break;
-                            //case '\?': _move_left_all_reduce_recursive(p); m_buf[p] = '\?'; break;
-                            default: break;
+                    for (self_refd* self = this; self != nullptr; self = self->m_next) {
+                        for(size_t p = 0; p < self->m_buf_len; ++p) {
+                            if (self->m_buf[p] == '\\') {
+                                const int test = 
+                                    (p + 1 >= self->m_buf_len) ?
+                                        (self->m_next && self->m_next->m_buf_len > 0 ? self->m_next->m_buf[0] : -1) :
+                                        self->m_buf[p+1];
+                                switch(test) {
+                                //case 'a':  _move_left_all_reduce_recursive(p); m_buf[p] = '\a'; break;
+                                //case 'b':  _move_left_all_reduce_recursive(p); m_buf[p] = '\b'; break;
+                                //case 'e':  _move_left_all_reduce_recursive(p); m_buf[p] = '\e'; break;
+                                //case 'f':  _move_left_all_reduce_recursive(p); m_buf[p] = '\f'; break;
+                                case 'n':  self->_move_left_all_reduce_recursive(p); self->m_buf[p] = '\n'; break;
+                                case 'r':  self->_move_left_all_reduce_recursive(p); self->m_buf[p] = '\r'; break;
+                                case 't':  self->_move_left_all_reduce_recursive(p); self->m_buf[p] = '\t'; break;
+                                //case 'v':  _move_left_all_reduce_recursive(p); m_buf[p] = '\v'; break;
+                                //case '\\': _move_left_all_reduce_recursive(p); m_buf[p] = '\\'; break;
+                                //case '\'': _move_left_all_reduce_recursive(p); m_buf[p] = '\''; break;
+                                //case '\"': _move_left_all_reduce_recursive(p); m_buf[p] = '\"'; break;
+                                //case '\?': _move_left_all_reduce_recursive(p); m_buf[p] = '\?'; break;
+                                default: break;
+                                }
                             }
                         }
+                        //if (m_next) m_next->auto_fix_backslashes();
+                        //else if (m_buf[m_buf_len - 1] == '\n') --m_buf_len; // last breakline
                     }
-                    if (m_next) m_next->auto_fix_backslashes_recursive();
-                    else if (m_buf[m_buf_len - 1] == '\n') --m_buf_len; // last breakline
                 }
             public:
 
                 // write on file
-                size_t flush_to(const char* path, const bool first = true)
+                size_t flush_to(const char* path)
                 {
                     if (!path) return 0;
 
                     auto& sd = GET(MySDcard);
-
-                    if (first) sd.overwrite_on(path, m_buf, m_buf_len);
-                    else       sd.append_on(path, m_buf, m_buf_len);
+                    size_t so_far = 0;
+                    size_t expected = calc_read();
+                    if (expected == 0) expected = 1;
                     
-                    if (m_next) return m_buf_len + m_next->flush_to(path, false);
-                    return m_buf_len;
+                    LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Flushing data to '%s', writing %zu bytes...", path, m_buf_len);
+
+                    for (self_refd* self = this; self != nullptr; self = self->m_next) {
+                        const bool first = (self == this);
+                        for (size_t rt = 0; rt < self->m_buf_len;){
+
+                            size_t nw = 0;
+                            if (first && rt == 0) {
+                                nw = sd.overwrite_on(path, self->m_buf + rt, self->m_buf_len - rt);
+                            }
+                            else {
+                                nw = sd.append_on(path, self->m_buf + rt, self->m_buf_len - rt);
+                            }
+
+                            if (nw == 0) {
+                                LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Cannot write. Trying again soon...");
+                                SLEEP(1000);
+                            }
+                            else {
+                                rt += nw;
+                                LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Writing... %zu bytes, progress: %.2f%%", so_far + rt, (100.0f * (so_far + rt) / expected));
+                            }
+                        }
+
+                        so_far += self->m_buf_len;
+
+                        SLEEP(50);
+                    }
+
+                    LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Ended writing on '%s'", path);
+                    
+                    return so_far;
                 }
 
                 // use this to create, fill, and fix automatically
@@ -309,20 +350,29 @@ inline void MySerialReader::async_serial_reader()
                         delete root;
                         return nullptr;
                     }
-                    root->auto_fix_backslashes_recursive();
+                    root->auto_fix_backslashes();
                     return root;
+                }
+
+                size_t calc_read() const {
+                    size_t c = 0;
+
+                    for (const self_refd* self = this; self != nullptr; self = self->m_next) c += self->m_buf_len;
+                    
+                    return c;
                 }
             };
             
-            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Reading stdin buffer has begun.");
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Reading of stdin buffer has begun.");
 
             auto hnd = std::unique_ptr<self_refd>(self_refd::auto_make_self());
             
-            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Writing to file '%s'...", aux_buffer);
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Read %zu, writing to file '%s'...", hnd->calc_read(), aux_buffer);
 
             const auto total_bytes = hnd->flush_to(aux_buffer);
 
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Ended writing to '%s'. Total bytes written: %zu.", aux_buffer, total_bytes);
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Confirmed file size now: %zu", sd.get_file_size(aux_buffer));
         }
         else if (strncmp(cmd_sd, buffer + off, sizeof(cmd_sd) - 1) == 0) { // SD INFO!
 

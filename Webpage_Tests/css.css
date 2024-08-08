@@ -5,6 +5,7 @@ body {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
+    background-color: hsl(0, 0%, 50%);
     margin: 0;
     padding: 0;
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
@@ -28,7 +29,7 @@ h4 {
 .header {
     margin: 0;
     padding: 0.5em 2em;
-    background-color: hsl(0, 0%, 75%);
+    background-color: hsl(0, 0%, 80%);
     box-shadow: inset -3px -3px 2px 3px hsl(0, 0%, 50%), inset 3px 3px 2px 3px hsl(0, 0%, 85%);
 }
 .header hr {
@@ -38,6 +39,55 @@ h4 {
 
 .content {
     margin: 0;
-    padding: 0.5em 2em;
+    padding: 1.2em;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    box-sizing: border-box;
     /*border: black 2px solid;*/
+}
+
+device_custom {
+    width: 250px;
+    max-width: 340px;
+    height: auto;
+    min-height: 100px;
+    box-shadow: 3px 5px 6px 3px hsla(0, 0%, 20%, 0.4);
+    background-color: hsl(0, 0%, 80%);
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    border: 2px solid black;
+    border-radius: 10px;
+    min-width: min-content;
+}
+
+device_custom.online {
+    background-color: hsl(110, 30%, 70%);
+}
+device_custom.issues {
+    background-color: hsl(0, 40%, 60%);
+}
+
+device_custom * {
+    flex: 1 1 auto;
+    width: 100%;
+}
+
+device_custom h2 {
+    margin: 0.2em 15px 0.6em;
+}
+
+device_custom p {
+    margin: 0.1em 15px 0.1em;
+}
+
+device_custom canvas {
+    margin: 15px;
+    padding: 0;
+    width: 100%;
+    height: 120px;
+    box-sizing: content-box;
+    background-color: hsla(0, 0%, 20%, 0.4);
+    border: 1px solid black;
 }
