@@ -3,6 +3,8 @@ const storage = {
     elements: [],
     time: 0,
     is_mock: false,
+    last_err: null,
+    exclusivity_click_ev: 0, /* 0 == devices or section, 1 == select. Resets on root event */
     page_start_time: Number(new Date())
 };
 
@@ -57,6 +59,18 @@ const tools = {
     fill_device_list: function(total) {
         const els = document.getElementById("blob-devices");
 
+        document.body.addEventListener("click", function() {
+            setTimeout(function() { 
+                /*if (storage.exclusivity_click_ev == 0) {
+                    const el = document.getElementById("el-show-big");
+                    if (el && el.children.length > 0) {
+                        el.children[0].click();
+                    }
+                }*/
+                storage.exclusivity_click_ev = 0;
+            }, 10);
+        });
+
         while(els.children.length > 0) /* reset */
             els.removeChild(els.children[els.children.length - 1]);
 
@@ -69,19 +83,27 @@ const tools = {
             nel.setAttribute("offset", `${id}`);
             nel.setAttribute("selected", "false");
             nel.addEventListener("click", function() {
+                if (storage.exclusivity_click_ev != 0) 
+                    return;
+
                 if (nel.getAttribute("selected") == "false") {
-                    nel.setAttribute("selected", "true");
-                    const root = document.getElementById("el-root");
                     let _nel = document.getElementById("el-show-big");
-                    if (_nel != null) _nel.parentNode.removeChild(_nel);
-                    _nel = document.createElement("section");
+                    if (_nel != null) {
+                        tools.log("WARN", `At ${id}, el-show-big exists already! Clicked out of screen. Workaround applied.`);
+                        _nel.children[0].click();
+                        return;
+                    }
+                    else {
+                        _nel = document.createElement("section");
+                    }
+                    nel.setAttribute("selected", "true");
                     _nel.className = "popup";
                     _nel.setAttribute("id", "el-show-big");
                     _nel.appendChild(nel);
                     _nel.addEventListener("click", function(){
                         nel.click();
-                    });                    
-                    root.appendChild(_nel);
+                    });
+                    document.body.appendChild(_nel);
                 }
                 else {
                     nel.setAttribute("selected", "false");
@@ -93,13 +115,22 @@ const tools = {
 
             const nel_titl = document.createElement("h2");
             const nel_desc = document.createElement("p");
+            const nel_sel = document.createElement("select");
             const nel_ctx = document.createElement("canvas");
 
             nel_titl.innerText = "Carregando...";
+
             nel_desc.innerText = "Carregando...";
+
+            nel_sel.setAttribute("name", "property selector");
+            nel_sel.setAttribute("id", "select");
+            nel_sel.addEventListener("click", function(ev) {
+                storage.exclusivity_click_ev = 1;
+            });
 
             nel.appendChild(nel_titl);
             nel.appendChild(nel_desc);
+            nel.appendChild(nel_sel);
             nel.appendChild(nel_ctx);
 
             els.appendChild(nel);
@@ -149,14 +180,14 @@ const workers = {
                                 this._update_device_with(i, j);
                             }
                             catch(err) {
-                                console.log(`ERR: ${JSON.stringify(err)}`);
+                                console.log(`ERR: ${(storage.last_err = err)}`);
                             }
                         }
                     }
         
                     self["step"] = {
                         dev_max: total,
-                        dev_now: 0, // loop 0..max
+                        dev_now: 0, /* loop 0..max */
                         curr_dev_max_idx: 0, /* max_index */
                         curr_dev_idx: -1 /* if -1, read max_index and props, then ++ until < max_idx */
                     };
@@ -187,7 +218,7 @@ const workers = {
                 }
             }
             catch(err) {
-                console.log(`ERR: ${JSON.stringify(err)}`);
+                console.log(`ERR: ${(storage.last_err = err)}`);
             }
             self.can_continue = true;
         }
@@ -214,7 +245,7 @@ const workers = {
                 el.innerText = tools.sec2str(device_time);
             }
             catch(err) {
-                console.log(`ERR: ${JSON.stringify(err)}`);
+                console.log(`ERR: ${(storage.last_err = err)}`);
             }
             self.can_continue = true;
         }
@@ -239,7 +270,7 @@ const workers = {
                 el_tot.innerText = `${storage.devices.length}`;
             }
             catch(err) {
-                console.log(`ERR: ${JSON.stringify(err)}`);
+                console.log(`ERR: ${(storage.last_err = err)}`);
             }
             self.can_continue = true;
         }
@@ -262,14 +293,29 @@ const workers = {
 
                     const el = storage.elements[i];
 
+                    const title = el.getElementsByTagName("h2")[0];
+                    const paragraph = el.getElementsByTagName("p")[0];
+                    const select = el.getElementsByTagName("select")[0];
+                    const canvas = el.getElementsByTagName("canvas")[0];
+
                     if (dev["empty"]) {
-                        el.children[0].innerText = "Carregando...";
-                        el.children[1].innerText = "Por favor, aguarde.";
+                        title.innerText = "Carregando...";
+                        paragraph.innerText = "Por favor, aguarde.";
+                        while(select.children.length > 0) select.removeChild(select.children[0]);
                         continue;
                     }
 
-                    el.children[0].innerText = dev.name;
-                    el.children[1].innerText = `${dev.online ? "online" : "offline"} | ${dev.has_issues ? "com problemas" : "sem problemas"} | ${dev.data.length} propriedades`;
+                    title.innerText = dev.name;
+                    paragraph.innerText = `${dev.online ? "online" : "offline"} | ${dev.has_issues ? "com problemas" : "sem problemas"} | ${dev.data.length} propriedades`;
+
+                    for(let k = 0; k < dev.data.length; ++k) {
+                        if (select.children.length <= k) select.appendChild(document.createElement("option"));
+                        const opt = select.children[k];
+                        if (opt.getAttribute("value") == dev.data[k].path) continue;
+
+                        opt.setAttribute("value", "" + dev.data[k].path);
+                        opt.innerText = dev.data[k].path;
+                    }
 
                     if (dev.has_issues) el.classList.add("issues");
                     else {
@@ -277,10 +323,66 @@ const workers = {
                         if (dev.online) el.classList.add("online");
                         else el.classList.remove("online");
                     }
+
+                    /* canvas part */
+
+                    canvas.width = canvas.offsetWidth;
+                    canvas.height = canvas.offsetHeight;
+
+                    const ctx = canvas.getContext("2d");
+                    ctx.font = "14px 'Segoe UI Emoji', 'Segoe UI Variable', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    let sel_opt = null;
+                    for(let j = 0; j < dev.data.length; ++j) {
+                        if (select.value == dev.data[j].path) {
+                            sel_opt = dev.data[j];
+                            break;
+                        }
+                    }
+
+                    function draw_text(text, x, y) {
+                        ctx.fillStyle = 'black';
+                        ctx.fillText(text, x + 1, y + 1);
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(text, x, y);
+                    }
+
+                    if (sel_opt) {
+                        ctx.fillStyle = 'black';
+
+                        const total = sel_opt.values.length;
+                        const step_x = canvas.width * 1.0 / (total - 1);
+                        
+                        const max_y = Math.max(...sel_opt.values);
+                        const min_y = Math.min(...sel_opt.values);
+                        let diff_y = max_y - min_y;
+                        if (diff_y == 0.0) diff_y = 0.0000001;
+                        
+                        ctx.beginPath();                        
+                        for(let x = 0; x < total - 1; ++x) {
+                            const rx = total - x - 2; /* real offset in canvas */
+
+                            const fx = rx * step_x;
+                            const lx = (rx + 1) * step_x;
+                            const ly = (1.0 - ((sel_opt.values[x] - min_y) / diff_y)) * canvas.height;
+                            const fy = (1.0 - ((sel_opt.values[x + 1] - min_y) / diff_y)) * canvas.height;
+
+                            ctx.moveTo(fx, fy);
+                            ctx.lineTo(lx, ly);
+                        }
+                        ctx.stroke();
+
+                        draw_text(`Max: ${max_y}`, 1.5, 14);
+                        draw_text(`Min: ${min_y}`, 1.5, 28);
+                    }
+                    else {
+                        draw_text(`Sem dados`, 1.5, 14);
+                    }
                 }
             }
             catch(err) {
-                console.log(`ERR: ${JSON.stringify(err)}`);
+                console.log(`ERR: ${(storage.last_err = err)}`);
             }
 
             self.can_continue = true;
