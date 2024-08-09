@@ -18,7 +18,7 @@ constexpr char app_version[] = "V0.0.1-BETA";
 constexpr const uint8_t def_spi_core_id = 0; // spi (tft screen, touch)
 constexpr const uint8_t def_alt_core_id = 1; // other tasks (+ sd card)
 
-constexpr const auto& cpu_core_id_for_i2c           = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_i2c           = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_core          = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_display_pwm   = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_sd_card       = def_alt_core_id;
@@ -151,6 +151,7 @@ constexpr int sd_card_pins[] = {
     25, // MOSI
     26  // CS
 };
+constexpr uint32_t sd_card_speed = 1000000;
 constexpr uint64_t sd_check_sd_time_ms = 1000;
 constexpr int sd_max_files_open = 2;
 constexpr int sd_thread_priority = 17; // higher is more important.
@@ -170,7 +171,7 @@ constexpr int i2c_pins[] = {
 constexpr size_t i2c_values_history_size = 20;
 constexpr uint64_t i2c_path_checking_time = 30000; // ms
 constexpr uint64_t i2c_packaging_delay = 5000; // ms
-constexpr int i2c_thread_priority = 2; // higher is more important.
+constexpr int i2c_thread_priority = 10; // higher is more important.
 constexpr bool wifi_hotspot_default = false;
 
 // ---- ---- END OF I2C CONTROLLER DEFAULTS BLOCK ---- ---- //

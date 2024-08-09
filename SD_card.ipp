@@ -22,7 +22,7 @@ inline void MySDcard::async_sdcard_caller()
         m_last_type = SD_type::C_OFFLINE;
         SD.end();
 
-        if (!SD.begin(cs, *spi, 4000000, "/sd", sd_max_files_open, false)) {
+        if (!SD.begin(cs, *spi, sd_card_speed, "/sd", sd_max_files_open, false)) {
             if (!m_initialized) { // must initialize without SD card anyway
                 LOGE_NOSD(e_LOG_TAG::TAG_SD, "__SDCARD: CORE LOAD WARN! SD card is not present, so many stuff MAY NOT be stable. Please consider adding one.");
                 LOGE_NOSD(e_LOG_TAG::TAG_SD, "__SDCARD: CORE LOAD WARN! Starting application in 10 seconds anyway. Good luck.");
