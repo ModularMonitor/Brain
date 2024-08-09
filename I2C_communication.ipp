@@ -76,6 +76,8 @@ inline void MyI2Ccomm::async_i2c_caller()
 {
     LOGI(e_LOG_TAG::TAG_I2C, "Setting up wire connection...");
 
+    vTaskPrioritySet(NULL, tskIDLE_PRIORITY);
+
     MySDcard& sd = GET(MySDcard);
     auto wire = std::unique_ptr<CS::PackagedWired>(new CS::PackagedWired(CS::config().set_master().set_sda(i2c_pins[0]).set_scl(i2c_pins[1])));
     char tempbuf[128];
@@ -97,15 +99,15 @@ inline void MyI2Ccomm::async_i2c_caller()
     };
 
     while(1) {
+        vTaskPrioritySet(NULL, tskIDLE_PRIORITY);
         while(last_run + GET(MyConfig).get_i2c_packaging_delay() > get_time_ms()) SLEEP(50);
         last_run = get_time_ms();
-
-        //CPU::AutoWait autotime(GET(MyConfig).get_i2c_packaging_delay()); // loop control
 
         if (m_sdcard_check_time.is_time()) {
             check_sd_card_paths_existance();
         }
 
+        vTaskPrioritySet(NULL, i2c_thread_priority);
         for(uint8_t p = 0; p < CS::d2u(CS::device_id::_MAX); ++p)
         {
             const auto curr = static_cast<CS::device_id>(p);
@@ -136,8 +138,6 @@ inline void MyI2Ccomm::async_i2c_caller()
 
                     const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
-
-                    //LOGI(e_LOG_TAG::TAG_I2C, "%s => %s", i.get_path(), data_written_ref);
                 }
                     break;
                 case CS::Command::vtype::TF:
@@ -148,8 +148,6 @@ inline void MyI2Ccomm::async_i2c_caller()
 
                     const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
-
-                    //LOGI(e_LOG_TAG::TAG_I2C, "%s => %s", i.get_path(), data_written_ref);
                 }
                     break;
                 case CS::Command::vtype::TI:
@@ -160,8 +158,6 @@ inline void MyI2Ccomm::async_i2c_caller()
 
                     const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
-
-                    //LOGI(e_LOG_TAG::TAG_I2C, "%s => %s", i.get_path(), data_written_ref);
                 }
                     break;
                 case CS::Command::vtype::TU:
@@ -172,8 +168,6 @@ inline void MyI2Ccomm::async_i2c_caller()
 
                     const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
-
-                    //LOGI(e_LOG_TAG::TAG_I2C, "%s => %s", i.get_path(), data_written_ref);
                 }
                     break;
                 default:

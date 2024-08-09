@@ -77,19 +77,19 @@ inline void MyConfig::save() const
     snprintf(dat.key, sizeof(dat.key),      "core_display_screen_saver_steps_time");
     snprintf(dat.value, sizeof(dat.value),  "%llu", m_core_display_screen_saver_steps_time);
     dat.check_and_fix_eof();
-    sd.overwrite_on(config_file_path, (char*)&dat, sizeof(dat));
+    ASSERT_SD_LOCK_OVERWRITE(sd, config_file_path, (char*)&dat, sizeof(dat));
 
     dat.reset();
     snprintf(dat.key, sizeof(dat.key),      "i2c_packaging_delay");
     snprintf(dat.value, sizeof(dat.value),  "%llu", m_i2c_packaging_delay);
     dat.check_and_fix_eof();
-    sd.append_on(config_file_path, (char*)&dat, sizeof(dat));
+    ASSERT_SD_LOCK_APPEND_ON(sd, config_file_path, (char*)&dat, sizeof(dat));
 
     dat.reset();
     snprintf(dat.key, sizeof(dat.key),      "wifi_hotspot");
     snprintf(dat.value, sizeof(dat.value),  "%s", m_wifi_hotspot ? "1" : "0");
     dat.check_and_fix_eof();
-    sd.append_on(config_file_path, (char*)&dat, sizeof(dat));
+    ASSERT_SD_LOCK_APPEND_ON(sd, config_file_path, (char*)&dat, sizeof(dat));
 
     LOGI(e_LOG_TAG::TAG_CFG, "Config saved on %s.", config_file_path);
 }
@@ -119,8 +119,8 @@ inline void MyConfig::set_core_display_screen_saver_steps_time(uint64_t v)
 
 inline void MyConfig::set_i2c_packaging_delay(uint64_t v)
 {
-    if (v >= 1000 && v <= 86400000) {
-        m_i2c_packaging_delay = v; // min 1 sec, max 1 day
+    if (v >= 5000 && v <= 86400000) {
+        m_i2c_packaging_delay = v; // min 5 sec, max 1 day
         LOGI(e_LOG_TAG::TAG_CFG, "Config changed: i2c_packaging_delay => %llu", m_i2c_packaging_delay);
     }
 }

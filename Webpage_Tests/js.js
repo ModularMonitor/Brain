@@ -60,13 +60,7 @@ const tools = {
         const els = document.getElementById("blob-devices");
 
         document.body.addEventListener("click", function() {
-            setTimeout(function() { 
-                /*if (storage.exclusivity_click_ev == 0) {
-                    const el = document.getElementById("el-show-big");
-                    if (el && el.children.length > 0) {
-                        el.children[0].click();
-                    }
-                }*/
+            setTimeout(function() {
                 storage.exclusivity_click_ev = 0;
             }, 10);
         });
@@ -146,7 +140,7 @@ const tools = {
 const workers = {
     fcn_update_devices: {
         can_continue: true,
-        time: 2000,
+        time: 500,
         step: null,
         is_debug_ready: false,
         pretty_name: "Update devices one by one forever",
@@ -177,7 +171,7 @@ const workers = {
                             storage.devices[i] = { empty: true };
                             try {
                                 const j = await tools.req_async(`/get_device/${i}?resumed=true`);
-                                this._update_device_with(i, j);
+                                self._update_device_with(i, j);
                             }
                             catch(err) {
                                 console.log(`ERR: ${(storage.last_err = err)}`);
@@ -424,3 +418,5 @@ function start_stuff(only_testing_ones) {
         }
     }
 }
+
+setTimeout(function(){ start_stuff(); }, 250);

@@ -10,10 +10,14 @@ inline void MySerialReader::async_serial_reader()
     auto& sd = GET(MySDcard);
 
     while(1) {
+        vTaskPrioritySet(NULL, tskIDLE_PRIORITY);
+
         while (!Serial.available()) SLEEP(250);
 
         memset(buffer, '\0', serialstdin_buffer_size);
         uint16_t off = 0;
+
+        vTaskPrioritySet(NULL, serialstdin_thread_priority);
 
         while(Serial.available()) {
             buffer[off++] = Serial.read();
@@ -40,11 +44,6 @@ inline void MySerialReader::async_serial_reader()
         constexpr char cmd_sd[] = "sd";
         constexpr char cmd_builddate[] = "build";
         constexpr char cmd_reloadpages[] = "reloadweb";
-
-        //const auto check_current_arg_is_num = [&]{
-        //    if (off >= serialstdin_buffer_size) return false;
-        //    return (buffer[off] >= '0' && buffer[off] <= '9');
-        //};
 
         if (strncmp(cmd_help, buffer + off, sizeof(cmd_help) - 1) == 0) { // HELP!
 
@@ -89,6 +88,10 @@ inline void MySerialReader::async_serial_reader()
                 snprintf(aux_buffer, serialstdin_buffer_size, "/");
                 //continue;
             }
+            if (aux_buffer[0] != '/') {
+                LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Mistyped path, please start with '/' like '/potato/test.txt'");
+                continue;
+            }
 
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Listing directories and files under '%s':", aux_buffer);
 
@@ -107,6 +110,10 @@ inline void MySerialReader::async_serial_reader()
                 LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Input for mkdir failed to be parsed. Please check help.");
                 continue;
             }
+            if (aux_buffer[0] != '/') {
+                LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Mistyped path, please start with '/' like '/potato/test.txt'");
+                continue;
+            }
 
             if (sd.make_dir(aux_buffer)) LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Created folder '%s'", aux_buffer);
             else                         LOGE_NOSD(e_LOG_TAG::TAG_STDIN, "Failed to create folder '%s'", aux_buffer);
@@ -120,6 +127,10 @@ inline void MySerialReader::async_serial_reader()
                 LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Input for rmdir failed to be parsed. Please check help.");
                 continue;
             }
+            if (aux_buffer[0] != '/') {
+                LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Mistyped path, please start with '/' like '/potato/test.txt'");
+                continue;
+            }
 
             if (sd.remove_dir(aux_buffer)) LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Deleted folder '%s'", aux_buffer);
             else                           LOGE_NOSD(e_LOG_TAG::TAG_STDIN, "Failed to delete folder '%s'", aux_buffer);
@@ -131,6 +142,10 @@ inline void MySerialReader::async_serial_reader()
 
             if (res <= 0) {
                 LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Input for rm failed to be parsed. Please check help.");
+                continue;
+            }
+            if (aux_buffer[0] != '/') {
+                LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Mistyped path, please start with '/' like '/potato/test.txt'");
                 continue;
             }
 
@@ -148,6 +163,10 @@ inline void MySerialReader::async_serial_reader()
 
             if (res <= 0) {
                 LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Input for read file failed to be parsed. Please check help.");
+                continue;
+            }
+            if (aux_buffer[0] != '/') {
+                LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Mistyped path, please start with '/' like '/potato/test.txt'");
                 continue;
             }
 
@@ -192,6 +211,10 @@ inline void MySerialReader::async_serial_reader()
 
             if (res <= 0) {
                 LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Input for write file failed to be parsed. Please check help.");
+                continue;
+            }
+            if (aux_buffer[0] != '/') {
+                LOGW_NOSD(e_LOG_TAG::TAG_STDIN, "Mistyped path, please start with '/' like '/potato/test.txt'");
                 continue;
             }
 
@@ -413,6 +436,5 @@ inline void MySerialReader::async_serial_reader()
 
 inline MySerialReader::MySerialReader()
 {
-    async_class_method_pri(MySerialReader, async_serial_reader, serialstdin_thread_priority, cpu_core_id_for_serialstdin);
-
+    async_class_method_pri(MySerialReader, async_serial_reader, tskIDLE_PRIORITY, cpu_core_id_for_serialstdin);
 }

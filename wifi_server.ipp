@@ -168,7 +168,7 @@ inline void MyWiFiPortal::handle_requests()
 
     while(1) {
         m_build->server.handleClient();
-        SLEEP(25);
+        SLEEP(50);
     }
 }
 
@@ -215,6 +215,14 @@ inline void MyWiFiPortal::start()
 
     m_thr = async_class_method(MyWiFiPortal, handle_requests, cpu_core_id_for_wifi_setup);
 
+
+    LOGI(e_LOG_TAG::TAG_WIFI, "Loading files into memory (max 5 tries)...");
+
+    for(uint8_t tries = 0; tries < 5 && (get_webserver_home().isEmpty() || get_webserver_css().isEmpty() || get_webserver_js().isEmpty()); ++tries) {
+        LOGI_NOSD(e_LOG_TAG::TAG_WIFI, "Loading WiFi files try %u of 5...", (unsigned)tries);
+        reload_webserver_items();
+    }
+
     LOGI(e_LOG_TAG::TAG_WIFI, "Started WiFi Portal handler thread.");
 }
 
@@ -228,6 +236,7 @@ inline void MyWiFiPortal::stop()
     m_build->dnsServer.stop();
 
     m_build.reset();
+    //WiFi.softAPdisconnect(true); // crashes?
 
     LOGI(e_LOG_TAG::TAG_WIFI, "Stopped WiFi Portal.");
 }

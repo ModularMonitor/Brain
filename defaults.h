@@ -170,7 +170,7 @@ constexpr int i2c_pins[] = {
 constexpr size_t i2c_values_history_size = 20;
 constexpr uint64_t i2c_path_checking_time = 30000; // ms
 constexpr uint64_t i2c_packaging_delay = 5000; // ms
-constexpr int i2c_thread_priority = tskIDLE_PRIORITY; // higher is more important.
+constexpr int i2c_thread_priority = 2; // higher is more important.
 constexpr bool wifi_hotspot_default = false;
 
 // ---- ---- END OF I2C CONTROLLER DEFAULTS BLOCK ---- ---- //
@@ -216,7 +216,7 @@ inline TaskHandle_t create_task(void(*fcn)(void*), const char* nam = "ASYNC", UB
 
 #define SLEEP(MILLISEC) { yield(); vTaskDelay(MILLISEC / portTICK_PERIOD_MS); }
 
-//#define ASSERT_SD_LOCK_OVERWRITE(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = (_e == 0 ? SDREF.overwrite_on(PATH, BUFFER, LEN) : SDREF.append_on(PATH, BUFFER + _e, LEN - _e)); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
-//#define ASSERT_SD_LOCK_APPEND_ON(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = SDREF.append_on(PATH, BUFFER + _e, LEN - _e); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
+#define ASSERT_SD_LOCK_OVERWRITE(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = (_e == 0 ? SDREF.overwrite_on(PATH, BUFFER, LEN) : SDREF.append_on(PATH, BUFFER + _e, LEN - _e)); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
+#define ASSERT_SD_LOCK_APPEND_ON(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = SDREF.append_on(PATH, BUFFER + _e, LEN - _e); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
 
 inline uint64_t get_time_ms() {return std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count(); }

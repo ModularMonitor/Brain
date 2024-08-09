@@ -60,6 +60,7 @@ inline void MySDcard::async_sdcard_caller()
     LOGI_NOSD(e_LOG_TAG::TAG_SD, "Working.");
 
     while(1) {
+        vTaskPrioritySet(NULL, tskIDLE_PRIORITY);
         // check & update type if necessary
         if (get_time_ms() - last_time > sd_check_sd_time_ms || last_time == 0) {
 
@@ -84,6 +85,7 @@ inline void MySDcard::async_sdcard_caller()
             continue;
         }
 
+        vTaskPrioritySet(NULL, sd_thread_priority);
 
         while(!m_tasks.empty()) {
             std::packaged_task<void(void)> i;
@@ -115,11 +117,6 @@ inline void MySDcard::async_sdcard_caller()
 
 inline bool MySDcard::push_task(std::packaged_task<void(void)>&& moving)
 {
-    //if (!is_online()) {
-    //    LOGW_NOSD(e_LOG_TAG::TAG_SD, "No task pushed for SD card this time. Skipped nearby task. SD card is not present.");
-    //    return false;
-    //}
-
     for (bool second_try = false;;) {
         {
             std::lock_guard<std::mutex> l(m_tasks_mtx);
@@ -203,7 +200,10 @@ inline size_t MySDcard::append_on(const char* path, const char* what, const size
         File fp = SD.open(path, FILE_APPEND);
         if (!fp) return;
 
-        ret = fp.write((uint8_t*)what, len);
+        for(size_t max_tries = 0; ret < len && max_tries < 10; ++max_tries){
+            if (max_tries > 3) SLEEP(50);
+            ret += fp.write((uint8_t*)what + ret, len - ret);
+        }
         fp.close();
     });
 
@@ -223,7 +223,10 @@ inline size_t MySDcard::overwrite_on(const char* path, const char* what, const s
         File fp = SD.open(path, FILE_WRITE);
         if (!fp) return;
 
-        ret = fp.write((uint8_t*)what, len);
+        for(size_t max_tries = 0; ret < len && max_tries < 10; ++max_tries){
+            if (max_tries > 3) SLEEP(50);
+            ret += fp.write((uint8_t*)what + ret, len - ret);
+        }
         fp.close();
     });
 
@@ -247,7 +250,11 @@ inline void MySDcard::async_append_on(const char* path, const char* what, const 
         File fp = SD.open(path_cpy.c_str(), FILE_APPEND);
         if (!fp) return;
 
-        fp.write((uint8_t*)what_mov.get(), len);
+        size_t ret = 0;
+        for(size_t max_tries = 0; ret < len && max_tries < 10; ++max_tries){
+            if (max_tries > 3) SLEEP(50);
+            ret += fp.write((uint8_t*)what_mov.get() + ret, len - ret);
+        }
         fp.close();
     });
 
@@ -264,7 +271,11 @@ inline void MySDcard::async_overwrite_on(const char* path, const char* what, con
         File fp = SD.open(path_cpy.c_str(), FILE_WRITE);
         if (!fp) return;
 
-        fp.write((uint8_t*)what_mov.get(), len);
+        size_t ret = 0;
+        for(size_t max_tries = 0; ret < len && max_tries < 10; ++max_tries){
+            if (max_tries > 3) SLEEP(50);
+            ret += fp.write((uint8_t*)what_mov.get() + ret, len - ret);
+        }
         fp.close();
     });
 

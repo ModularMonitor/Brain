@@ -451,18 +451,18 @@ inline void CoreDisplay::_task_work_body_blocks_event()
                 case core_settings_buttons::BTN_SAVE_SPEED:
                 {
                     switch(cfg.get_i2c_packaging_delay()) {
-                    case 1000:
-                        cfg.set_i2c_packaging_delay(2000); // 2 s
-                        break;
-                    case 2000:
-                        cfg.set_i2c_packaging_delay(3000); // 3 s
-                        break;
-                    case 3000:
-                        cfg.set_i2c_packaging_delay(4000); // 4 s
-                        break;
-                    case 4000:
-                        cfg.set_i2c_packaging_delay(5000); // 5 s
-                        break;
+                    //case 1000:
+                    //    cfg.set_i2c_packaging_delay(2000); // 2 s
+                    //    break;
+                    //case 2000:
+                    //    cfg.set_i2c_packaging_delay(3000); // 3 s
+                    //    break;
+                    //case 3000:
+                    //    cfg.set_i2c_packaging_delay(4000); // 4 s
+                    //    break;
+                    //case 4000:
+                    //    cfg.set_i2c_packaging_delay(5000); // 5 s
+                    //    break;
                     case 5000:
                         cfg.set_i2c_packaging_delay(7500); // 7.5 s
                         break;
@@ -524,7 +524,7 @@ inline void CoreDisplay::_task_work_body_blocks_event()
                         cfg.set_i2c_packaging_delay(86400000); // 24 h
                         break;
                     default:
-                        cfg.set_i2c_packaging_delay(1000);
+                        cfg.set_i2c_packaging_delay(5000);
                         break;
                     }
                     cfg.save();
@@ -725,7 +725,11 @@ inline void CoreDisplay::async_display_caller()
         SLEEP(15);
 
         if (m_screen_saver.state != 2) { // only update screen if makes sense
+            vTaskPrioritySet(NULL, core_thread_priority);
             task_display();
+        }
+        else {
+            vTaskPrioritySet(NULL, tskIDLE_PRIORITY);
         }
 
         SLEEP(15);
