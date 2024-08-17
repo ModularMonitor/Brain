@@ -57,7 +57,9 @@ inline void MySerialReader::async_serial_reader()
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- rm [file]: delete a file (like '/path/file.txt')");
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- sd: Tells SD card info");
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- build: Tells build date time");
-            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- reloadweb: Reload the web pages from SD card to RAM.");
+#ifdef USE_SD_CARD_AS_REF
+            LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "- reloadweb: Reload the web pages from SD card to RAM, if build enables it.");
+#endif
 
         }
         else if (strncmp(cmd_reloadpages, buffer + off, sizeof(cmd_reloadpages) - 1) == 0) { // RELOAD WEB
@@ -67,9 +69,9 @@ inline void MySerialReader::async_serial_reader()
             reload_webserver_items();
 
             LOGI_NOSD(e_LOG_TAG::TAG_STDIN, "Reloaded pages, sizes: %u, %u, %u",
-                _get_webserver_idx(0).length(),
-                _get_webserver_idx(1).length(),
-                _get_webserver_idx(2).length()
+                get_webserver_home().length(),
+                get_webserver_js().length(),
+                get_webserver_css().length()
             );
 
         }

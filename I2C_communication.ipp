@@ -137,7 +137,9 @@ inline void MyI2Ccomm::async_i2c_caller()
 
                     snprintf(device_file_path, sizeof(device_file_path), "/i2c/%s/%s.log", CS::d2str(curr), cleanup_to_tempbuf(i.get_path()));
 
-                    const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
+                    LOG_DATA(e_LOG_TAG::TAG_I2C, "%s,%s", i.get_path(), data_written_ref);
+
+                    const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);                    
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
                 }
                     break;
@@ -146,6 +148,8 @@ inline void MyI2Ccomm::async_i2c_caller()
                     const char* const data_written_ref = dev.post_value_nolock(i.get_path(), i.get_val<float>());
 
                     snprintf(device_file_path, sizeof(device_file_path), "/i2c/%s/%s.log", CS::d2str(curr), cleanup_to_tempbuf(i.get_path()));
+
+                    LOG_DATA(e_LOG_TAG::TAG_I2C, "%s,%s", i.get_path(), data_written_ref);
 
                     const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
@@ -157,6 +161,8 @@ inline void MyI2Ccomm::async_i2c_caller()
 
                     snprintf(device_file_path, sizeof(device_file_path), "/i2c/%s/%s.log", CS::d2str(curr), cleanup_to_tempbuf(i.get_path()));
 
+                    LOG_DATA(e_LOG_TAG::TAG_I2C, "%s,%s", i.get_path(), data_written_ref);
+
                     const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
                 }
@@ -167,6 +173,8 @@ inline void MyI2Ccomm::async_i2c_caller()
 
                     snprintf(device_file_path, sizeof(device_file_path), "/i2c/%s/%s.log", CS::d2str(curr), cleanup_to_tempbuf(i.get_path()));
 
+                    LOG_DATA(e_LOG_TAG::TAG_I2C, "%s,%s", i.get_path(), data_written_ref);
+                    
                     const int to_write_on_sd_card = snprintf(tempbuf, sizeof(tempbuf), "%llu,%s\n", get_time_ms(), data_written_ref);
                     if (to_write_on_sd_card > 0) sd.append_on(device_file_path, tempbuf, to_write_on_sd_card);
                 }
