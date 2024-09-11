@@ -179,13 +179,14 @@ inline void DisplayFullBlockGraph::update_with(CS::device_id current_dev, const 
         m_hist_should_redraw |= ref_map.m_update_time != m_hist_last;
         m_hist_last = ref_map.m_update_time;
         
-        const auto new_desc = std::next(ref_map.m_map.begin(), current_off)->first + "   ";
+        const auto& ref_ref_map = std::next(ref_map.m_map.begin(), current_off);
+        const auto new_desc = ref_ref_map->first + " => " + ref_ref_map->second + "   ";
 
         m_hist_should_redraw |= new_desc != m_description;
 
         set_description(new_desc); // DESC SET (as filter too)
 
-        set_extra("Atualizado faz " + std::string(buf) + ".");
+        set_extra("Atualizado faz " + std::string(buf) + ".  ");
 
         const uint16_t fill = 
             is_bad ? item_has_issues_bg_color : (is_on ? item_online_bg_color : item_offline_bg_color);
@@ -274,4 +275,50 @@ inline void DisplayFullBlockGraph::draw()
 
     off_left = m_tft->textWidth(res.c_str(), 2);
     m_tft->drawString(res.c_str(), graph_margin_left + (graph_width_calculated / 2) - (off_left / 2), graph_margin_top + graph_height_calculated + 2, 2);
+}
+
+inline void DisplayQRcodeDrawer::update()
+{
+    const auto& cfg = GET(MyConfig);
+    const bool wifi_on = cfg.get_wifi_hotspot();
+
+    if (wifi_on) {
+        set_texts("WiFi ligada!", "Use seu celular para acessar o site interno pelo QR code:", "");
+        m_has_changes |= !m_last_had_qrcode;
+        m_last_had_qrcode = true;
+    }
+    else {
+        set_texts("WiFi desligada", "Ative primeiro a WiFi pela tela de config.", "");
+        m_has_changes |= m_last_had_qrcode;
+        m_last_had_qrcode = false;
+    }
+
+    //m_has_changes = true;
+}
+
+inline void DisplayQRcodeDrawer::draw()
+{
+    using namespace DisplayColors;
+
+    const auto& wifi = GET(MyWiFiPortal);
+    const auto& qr = wifi.get_qr_code();
+
+    if (m_has_changes) {
+        m_has_changes = false;
+        draw_rounded_device_box(0, bar_top_height, item_full_width_max, item_full_height_max, item_resumed_border_radius);
+
+        for(int y = 0; y < qr.getSize(); ++y) {
+            for(int x = 0; x < qr.getSize(); ++x) {
+                const auto color_box = qr.getModule(x, y) ? TFT_BLACK : TFT_WHITE;
+                m_tft->fillRect(
+                    qrcode_margin_left + qrcode_size_pixel * x,
+                    qrcode_margin_top + qrcode_size_pixel * y,
+                    qrcode_size_pixel, qrcode_size_pixel,
+                    color_box
+                );
+            }
+        }
+    }
+
+    draw_text_auto(0, bar_top_height);
 }

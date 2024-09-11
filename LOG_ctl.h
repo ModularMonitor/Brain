@@ -24,7 +24,9 @@ enum class e_LOG_TAG{
     TAG_CPU,
     TAG_I2C,
     TAG_CORE,
-    TAG_CFG
+    TAG_CFG,
+    TAG_WIFI,
+    TAG_STDIN
 };
 
 enum class e_LOG_TYPE{
@@ -39,6 +41,8 @@ MAKE_SINGLETON_CLASS(MyLOG, {
 public:
     int printf(const e_LOG_TAG&, const e_LOG_TYPE&, const char*, ...);
     int printf_nosd(const e_LOG_TAG&, const e_LOG_TYPE&, const char*, ...);
+    int printf_fordatalog(const e_LOG_TAG&, const char*, ...);
+    int printf_nosd_raw(const char*, ...);
 });
 
 #define LOGI(TAG, ...) GET(MyLOG).printf(TAG, e_LOG_TYPE::INFO,  __VA_ARGS__)
@@ -47,3 +51,5 @@ public:
 #define LOGI_NOSD(TAG, ...) GET(MyLOG).printf_nosd(TAG, e_LOG_TYPE::INFO,  __VA_ARGS__)
 #define LOGW_NOSD(TAG, ...) GET(MyLOG).printf_nosd(TAG, e_LOG_TYPE::WARN,  __VA_ARGS__)
 #define LOGE_NOSD(TAG, ...) GET(MyLOG).printf_nosd(TAG, e_LOG_TYPE::ERROR, __VA_ARGS__)
+#define LOG_DATA(TAG, ...) GET(MyLOG).printf_fordatalog(TAG, __VA_ARGS__)
+#define LOGRAW(...) GET(MyLOG).printf_nosd_raw(__VA_ARGS__)

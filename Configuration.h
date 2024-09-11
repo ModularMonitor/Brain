@@ -32,6 +32,7 @@ MAKE_SINGLETON_CLASS(MyConfig, {
 
     uint64_t m_core_display_screen_saver_steps_time = core_display_screen_saver_steps_time;
     uint64_t m_i2c_packaging_delay = i2c_packaging_delay;
+    bool m_wifi_hotspot = wifi_hotspot_default;
 
     void load();
 public:
@@ -41,8 +42,10 @@ public:
 
     uint64_t get_core_display_screen_saver_steps_time   () const;
     uint64_t get_i2c_packaging_delay                    () const;
+    bool     get_wifi_hotspot                           () const;
 
     void set_core_display_screen_saver_steps_time       (uint64_t);
     void set_i2c_packaging_delay                        (uint64_t);
+    void set_wifi_hotspot                               (bool);
 
 });

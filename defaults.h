@@ -15,14 +15,34 @@
 
 constexpr char app_version[] = "V0.0.1-BETA";
 
-constexpr const uint8_t def_spi_core_id = 1; // spi (tft screen, touch)
-constexpr const uint8_t def_alt_core_id = 0; // other tasks (+ sd card)
+constexpr const uint8_t def_spi_core_id = 0; // spi (tft screen, touch)
+constexpr const uint8_t def_alt_core_id = 1; // other tasks (+ sd card)
 
 constexpr const auto& cpu_core_id_for_i2c           = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_core          = def_spi_core_id;
 constexpr const auto& cpu_core_id_for_display_pwm   = def_alt_core_id;
 constexpr const auto& cpu_core_id_for_sd_card       = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_serialstdin   = def_alt_core_id;
+constexpr const auto& cpu_core_id_for_wifi_setup    = def_alt_core_id;
 //constexpr const auto& cpu_core_id_for_4g_lte  = def_alt_core_id;
+
+// ---- ---- WEBPAGE DEFAULTS BLOCK ---- ---- //
+
+constexpr char web_file_html[] = "/webpage/index.html";
+constexpr char web_file_js[]   = "/webpage/js.js";
+constexpr char web_file_css[]  = "/webpage/css.css";
+constexpr size_t web_slice_read = 32;
+constexpr size_t web_timeout_write = 5000; // msec
+
+// ---- ---- END OF WEBPAGE DEFAULTS BLOCK ---- ---- //
+
+// ---- ---- SERIAL STDIN DEFAULTS BLOCK ---- ---- //
+
+constexpr size_t serialstdin_buffer_size = 96;
+constexpr size_t serialstdin_readblock_buffer_size = 256;
+constexpr int serialstdin_thread_priority = 1; // higher is more important.
+
+// ---- ---- END OF SERIAL STDIN DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- CONFIGURATION DEFAULTS BLOCK ---- ---- //
 
@@ -44,8 +64,8 @@ constexpr char config_file_path[] = "/config.ini";
 #define DISPLAY_MISO       18
 
 constexpr int core_display_led_pwm_pin = 17;
-constexpr uint64_t core_display_led_pwn_delay = 25; // ms
-constexpr uint64_t core_display_main_delay = 30; // ms
+constexpr uint64_t core_display_led_pwn_delay = 35; // ms
+constexpr uint64_t core_display_main_delay = 50; // ms
 constexpr char core_display_config_ini[] = "/display_calibration.ini";
 constexpr uint64_t core_display_screen_saver_steps_time = 10000; // ms
 constexpr int core_thread_priority = tskIDLE_PRIORITY;
@@ -53,16 +73,16 @@ constexpr int core_led_pwm_thread_priority = tskIDLE_PRIORITY;
 constexpr uint64_t core_display_animations_check_time = 1000; // ms, updates screen stuff.
 
 namespace DisplayColors {
-    constexpr size_t log_line_dist = 20;
-    constexpr size_t log_amount = 320 / log_line_dist;
-    constexpr size_t log_line_max_len = 96;
+    //constexpr size_t log_line_dist = 20;
+    //constexpr size_t log_amount = 320 / log_line_dist;
+    //constexpr size_t log_line_max_len = 96;
 
     constexpr int32_t bar_top_height = 20;
     constexpr int32_t bar_right_width = 40;
 
     constexpr int32_t display_real_work_area[2] = {(480 - bar_right_width), (320 - bar_top_height) };
 
-    constexpr int32_t bar_right_buttons_amount = 4;
+    constexpr int32_t bar_right_buttons_amount = 5;
     constexpr int32_t bar_right_each_height = display_real_work_area[1] / bar_right_buttons_amount;
 
     constexpr uint16_t bar_top_color = 0x34da;
@@ -102,6 +122,10 @@ namespace DisplayColors {
     constexpr int32_t graph_width_calculated = display_real_work_area[0] - graph_margin_left - graph_margin_right;
     constexpr int32_t graph_height_calculated = display_real_work_area[1] - graph_margin_top - graph_margin_bottom;
 
+    constexpr int32_t qrcode_margin_left = 80; // px
+    constexpr int32_t qrcode_margin_top = 80; // px
+    constexpr int32_t qrcode_size_pixel = 8; // px
+
     constexpr uint16_t graph_background_color = 0x9e13;
     constexpr uint16_t graph_line_color = 0xF800;
 
@@ -111,8 +135,8 @@ namespace DisplayColors {
 
 // ---- ---- LOGGER DEFAULTS BLOCK ---- ---- //
 
-constexpr int logger_serial_speed = 115200; // in weird situations, may be used by SD card
-constexpr size_t logger_buffer_len = 256;
+constexpr int logger_serial_speed = 19200; // in weird situations, may be used by SD card
+constexpr size_t logger_buffer_len = 160;
 constexpr char logger_log_path[] = "/log.txt";
 constexpr char logger_exception_path[] = "/log_exceptions.txt";
 
@@ -127,11 +151,13 @@ constexpr int sd_card_pins[] = {
     25, // MOSI
     26  // CS
 };
-constexpr uint64_t sd_check_sd_time_ms = 5000;
-constexpr int sd_max_files_open = 10;
-constexpr int sd_thread_priority = 10; // higher is more important.
+constexpr uint32_t sd_card_speed = 1000000;
+constexpr uint64_t sd_check_sd_time_ms = 1000;
+constexpr int sd_max_files_open = 2;
+constexpr int sd_thread_priority = 17; // higher is more important.
 constexpr uint32_t sd_max_timeout_wait_future = 10000; // ms
-constexpr size_t sd_max_tasks_pending = 64; // should be good for async events lmao
+constexpr uint32_t sd_max_timeout_sd_card_full_of_tasks = 3500; // ms
+constexpr size_t sd_max_tasks_pending = 6; // should be good for async events lmao
 
 // ---- ---- END OF SD CARD DEFAULTS BLOCK ---- ---- //
 
@@ -142,16 +168,17 @@ constexpr int i2c_pins[] = {
     15  // SCL
 };
 
-constexpr size_t i2c_values_history_size = 100;
+constexpr size_t i2c_values_history_size = 20;
 constexpr uint64_t i2c_path_checking_time = 30000; // ms
 constexpr uint64_t i2c_packaging_delay = 5000; // ms
-constexpr int i2c_thread_priority = 2; // higher is more important.
+constexpr int i2c_thread_priority = 4; // higher is more important.
+constexpr bool wifi_hotspot_default = false;
 
 // ---- ---- END OF I2C CONTROLLER DEFAULTS BLOCK ---- ---- //
 
 // ---- ---- NON RELATED ---- ---- /
 
-constexpr auto cpu_task_default_stack = 8192; 
+constexpr auto cpu_task_default_stack = 5120; 
 
 
 // function to create threads easily
@@ -169,7 +196,7 @@ inline TaskHandle_t create_task(void(*fcn)(void*), const char* nam = "ASYNC", UB
 // auto create task core prio body argument
 #define actcpba(BODY, COREID, PRIORITY, ARG) { create_task([](void* arg){ BODY; vTaskDelete(NULL); }, "ASYNCAUTO", PRIORITY, cpu_task_default_stack, ARG, COREID); }
 // auto run class function as thread on core
-#define async_class_method_pri(CLASSNAME, CLASSMETHOD, PRIORITY, COREID) { create_task([](void* arg){ ((CLASSNAME*)arg)->CLASSMETHOD(); vTaskDelete(NULL); }, "CLASSASYNC", PRIORITY, cpu_task_default_stack, (void*)this, COREID); }
+#define async_class_method_pri(CLASSNAME, CLASSMETHOD, PRIORITY, COREID) create_task([](void* arg){ ((CLASSNAME*)arg)->CLASSMETHOD(); vTaskDelete(NULL); }, "CLASSASYNC", PRIORITY, cpu_task_default_stack, (void*)this, COREID);
 #define async_class_method(CLASSNAME, CLASSMETHOD, COREID) async_class_method_pri(CLASSNAME, CLASSMETHOD, tskIDLE_PRIORITY, COREID)
 
 #define MAKE_SINGLETON_CLASS_F(CLASSNAME, CLASSBODY, FUNCFLAGS) class CLASSNAME CLASSBODY; CLASSNAME& FUNCFLAGS get_singleton_of_##CLASSNAME(){ static CLASSNAME obj; return obj; }
@@ -189,5 +216,8 @@ inline TaskHandle_t create_task(void(*fcn)(void*), const char* nam = "ASYNC", UB
 #define GET(SINGLETON_NAME) get_singleton_of_##SINGLETON_NAME()
 
 #define SLEEP(MILLISEC) { yield(); vTaskDelay(MILLISEC / portTICK_PERIOD_MS); }
+
+#define ASSERT_SD_LOCK_OVERWRITE(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = (_e == 0 ? SDREF.overwrite_on(PATH, BUFFER, LEN) : SDREF.append_on(PATH, BUFFER + _e, LEN - _e)); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
+#define ASSERT_SD_LOCK_APPEND_ON(SDREF, PATH, BUFFER, LEN) for(size_t _e = 0; _e < LEN;) { const size_t _g = SDREF.append_on(PATH, BUFFER + _e, LEN - _e); if (_g) {_e += _g; } else { Serial.printf("__INTERNAL: SDCARD LOCK MACRO GOT ZERO, DELAYED.\n"); SLEEP(1000); } }
 
 inline uint64_t get_time_ms() {return std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count(); }

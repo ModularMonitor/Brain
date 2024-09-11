@@ -3,6 +3,7 @@
 #include "SD_card.h"
 #include "Custom_Bitmaps.h"
 #include "Configuration.h"
+#include "qr_code.h"
 
 #include "TFT/TFT_eSPI.h"
 
@@ -54,6 +55,22 @@ public:
     using DisplayLineBlock::set_nodata_color;
 
     void update_with(CS::device_id current_dev, const unsigned current_off);
+
+    void draw();
+};
+
+class DisplayQRcodeDrawer : public DisplayLineBlock {
+    bool m_last_had_qrcode = false;
+
+    using DisplayLineBlock::set_texts; // private it. Use update instead
+public:
+    using DisplayLineBlock::set_state_changed;
+    using DisplayLineBlock::set_fill_color;
+    using DisplayLineBlock::set_border_color;
+    using DisplayLineBlock::set_font_color;
+    using DisplayLineBlock::set_nodata_color;
+
+    void update();
 
     void draw();
 };

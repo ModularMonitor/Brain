@@ -28,6 +28,12 @@ to call SD functions.
 
 enum class SD_type {C_OFFLINE, C_MMC, C_SD, C_SDHC};
 
+struct file_info {
+    std::string fp_name;
+    uint32_t fp_size;
+    bool is_file;
+};
+
 // use GET(MySDcard) to get its singleton ref!
 // MySDcard is an async SD card manager that allows any thread to append tasks of write / read to the card. It also tests for the SD card periodically.
 MAKE_SINGLETON_CLASS(MySDcard, {
@@ -46,6 +52,9 @@ public:
 
     // Removes a file from SD card.
     bool remove_file(const char* who);
+
+    // Get file size
+    size_t get_file_size(const char* path);
 
     // Renames a file from SD card.
     bool rename_file(const char* who, const char* to);
@@ -76,6 +85,9 @@ public:
 
     // Check if directory exists (must be directory).
     bool dir_exists(const char* dir);
+
+    // List files and dirs under this path:
+    std::deque<file_info> ls(const char* dir);
 
     // Check SD card size.
     size_t sd_card_size() const;
